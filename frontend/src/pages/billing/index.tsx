@@ -1,0 +1,570 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import {
+  RiCheckLine,
+  RiCloseLine,
+  RiArrowRightLine,
+  RiRefundLine,
+} from 'react-icons/ri';
+
+// ── Palette ──
+const C = {
+  bg: '#121212',
+  surface: '#1e1e1e',
+  surfaceHover: '#2a2a2a',
+  card: '#1a1a1a',
+  textPrimary: '#fafafa',
+  textSecondary: '#9e9e9e',
+  textTertiary: '#757575',
+  accent: '#FFC107',
+  accentHover: '#FFA000',
+  accentSubtle: 'rgba(255,193,7,0.08)',
+  secondary: '#1976D2',
+  secondaryHover: '#1565C0',
+  border: 'rgba(255,255,255,0.06)',
+  green: '#4caf50',
+  orange: '#ff9800',
+  red: '#ef5350',
+};
+
+// ── Types ──
+interface Plan {
+  id: string;
+  name: string;
+  code: string;
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  features: {
+    multi_account?: boolean;
+    api_access?: boolean;
+    team_management?: boolean;
+    webhook?: boolean;
+  };
+  limits: {
+    environments?: number;
+    executors?: number;
+    api_daily?: number;
+    members?: number;
+  };
+  sort_order: number;
+}
+
+interface Subscription {
+  id: string;
+  tenant_id: string;
+  plan_id: string | null;
+  plan: Plan | null;
+  billing_cycle: string;
+  status: string;
+  start_date: string;
+  end_date: string | null;
+  auto_renew: boolean;
+}
+
+interface Invoice {
+  id: string;
+  tenant_id: string;
+  subscription_id: string | null;
+  amount: number;
+  status: string;
+  billing_period_start: string | null;
+  billing_period_end: string | null;
+  paid_at: string | null;
+  created_at: string;
+}
+
+// ── API helper ──
+const getToken = () => localStorage.getItem('access_token');
+
+const apiFetch = async (path: string, options: RequestInit = {}) => {
+  const token = getToken();
+  const res = await fetch(`/api/v1${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+};
+
+// ── Feature labels ──
+const FEATURE_LABELS: Record<string, string> = {
+  multi_account: '多账号管理',
+  api_access: 'API 访问',
+  team_management: '团队管理',
+  webhook: 'Webhook 通知',
+};
+
+const PLAN_ORDER = ['free', 'personal', 'pro', 'enterprise'];
+
+const BillingPage: React.FC = () => {
+  const [loading, setLoading] = useState(true);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [upgrading, setUpgrading] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'plans' | 'invoices'>('plans');
+
+  // Fetch data
+  const fetchPlans = useCallback(async () => {
+    const data = await apiFetch('/billing/plans');
+    return data.plans as Plan[];
+  }, []);
+
+  const fetchSubscription = useCallback(async () => {
+    try {
+      return await apiFetch('/billing/subscription') as Subscription | null;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const fetchInvoices = useCallback(async () => {
+    const data = await apiFetch('/billing/invoices?limit=50');
+    return (data.invoices || []) as Invoice[];
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      try {
+        const [plansData, subData, invoicesData] = await Promise.all([
+          fetchPlans(),
+          fetchSubscription(),
+          fetchInvoices(),
+        ]);
+        setPlans(plansData.sort((a, b) => a.sort_order - b.sort_order));
+        setSubscription(subData);
+        setInvoices(invoicesData);
+      } catch (e: any) {
+        toast.error(e.message || '获取数据失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [fetchPlans, fetchSubscription, fetchInvoices]);
+
+  // Get current plan code
+  const currentPlanCode = subscription?.plan?.code || 'free';
+
+  // Get plan by code
+  const getPlanByCode = (code: string) => plans.find(p => p.code === code);
+
+  // Handle upgrade/subscribe
+  const handleSubscribe = async (planCode: string, billingCycle: string = 'monthly') => {
+    setUpgrading(planCode);
+    try {
+      const sub = await apiFetch('/billing/subscription', {
+        method: 'POST',
+        body: JSON.stringify({ plan_code: planCode, billing_cycle: billingCycle }),
+      });
+      setSubscription(sub);
+      toast.success('订阅成功！');
+    } catch (e: any) {
+      toast.error(e.message || '订阅失败');
+    } finally {
+      setUpgrading(null);
+    }
+  };
+
+  // Handle cancel
+  const handleCancel = async () => {
+    if (!confirm('确定要取消订阅吗？取消后将降级为免费套餐。')) return;
+    try {
+      await apiFetch('/billing/subscription', { method: 'DELETE' });
+      setSubscription(null);
+      toast.success('订阅已取消');
+      // Refresh to get updated data
+      const plansData = await fetchPlans();
+      setPlans(plansData);
+    } catch (e: any) {
+      toast.error(e.message || '取消失败');
+    }
+  };
+
+  // Format price
+  const formatPrice = (price: number) => {
+    if (price === 0) return '免费';
+    return `¥${price}`;
+  };
+
+  // Format date
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+
+  // Status badge
+  const statusBadge = (status: string) => {
+    const map: Record<string, { bg: string; color: string; label: string }> = {
+      pending: { bg: 'rgba(255,152,0,0.15)', color: C.orange, label: '待支付' },
+      paid: { bg: 'rgba(76,175,80,0.15)', color: C.green, label: '已支付' },
+      failed: { bg: 'rgba(239,83,80,0.15)', color: C.red, label: '失败' },
+      canceled: { bg: 'rgba(158,158,158,0.15)', color: C.textSecondary, label: '已取消' },
+    };
+    const s = map[status] || { bg: 'rgba(158,158,158,0.15)', color: C.textSecondary, label: status };
+    return (
+      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: s.bg, color: s.color }}>
+        {s.label}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return <div style={{ padding: 32, color: C.textSecondary }}>加载中...</div>;
+  }
+
+  return (
+    <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}>
+      {/* ── Header ── */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+          计费管理
+        </h1>
+        <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+          管理和升级您的订阅套餐
+        </p>
+      </div>
+
+      {/* ── Current Plan Card ── */}
+      {subscription && (
+        <div style={{
+          backgroundColor: C.card,
+          border: `1px solid ${C.border}`,
+          borderRadius: 12,
+          padding: 24,
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          <div>
+            <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>当前套餐</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 24, fontWeight: 700, color: C.accent }}>
+                {subscription.plan?.name || 'Free'}
+              </span>
+              <span style={{ fontSize: 13, color: C.textSecondary }}>
+                {subscription.billing_cycle === 'monthly' ? '月付' : '年付'}
+              </span>
+              <span style={{
+                fontSize: 12,
+                padding: '2px 8px',
+                borderRadius: 4,
+                backgroundColor: subscription.status === 'active' ? 'rgba(76,175,80,0.15)' : 'rgba(255,152,0,0.15)',
+                color: subscription.status === 'active' ? C.green : C.orange,
+              }}>
+                {subscription.status === 'active' ? '有效' : subscription.status}
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 8 }}>
+              到期时间：{formatDate(subscription.end_date)}
+              {subscription.auto_renew && <span style={{ marginLeft: 12 }}>• 自动续费</span>}
+            </div>
+          </div>
+          {currentPlanCode !== 'enterprise' && (
+            <button
+              onClick={handleCancel}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                border: `1px solid ${C.border}`,
+                backgroundColor: 'transparent',
+                color: C.textSecondary,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              取消订阅
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── Tabs ── */}
+      <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 24 }}>
+        <button
+          onClick={() => setActiveTab('plans')}
+          style={{
+            padding: '8px 16px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'plans' ? C.accent : C.textSecondary,
+            fontSize: 13,
+            fontWeight: activeTab === 'plans' ? 600 : 400,
+            cursor: 'pointer',
+            borderBottom: activeTab === 'plans' ? `2px solid ${C.accent}` : '2px solid transparent',
+            marginBottom: -1,
+          }}
+        >
+          套餐对比
+        </button>
+        <button
+          onClick={() => setActiveTab('invoices')}
+          style={{
+            padding: '8px 16px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            color: activeTab === 'invoices' ? C.accent : C.textSecondary,
+            fontSize: 13,
+            fontWeight: activeTab === 'invoices' ? 600 : 400,
+            cursor: 'pointer',
+            borderBottom: activeTab === 'invoices' ? `2px solid ${C.accent}` : '2px solid transparent',
+            marginBottom: -1,
+          }}
+        >
+          账单历史
+        </button>
+      </div>
+
+      {/* ── Plans Comparison ── */}
+      {activeTab === 'plans' && (
+        <div>
+          {/* Price display toggle could go here */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+            {plans.map((plan) => {
+              const isCurrent = plan.code === currentPlanCode;
+              const isUpgrade = PLAN_ORDER.indexOf(plan.code) > PLAN_ORDER.indexOf(currentPlanCode);
+
+              return (
+                <div
+                  key={plan.id}
+                  style={{
+                    backgroundColor: C.card,
+                    border: `1px solid ${isCurrent ? C.accent : C.border}`,
+                    borderRadius: 12,
+                    padding: 20,
+                    position: 'relative',
+                    ...(plan.code === 'pro' ? { borderColor: C.secondary } : {}),
+                  }}
+                >
+                  {plan.code === 'pro' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: -10,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: C.secondary,
+                      color: '#fff',
+                      fontSize: 11,
+                      padding: '2px 12px',
+                      borderRadius: 10,
+                      fontWeight: 600,
+                    }}>
+                      推荐
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>
+                      {plan.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.textSecondary }}>
+                      {plan.description}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: 20 }}>
+                    <span style={{ fontSize: 28, fontWeight: 700, color: C.accent }}>
+                      {formatPrice(plan.price_monthly)}
+                    </span>
+                    {plan.price_monthly > 0 && (
+                      <span style={{ fontSize: 12, color: C.textSecondary }}>/月</span>
+                    )}
+                  </div>
+
+                  {/* Features */}
+                  <div style={{ marginBottom: 20 }}>
+                    {Object.entries(FEATURE_LABELS).map(([key, label]) => {
+                      const hasFeature = plan.features[key];
+                      return (
+                        <div key={key} style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          marginBottom: 6,
+                          fontSize: 12,
+                          color: hasFeature ? C.textPrimary : C.textTertiary,
+                        }}>
+                          {hasFeature ? (
+                            <RiCheckLine size={14} style={{ color: C.green }} />
+                          ) : (
+                            <RiCloseLine size={14} style={{ color: C.textTertiary }} />
+                          )}
+                          <span>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Limits */}
+                  <div style={{
+                    padding: '12px',
+                    backgroundColor: C.surface,
+                    borderRadius: 8,
+                    marginBottom: 20,
+                    fontSize: 11,
+                    color: C.textSecondary,
+                  }}>
+                    <div style={{ marginBottom: 4 }}>额度限制</div>
+                    <div>环境：{plan.limits.environments === 99999 ? '无限制' : plan.limits.environments}</div>
+                    <div>执行器：{plan.limits.executors === 99 ? '无限制' : plan.limits.executors}</div>
+                    <div>API日限额：{plan.limits.api_daily === 99999 ? '无限制' : plan.limits.api_daily}</div>
+                    <div>团队成员：{plan.limits.members === 999 ? '无限制' : plan.limits.members}</div>
+                  </div>
+
+                  {/* Action button */}
+                  {isCurrent ? (
+                    <button
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '9px 0',
+                        borderRadius: 8,
+                        border: 'none',
+                        backgroundColor: C.accentSubtle,
+                        color: C.accent,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: 'not-allowed',
+                      }}
+                    >
+                      当前套餐
+                    </button>
+                  ) : isUpgrade ? (
+                    <button
+                      onClick={() => handleSubscribe(plan.code)}
+                      disabled={upgrading === plan.code}
+                      style={{
+                        width: '100%',
+                        padding: '9px 0',
+                        borderRadius: 8,
+                        border: 'none',
+                        backgroundColor: upgrading === plan.code ? C.textTertiary : C.accent,
+                        color: '#121212',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: upgrading === plan.code ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                      }}
+                      onMouseEnter={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = C.accentHover; }}
+                      onMouseLeave={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = C.accent; }}
+                    >
+                      {upgrading === plan.code ? '处理中...' : (
+                        <>
+                          升级到{plan.name} <RiArrowRightLine size={14} />
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '9px 0',
+                        borderRadius: 8,
+                        border: `1px solid ${C.border}`,
+                        backgroundColor: 'transparent',
+                        color: C.textTertiary,
+                        fontSize: 13,
+                        cursor: 'not-allowed',
+                      }}
+                    >
+                      降级
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Invoice History ── */}
+      {activeTab === 'invoices' && (
+        <div>
+          {invoices.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 24px',
+              color: C.textSecondary,
+              backgroundColor: C.card,
+              borderRadius: 12,
+              border: `1px solid ${C.border}`,
+            }}>
+              <RiRefundLine size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
+              <p style={{ fontSize: 14 }}>暂无账单记录</p>
+            </div>
+          ) : (
+            <div style={{ backgroundColor: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ backgroundColor: C.surface }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      账单金额
+                    </th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      状态
+                    </th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      计费周期
+                    </th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      创建时间
+                    </th>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      支付时间
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice, idx) => (
+                    <tr key={invoice.id} style={{ backgroundColor: idx % 2 === 0 ? 'transparent' : C.surface }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textPrimary, borderBottom: `1px solid ${C.border}` }}>
+                        <span style={{ fontWeight: 600, color: invoice.amount > 0 ? C.accent : C.textSecondary }}>
+                          {invoice.amount > 0 ? `¥${invoice.amount.toFixed(2)}` : '免费'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}` }}>
+                        {statusBadge(invoice.status)}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                        {invoice.billing_period_start && invoice.billing_period_end
+                          ? `${formatDate(invoice.billing_period_start)} ~ ${formatDate(invoice.billing_period_end)}`
+                          : '-'}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                        {formatDate(invoice.created_at)}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                        {formatDate(invoice.paid_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BillingPage;

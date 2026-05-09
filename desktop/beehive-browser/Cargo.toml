@@ -1,0 +1,42 @@
+[package]
+name = "beehive-browser"
+version = "0.1.0"
+description = "蜂巢浏览器 — 防检测多账号管理桌面客户端"
+authors = ["roymaste"]
+edition = "2021"
+
+[lib]
+name = "beehive_browser_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+doctest = false
+
+[[bin]]
+name = "beehive-browser"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-updater = "2"
+log = "0.4"
+env_logger = "0.11"
+once_cell = "1"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+tokio = { version = "1", features = ["full"] }
+futures-util = "0.3"
+zip = "2"
+dirs = "6"
+
+# Linux deps (process management)
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.31", features = ["signal"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

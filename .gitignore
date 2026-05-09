@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.exe
+*.msi
+*.deb
+*.AppImage
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+test-results/
+
+# Temporary files
+*.tmp
+*.bak
+*.bak2
+
+# Rust build artifacts
+target/
+.cargo/
+*.rlib
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+
+# Editor directories
+dist/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

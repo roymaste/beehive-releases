@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" width="220" height="48">
+  <!-- Honeycomb hexagon with bee icon + brand text -->
+  <defs>
+    <linearGradient id="beeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#42a5f5"/>
+      <stop offset="100%" stop-color="#1976d2"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Hexagon outline - yellow #FFC107 -->
+  <g transform="translate(24, 24)">
+    <path d="M0 -18 L15.6 -9 L15.6 9 L0 18 L-15.6 9 L-15.6 -9 Z" 
+          fill="none" 
+          stroke="#ffc107" 
+          stroke-width="1.5" 
+          stroke-linejoin="round"/>
+    
+    <!-- Internal hexagon lines -->
+    <line x1="0" y1="-18" x2="0" y2="18" stroke="#ffc107" stroke-width="1" opacity="0.5"/>
+    <line x1="-15.6" y1="-9" x2="15.6" y2="9" stroke="#ffc107" stroke-width="0.8" opacity="0.3"/>
+    <line x1="15.6" y1="-9" x2="-15.6" y2="9" stroke="#ffc107" stroke-width="0.8" opacity="0.3"/>
+    
+    <!-- Stylized bee - blue geometric -->
+    <g transform="translate(0, 0)">
+      <!-- Bee body -->
+      <ellipse cx="0" cy="0" rx="5" ry="3.5" fill="url(#beeGrad)"/>
+      <!-- Bee stripes -->
+      <rect x="-3" y="-1.5" width="1.5" height="3" fill="#ffc107" opacity="0.8"/>
+      <rect x="0" y="-1.5" width="1.5" height="3" fill="#ffc107" opacity="0.8"/>
+      <rect x="3" y="-1.5" width="1.5" height="3" fill="#ffc107" opacity="0.8"/>
+      <!-- Bee wings -->
+      <ellipse cx="-3" cy="-4" rx="3" ry="1.8" fill="#fff" opacity="0.6" transform="rotate(-25)"/>
+      <ellipse cx="3" cy="-4" rx="3" ry="1.8" fill="#fff" opacity="0.6" transform="rotate(25)"/>
+    </g>
+  </g>
+  
+  <!-- Brand text -->
+  <text x="52" y="22" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" font-weight="600" fill="#fafafa" letter-spacing="-0.3px">HiveAgent</text>
+  <text x="52" y="38" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="400" fill="#a1a1aa" letter-spacing="0">蜂巢智能体</text>
+</svg>

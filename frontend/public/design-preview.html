@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蜂巢智能体 · 设计方向</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #111; color: #fff; }
+.container { max-width: 1400px; margin: 0 auto; padding: 40px 32px; }
+h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; }
+.subtitle { font-size: 15px; color: #888; margin-bottom: 48px; font-weight: 400; }
+
+/* 三栏布局 */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 48px; }
+.card { border-radius: 16px; overflow: hidden; transition: transform 0.2s; cursor: pointer; }
+.card:hover { transform: translateY(-4px); }
+
+.card-header { padding: 24px 24px 16px; display: flex; align-items: center; gap: 10px; }
+.card-header h2 { font-size: 17px; font-weight: 600; }
+.card-header .tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.3px; }
+
+/* 风格A: Linear */
+.style-a { background: #0f1011; border: 1px solid rgba(255,255,255,0.06); }
+.style-a .card-header { background: transparent; }
+.style-a .card-header h2 { color: #f7f8f8; }
+.style-a .tag { background: rgba(113,112,255,0.15); color: #828fff; }
+
+/* 风格B: Stripe */
+.style-b { background: linear-gradient(135deg, #1a103d 0%, #0d0a1a 100%); border: 1px solid rgba(127,86,217,0.2); }
+.style-b .card-header h2 { color: #fff; }
+.style-b .tag { background: rgba(127,86,217,0.2); color: #b397ff; }
+
+/* 风格C: Notion */
+.style-c { background: #1a1a1e; border: 1px solid rgba(255,255,255,0.04); }
+.style-c .card-header h2 { color: #e8e8e8; }
+.style-c .tag { background: rgba(235,87,87,0.15); color: #eb5757; }
+
+/* 预览区域 */
+.preview { padding: 12px 20px 28px; }
+
+/* 仪表盘卡片模拟 */
+.mock-dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-card { padding: 14px; border-radius: 10px; }
+.stat-card .num { font-size: 22px; font-weight: 600; margin-bottom: 2px; }
+.stat-card .label { font-size: 12px; font-weight: 400; }
+
+/* A风格统计卡 */
+.a-stat { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+.a-stat .num { color: #f7f8f8; }
+.a-stat .label { color: #8a8f98; }
+
+/* B风格统计卡 */
+.b-stat { background: rgba(127,86,217,0.1); border: 1px solid rgba(127,86,217,0.15); }
+.b-stat .num { color: #e8dfff; }
+.b-stat .label { color: #a08ec0; }
+
+/* C风格统计卡 */
+.c-stat { background: #222226; }
+.c-stat .num { color: #e8e8e8; }
+.c-stat .label { color: #8a8a8e; }
+
+/* 表格模拟 */
+.mock-table { margin-top: 8px; }
+.mock-row { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid; font-size: 12px; }
+.mock-row .col { flex: 1; }
+.mock-row .status { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+
+.a-row { border-color: rgba(255,255,255,0.04); color: #a1a1aa; }
+.a-row .name { color: #f7f8f8; }
+.b-row { border-color: rgba(127,86,217,0.08); color: #b8aed0; }
+.b-row .name { color: #e8dfff; }
+.c-row { border-color: rgba(255,255,255,0.04); color: #9f9fa3; }
+.c-row .name { color: #e8e8e8; }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; margin-top: 12px; }
+
+.a-btn { background: #5e6ad2; color: #fff; }
+.b-btn { background: #7f56d9; color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.c-btn { background: #eb5757; color: #fff; }
+
+.desc { padding: 0 20px 24px; }
+.desc p { font-size: 13px; line-height: 1.6; color: #888; }
+.desc ul { list-style: none; padding: 0; margin-top: 10px; }
+.desc li { font-size: 12px; color: #666; padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+.desc li::before { content: ''; width: 4px; height: 4px; border-radius: 50%; flex-shrink: 0; }
+
+.a-desc li::before { background: #828fff; }
+.b-desc li::before { background: #b397ff; }
+.c-desc li::before { background: #eb5757; }
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🪄 设计方向提案</h1>
+  <p class="subtitle">蜂巢智能体 · 基于真实设计系统的三种视觉语言</p>
+
+  <div class="grid">
+    <!-- 风格A: Linear -->
+    <div class="card style-a">
+      <div class="card-header">
+        <h2>✦ 星轨</h2>
+        <span class="tag">Linear 系</span>
+      </div>
+      <div class="preview">
+        <div class="mock-dashboard">
+          <div class="stat-card a-stat"><div class="num">24</div><div class="label">环境</div></div>
+          <div class="stat-card a-stat"><div class="num">18</div><div class="label">在线</div></div>
+        </div>
+        <div class="mock-table">
+          <div class="mock-row a-row"><span class="status" style="background:#10b981"></span><span class="col name">推特运营-1</span><span class="col">活跃</span><span>US-西雅图</span></div>
+          <div class="mock-row a-row"><span class="status" style="background:#10b981"></span><span class="col name">推特运营-2</span><span class="col">活跃</span><span>US-纽约</span></div>
+          <div class="mock-row a-row"><span class="status" style="background:#7170ff"></span><span class="col name">INS营销-A</span><span class="col">空闲</span><span>US-洛杉矶</span></div>
+        </div>
+        <button class="btn a-btn">+ 新建环境</button>
+      </div>
+      <div class="desc">
+        <p>近黑底色 · 靛蓝点缀 · 极精确排版 · Inter 字体系 · 高信息密度</p>
+        <ul>
+          <li>暗色原生，信息像星光从黑暗中浮现</li>
+          <li>唯一的彩色 = 靛蓝 (#5e6ad2) — 用在关键交互上</li>
+          <li>半透明白边框替代实色边框，层次靠亮度堆叠</li>
+          <li>适合：专业管理后台、高密度数据页面</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 风格B: Stripe -->
+    <div class="card style-b">
+      <div class="card-header">
+        <h2>✦ 极光</h2>
+        <span class="tag">Stripe 系</span>
+      </div>
+      <div class="preview">
+        <div class="mock-dashboard">
+          <div class="stat-card b-stat"><div class="num">¥12.8k</div><div class="label">月营收</div></div>
+          <div class="stat-card b-stat"><div class="num">342</div><div class="label">活跃账号</div></div>
+        </div>
+        <div class="mock-table">
+          <div class="mock-row b-row"><span class="status" style="background:#10b981"></span><span class="col name">客户A</span><span class="col">¥3,200</span><span>企业版</span></div>
+          <div class="mock-row b-row"><span class="status" style="background:#10b981"></span><span class="col name">客户B</span><span class="col">¥1,800</span><span>专业版</span></div>
+          <div class="mock-row b-row"><span class="status" style="background:#fbbf24"></span><span class="col name">客户C</span><span class="col">¥599</span><span>基础版</span></div>
+        </div>
+        <button class="btn b-btn">查看财务</button>
+      </div>
+      <div class="desc">
+        <p>深紫渐变 · 紫色商业调 · 玻璃拟态 · 卡片式布局</p>
+        <ul>
+          <li>紫色渐变背景，品牌感极强</li>
+          <li>毛玻璃效果 (backdrop-filter: blur) 增加层次</li>
+          <li>按钮有内阴影，像真实物理按钮</li>
+          <li>适合：面向客户的 SaaS 管理后台、财务/商业面板</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 风格C: Notion -->
+    <div class="card style-c">
+      <div class="card-header">
+        <h2>✦ 蜂巢</h2>
+        <span class="tag">Notion 系</span>
+      </div>
+      <div class="preview">
+        <div class="mock-dashboard">
+          <div class="stat-card c-stat"><div class="num">47</div><div class="label">今日发推</div></div>
+          <div class="stat-card c-stat"><div class="num">12.3k</div><div class="label">总互动</div></div>
+        </div>
+        <div class="mock-table">
+          <div class="mock-row c-row"><span class="status" style="background:#eb5757"></span><span class="col name">定时任务A</span><span class="col">已发布</span><span>09:34</span></div>
+          <div class="mock-row c-row"><span class="status" style="background:#fbbf24"></span><span class="col name">定时任务B</span><span class="col">待审核</span><span>10:00</span></div>
+          <div class="mock-row c-row"><span class="status" style="background:#eb5757"></span><span class="col name">定时任务C</span><span class="col">已发布</span><span>11:20</span></div>
+        </div>
+        <button class="btn c-btn">+ 新建任务</button>
+      </div>
+      <div class="desc">
+        <p>柔灰底色 · 红色点缀 · 温暖阅读感 · 高可读性</p>
+        <ul>
+          <li>暖灰而不是纯黑/纯白，视觉最舒适</li>
+          <li>红色 (#eb5757) 作为品牌色，活泼有记忆点</li>
+          <li>无边框设计，内容为王</li>
+          <li>适合：内容运营面板、自媒体仪表盘</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; padding: 32px 0; border-top: 1px solid rgba(255,255,255,0.06); color: #555; font-size: 13px;">
+    选一个方向，我生成完整设计预览 → 然后让阿杰把整个前端换成这个风格
+  </div>
+</div>
+</body>
+</html>

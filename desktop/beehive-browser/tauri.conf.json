@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicoverbruggen/tauri-v2-schema/main/tauri.conf.schema.json",
+  "productName": "Beehive Browser",
+  "version": "0.1.0",
+  "identifier": "com.beehive.browser",
+  "build": {
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../../frontend/dist"
+  },
+  "app": {
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "wix": {
+        "language": "zh-CN"
+      },
+      "nsis": {
+        "languages": ["SimpChinese", "English"],
+        "displayLanguageSelector": true
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQxNDcxOTk2RUQ5ODUxNApSV1FVaGRsdW1YRVVCSHdPRVl2VmF0bVl4Q2dCRXNTdklKM0FXZ0ZhM01YN1BXeEdyWmFHSXFaQQo=",
+      "endpoints": ["https://YOUR_VPS_IP:8008/updates/{{target}}-{{arch}}/{{current_version}}"]
+    }
+  }
+}
