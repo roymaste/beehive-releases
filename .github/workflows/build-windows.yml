@@ -1,0 +1,56 @@
+name: Build Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/beehive-browser/**'
+      - 'frontend/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+
+      - name: Build frontend
+        run: |
+          npm install
+          npm run build
+        working-directory: frontend
+
+      - name: Copy frontend to desktop dist
+        run: |
+          xcopy /E /Y frontend\dist desktop\beehive-browser\frontend\dist\
+        shell: cmd
+
+      - name: Build Tauri app (Windows MSI + NSIS)
+        run: |
+          cargo tauri build --bundles "msi,nsis"
+        working-directory: desktop/beehive-browser
+        env:
+          TAURI_SKIP_DEVSERVER_CHECK: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: beehive-windows-installer
+          path: |
+            desktop/beehive-browser/target/release/bundle/msi/*.msi
+            desktop/beehive-browser/target/release/bundle/nsis/*.exe
+          retention-days: 7

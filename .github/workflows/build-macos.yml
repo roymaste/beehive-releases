@@ -1,0 +1,67 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:  # 手动触发
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/beehive-browser/**'
+      - 'frontend/**'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      
+      - name: Build frontend
+        run: |
+          npm install
+          npm run build
+        working-directory: frontend
+      
+      - name: Build Tauri app (universal binary)
+        run: |
+          cargo tauri build --target universal-apple-darwin
+        working-directory: desktop/beehive-browser
+        env:
+          FORCE_COLOR: 0
+      
+      - name: Create proper icns from PNG
+        run: |
+          # Convert icon PNG to proper icns using iconutil
+          # First check if we have a valid PNG icon
+          if [ -f icons/32x32.png ]; then
+            # Create a temporary iconset
+            mkdir -p beehive.iconset
+            cp icons/32x32.png beehive.iconset/icon_16x16.png
+            cp icons/32x32.png beehive.iconset/icon_32x32.png
+            cp icons/128x128.png beehive.iconset/icon_128x128.png
+            cp icons/128x128@2x.png beehive.iconset/icon_256x256.png
+            cp icons/128x128@2x.png beehive.iconset/icon_512x512.png
+            # Generate icns
+            iconutil -c icns beehive.iconset
+            rm -rf beehive.iconset
+            echo "Created proper icns file"
+          fi
+        working-directory: desktop/beehive-browser
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: beehive-macos-universal
+          path: |
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app
+          retention-days: 5
