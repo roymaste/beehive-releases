@@ -28,6 +28,12 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version "^2"
 
+      - name: Download CloakBrowser kernel
+        run: |
+          curl -L -o cloakbrowser-kernel.tar.gz https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.tar.gz
+          tar -xzf cloakbrowser-kernel.tar.gz -C desktop/beehive-browser/
+        shell: bash
+
       - name: Build frontend
         run: |
           npm install
