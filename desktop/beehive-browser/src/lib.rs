@@ -6,12 +6,10 @@
 // 3. 用户在前端点击「启动」→ 本地弹出伪装浏览器窗口
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
-use std::io::Write;
-
 #[cfg(windows)]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -99,6 +97,7 @@ pub struct LaunchConfig {
     pub headless: Option<bool>,
     pub humanize: Option<bool>,
     pub cdp_port: Option<i32>,
+    pub kernel_version: Option<String>,
 }
 
 // ── 工具函数 ───────────────────────────────────────────────
@@ -118,7 +117,7 @@ fn get_home_dir() -> Result<PathBuf, String> {
     }
 }
 
-fn find_cloak_binary() -> Result<PathBuf, String> {
+fn find_cloak_binary(version: Option<&str>) -> Result<PathBuf, String> {
     let home = get_home_dir()?;
 
     // 搜索路径优先级：
@@ -148,6 +147,43 @@ fn find_cloak_binary() -> Result<PathBuf, String> {
         dirs
     };
 
+    // 如果指定了版本，按前缀匹配（"146" 匹配 "chromium-146.0.7680.177.3"）
+    if let Some(v) = version {
+        for cloak_dir in &search_dirs {
+            if !cloak_dir.exists() {
+                continue;
+            }
+            if let Ok(entries) = std::fs::read_dir(cloak_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if !dir_name.starts_with(&format!("chromium-{}", v)) {
+                        continue;
+                    }
+                    if !path.is_dir() {
+                        continue;
+                    }
+                    // 跳过备份/旧版目录
+                    if dir_name.ends_with(".bak") || dir_name.ends_with(".old") || dir_name.ends_with(".backup") {
+                        continue;
+                    }
+                    #[cfg(target_os = "windows")]
+                    let binary = path.join("chrome.exe");
+                    #[cfg(target_os = "macos")]
+                    let binary = path.join("CloakBrowser");
+                    #[cfg(target_os = "linux")]
+                    let binary = path.join("chrome");
+
+                    if binary.exists() {
+                        return Ok(binary);
+                    }
+                }
+            }
+        }
+        return Err(format!("未找到内核版本 {} 的二进制文件", v));
+    }
+
+    // 未指定版本：返回第一个找到的
     for cloak_dir in search_dirs {
         if !cloak_dir.exists() {
             continue;
@@ -159,7 +195,13 @@ fn find_cloak_binary() -> Result<PathBuf, String> {
                 if path.is_dir()
                     && path
                         .file_name()
-                        .map_or(false, |n| n.to_string_lossy().starts_with("chromium-"))
+                        .map_or(false, |n| {
+                            let name = n.to_string_lossy();
+                            name.starts_with("chromium-")
+                                && !name.ends_with(".bak")
+                                && !name.ends_with(".old")
+                                && !name.ends_with(".backup")
+                        })
                 {
                     #[cfg(target_os = "windows")]
                     let binary = path.join("chrome.exe");
@@ -186,16 +228,13 @@ fn find_cloak_binary() -> Result<PathBuf, String> {
     }
 
     #[cfg(target_os = "windows")]
-    let msg = format!(
-        "请下载 CloakBrowser 并解压到以下目录：\nC:\\Users\\{}\\AppData\\Local\\.cloakbrowser\\\n或访问 https://cloakbrowser.com/download",
-        std::env::var("USERNAME").unwrap_or_else(|_| "你的用户名".to_string())
-    );
+    let msg = "正在自动下载 CloakBrowser 内核，请稍候...".to_string();
     #[cfg(target_os = "macos")]
-    let msg = "请下载 CloakBrowser 并解压到以下目录：\n~/.cloakbrowser/\n或访问 https://cloakbrowser.com/download".to_string();
+    let msg = "正在自动下载 CloakBrowser 内核，请稍候...".to_string();
     #[cfg(target_os = "linux")]
-    let msg = "请下载 CloakBrowser 并解压到以下目录：\n~/.cloakbrowser/\n或访问 https://cloakbrowser.com/download".to_string();
+    let msg = "正在自动下载 CloakBrowser 内核，请稍候...".to_string();
     #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-    let msg = "请下载 CloakBrowser 并解压到 ~/.cloakbrowser/ 目录下".to_string();
+    let msg = "正在自动下载 CloakBrowser 内核，请稍候...".to_string();
     Err(msg)
 }
 
@@ -240,7 +279,7 @@ fn is_process_alive(pid: u32) -> bool {
 
 #[tauri::command]
 fn launch_cloak(config: LaunchConfig, state: tauri::State<CloakState>) -> Result<String, String> {
-    let binary = find_cloak_binary()?;
+    let binary = find_cloak_binary(config.kernel_version.as_deref())?;
     let mut cmd = Command::new(&binary);
 
     // User data dir
@@ -386,7 +425,7 @@ fn list_running_cloaks(state: tauri::State<CloakState>) -> Result<String, String
 
 #[tauri::command]
 fn check_cloakbrowser_installed() -> String {
-    match find_cloak_binary() {
+    match find_cloak_binary(None) {
         Ok(path) => serde_json::json!({
             "installed": true,
             "path": path.to_string_lossy(),
@@ -394,7 +433,7 @@ fn check_cloakbrowser_installed() -> String {
         Err(_) => serde_json::json!({
             "installed": false,
             "path": null,
-            "download_url": "https://cloakbrowser.com/download",
+            "download_url": "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip",
         }).to_string(),
     }
 }
@@ -404,7 +443,7 @@ fn check_cloakbrowser_installed() -> String {
 /// 检查 CloakBrowser 内核是否已安装（增强版：返回版本信息）
 #[tauri::command]
 fn check_core_installed() -> String {
-    match find_cloak_binary() {
+    match find_cloak_binary(None) {
         Ok(path) => {
             // 尝试从路径提取版本号
             let version = path
@@ -413,49 +452,45 @@ fn check_core_installed() -> String {
                 .and_then(|n| {
                     let s = n.to_string_lossy().to_string();
                     s.strip_prefix("chromium-").map(|v| v.to_string())
-                });
+                })
+                .unwrap_or_else(|| "unknown".to_string());
             serde_json::json!({
                 "installed": true,
-                "version": version,
+                "versions": {
+                    "chromium": version,
+                    "playwright": "1.40.0",
+                },
                 "path": path.to_string_lossy(),
             }).to_string()
         }
         Err(_) => serde_json::json!({
             "installed": false,
-            "version": null,
+            "versions": null,
             "path": null,
         }).to_string(),
     }
 }
 
-/// 获取可用内核版本列表
+/// 获取已安装内核版本
 #[tauri::command]
-fn get_core_versions() -> String {
-    // 硬编码最新版本，后续可从 GitHub API 动态获取
-    let versions = serde_json::json!([
-        {
-            "version": "146.0.7680.177.4",
-            "platform": "windows-x64",
-            "url": "https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-windows-x64.zip",
-            "size": 210000000,
-            "checksum": "sha256:abc123...",
-        },
-        {
-            "version": "146.0.7680.177.4",
-            "platform": "linux-x64",
-            "url": "https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-linux-x64.zip",
-            "size": 180000000,
-            "checksum": "sha256:def456...",
-        },
-        {
-            "version": "146.0.7680.177.4",
-            "platform": "macos-x64",
-            "url": "https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-macos-x64.zip",
-            "size": 190000000,
-            "checksum": "sha256:ghi789...",
-        },
-    ]);
-    versions.to_string()
+fn get_core_versions() -> Result<String, String> {
+    match find_cloak_binary(None) {
+        Ok(path) => {
+            let version = path
+                .parent()
+                .and_then(|p| p.file_name())
+                .and_then(|n| {
+                    let s = n.to_string_lossy().to_string();
+                    s.strip_prefix("chromium-").map(|v| v.to_string())
+                })
+                .unwrap_or_else(|| "unknown".to_string());
+            Ok(serde_json::json!({
+                "chromium": version,
+                "playwright": "1.40.0",
+            }).to_string())
+        }
+        Err(e) => Err(e),
+    }
 }
 
 /// 下载 CloakBrowser 内核（流式下载 + 进度事件）
@@ -609,16 +644,16 @@ fn extract_core(zip_path: String) -> Result<String, String> {
 /// 首次启动时检查 BeehiveBrowser 二进制是否存在
 /// 不存在则弹窗提示用户安装
 fn check_cloak_binary_setup(app: &tauri::AppHandle) {
-    if let Err(msg) = find_cloak_binary() {
+    if let Err(msg) = find_cloak_binary(None) {
         // 用 dialog 弹窗提示
         #[cfg(target_os = "windows")]
-        let install_hint = "请从 CloakBrowser 官网下载并解压到以下目录：\nC:\\Users\\你的用户名\\AppData\\Local\\.cloakbrowser\\";
+        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
         #[cfg(target_os = "macos")]
-        let install_hint = "请从 CloakBrowser 官网下载并解压到以下目录：\n~/.cloakbrowser/\n或访问 https://cloakbrowser.com/download";
+        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
         #[cfg(target_os = "linux")]
-        let install_hint = "请从 CloakBrowser 官网下载并解压到以下目录：\n~/.cloakbrowser/\n或访问 https://cloakbrowser.com/download";
+        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
         #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-        let install_hint = "请从 CloakBrowser 官网下载并解压到 ~/.cloakbrowser/ 目录";
+        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
         let _ = tauri_plugin_dialog::DialogExt::dialog(app)
             .message(format!("未找到 CloakBrowser。\n\n{}\n\n{}", msg, install_hint))
             .title("蜂巢浏览器 — 缺少 CloakBrowser")
@@ -763,6 +798,9 @@ pub fn run() {
             extract_core,
         ])
         .setup(|app| {
+            // 首次启动检查 CloakBrowser 二进制
+            check_cloak_binary_setup(app.handle());
+
             // Auto-update 启动时检查更新
             #[cfg(desktop)]
             let _ = app.handle().plugin(tauri_plugin_updater::Builder::new().build());
@@ -850,6 +888,7 @@ pub fn run() {
                                                         headless: None,
                                                         humanize: None,
                                                         cdp_port: Some(cdp_port),
+                                                        kernel_version: None,
                                                     };
 
                                                     let launch_result = launch_cloak(launch_config, cloak_state);

@@ -54,3 +54,10 @@ jobs:
             desktop/beehive-browser/target/release/bundle/msi/*.msi
             desktop/beehive-browser/target/release/bundle/nsis/*.exe
           retention-days: 7
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload v0.1.1 desktop/beehive-browser/target/release/bundle/msi/*.msi --repo roymaste/beehive-releases --clobber
+          gh release upload v0.1.1 desktop/beehive-browser/target/release/bundle/nsis/*.exe --repo roymaste/beehive-releases --clobber
