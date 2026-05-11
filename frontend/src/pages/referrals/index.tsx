@@ -286,7 +286,7 @@ const ReferralPage: React.FC = () => {
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             推广返利
           </h1>
           <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
@@ -517,7 +517,7 @@ const ReferralPage: React.FC = () => {
                     <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{r.referee_name || '—'}</div>
-                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_email}</div>
+                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_id}</div>
                       </td>
                       <td style={{ padding: '12px 16px' }}>{tierBadge(r.tier)}</td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: C.textSecondary }}>{formatDate(r.created_at)}</td>
@@ -614,7 +614,7 @@ const ReferralPage: React.FC = () => {
                     <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{r.referee_name || '—'}</div>
-                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_email}</div>
+                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_id}</div>
                       </td>
                       <td style={{ padding: '12px 16px', fontWeight: 600, color: C.accent }}>¥{r.amount.toFixed(2)}</td>
                       <td style={{ padding: '12px 16px' }}>{tierBadge(r.tier)}</td>

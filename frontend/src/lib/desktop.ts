@@ -101,3 +101,82 @@ export function fingerprintToLauncherConfig(
     headless: fingerprint.headless,
   };
 }
+
+/** 内核版本信息 */
+export interface CoreVersions {
+  chromium: string;
+  playwright: string;
+}
+
+/** 内核检查结果 */
+export interface CoreCheckResult {
+  installed: boolean;
+  versions?: CoreVersions;
+  message?: string;
+}
+
+/** 下载进度事件 */
+export interface DownloadProgressEvent {
+  downloaded: number;
+  total: number;
+  percentage: number;
+}
+
+/** 下载结果 */
+export interface DownloadResult {
+  status: string;
+  path: string;
+}
+
+/** 解压结果 */
+export interface ExtractResult {
+  status: string;
+  path: string;
+}
+
+/** 检查内核是否已安装 */
+export async function checkCoreInstalled(): Promise<CoreCheckResult> {
+  return tauriInvoke<CoreCheckResult>('check_core_installed');
+}
+
+/** 获取已安装内核版本 */
+export async function getCoreVersions(): Promise<CoreVersions> {
+  return tauriInvoke<CoreVersions>('get_core_versions');
+}
+
+/** 下载内核，支持进度回调 */
+export async function downloadCore(
+  url: string,
+  onProgress?: (event: DownloadProgressEvent) => void
+): Promise<DownloadResult> {
+  if (!isDesktopApp()) {
+    throw new Error('Not running in desktop app');
+  }
+
+  const { invoke, listen } = window.__TAURI__ as any;
+
+  // 监听下载进度事件
+  let unlisten: (() => void) | undefined;
+  if (onProgress && typeof listen === 'function') {
+    unlisten = await listen('download-progress', (event: { payload: DownloadProgressEvent }) => {
+      onProgress(event.payload);
+    });
+  }
+
+  try {
+    const result = await invoke('download_core', { url });
+    return JSON.parse(result) as DownloadResult;
+  } catch (e) {
+    console.error('Tauri command "download_core" failed:', e);
+    throw e;
+  } finally {
+    if (unlisten) {
+      unlisten();
+    }
+  }
+}
+
+/** 解压内核 */
+export async function extractCore(zipPath: string): Promise<ExtractResult> {
+  return tauriInvoke<ExtractResult>('extract_core', { zipPath });
+}

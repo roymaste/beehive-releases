@@ -50,7 +50,7 @@ const APIKeysSubPage: React.FC = () => {
           <div className="flex-1">
             <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>Key 名称</label>
             <input
-              className="apple-input"
+              className="input"
               value={keyName}
               onChange={(e) => setKeyName(e.target.value)}
               placeholder="输入 Key 名称，如：default、production"

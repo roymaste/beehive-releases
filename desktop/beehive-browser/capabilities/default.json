@@ -1,6 +1,6 @@
 {
   "identifier": "default",
-  "description": "Default permissions",
+  "description": "Default permissions — tightened for production",
   "windows": ["beehive-main"],
   "permissions": [
     "core:default",

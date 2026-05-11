@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiCheckLine,
   RiCloseLine,
@@ -156,10 +157,7 @@ const BillingPage: React.FC = () => {
   // Get current plan code
   const currentPlanCode = subscription?.plan?.code || 'free';
 
-  // Get plan by code
-  const getPlanByCode = (code: string) => plans.find(p => p.code === code);
-
-  // Handle upgrade/subscribe
+    // Handle upgrade/subscribe
   const handleSubscribe = async (planCode: string, billingCycle: string = 'monthly') => {
     setUpgrading(planCode);
     try {
@@ -176,19 +174,26 @@ const BillingPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   // Handle cancel
   const handleCancel = async () => {
-    if (!confirm('确定要取消订阅吗？取消后将降级为免费套餐。')) return;
-    try {
-      await apiFetch('/billing/subscription', { method: 'DELETE' });
-      setSubscription(null);
-      toast.success('订阅已取消');
-      // Refresh to get updated data
-      const plansData = await fetchPlans();
-      setPlans(plansData);
-    } catch (e: any) {
-      toast.error(e.message || '取消失败');
-    }
+    confirm({
+      title: '取消订阅',
+      description: '确定要取消订阅吗？取消后将降级为免费套餐。',
+      onConfirm: async () => {
+        try {
+          await apiFetch('/billing/subscription', { method: 'DELETE' });
+          setSubscription(null);
+          toast.success('订阅已取消');
+          // Refresh to get updated data
+          const plansData = await fetchPlans();
+          setPlans(plansData);
+        } catch (e: any) {
+          toast.error(e.message || '取消失败');
+        }
+      },
+    });
   };
 
   // Format price
@@ -231,7 +236,7 @@ const BillingPage: React.FC = () => {
     <div style={{ padding: 32, maxWidth: 1200, margin: '0 auto' }}>
       {/* ── Header ── */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+        <h1 className="text-2xl font-semibold text-foreground mb-6">
           计费管理
         </h1>
         <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
@@ -389,7 +394,7 @@ const BillingPage: React.FC = () => {
                   {/* Features */}
                   <div style={{ marginBottom: 20 }}>
                     {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-                      const hasFeature = plan.features[key];
+                      const hasFeature = plan.features[key as keyof Plan['features']];
                       return (
                         <div key={key} style={{
                           display: 'flex',
@@ -563,6 +568,7 @@ const BillingPage: React.FC = () => {
           )}
         </div>
       )}
+      {dialog}
     </div>
   );
 };

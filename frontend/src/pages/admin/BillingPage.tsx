@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  RiBarChart2Line,
   RiAddLine,
   RiEditLine,
   RiDeleteBinLine,
-  RiArrowRightSLine,
   RiCloseLine,
-  RiCheckLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
 // Beehive Design System Colors
 const C = {
@@ -74,15 +71,7 @@ const formatPrice = (cents: number): string => {
   return `¥${(cents / 100).toFixed(2)}`;
 };
 
-// Parse price from yuan string to fen
-const parsePrice = (yuan: string): number => {
-  const cleaned = yuan.replace(/[^0-9.]/g, '');
-  if (!cleaned) return 0;
-  return Math.round(parseFloat(cleaned) * 100);
-};
-
 const AdminBillingPage: React.FC = () => {
-  const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -90,6 +79,7 @@ const AdminBillingPage: React.FC = () => {
   const [formData, setFormData] = useState<PlanFormData>(emptyForm);
   const [featuresInput, setFeaturesInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   // Fetch plans
   const fetchPlans = async () => {
@@ -199,29 +189,33 @@ const AdminBillingPage: React.FC = () => {
 
   // Handle delete (soft delete)
   const handleDelete = async (plan: Plan) => {
-    if (!confirm(`确定要下架「${plan.name}」吗？`)) return;
+    confirm({
+      title: '下架确认',
+      description: `确定要下架「${plan.name}」吗？`,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('access_token');
+          const res = await fetch(`/api/v1/admin/plans/${plan.id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-    try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`/api/v1/admin/plans/${plan.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await res.json();
-      if (data.code === 0) {
-        toast.success('套餐已下架');
-        fetchPlans();
-      } else {
-        toast.error(data.message || '操作失败');
-      }
-    } catch (err) {
-      toast.error('操作失败');
-      console.error(err);
-    }
+          const data = await res.json();
+          if (data.code === 0) {
+            toast.success('套餐已下架');
+            fetchPlans();
+          } else {
+            toast.error(data.message || '操作失败');
+          }
+        } catch (err) {
+          toast.error('操作失败');
+          console.error(err);
+        }
+      },
+    });
   };
 
   return (
@@ -229,7 +223,7 @@ const AdminBillingPage: React.FC = () => {
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, margin: 0, marginBottom: 4 }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             套餐管理
           </h1>
           <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
@@ -687,6 +681,7 @@ const AdminBillingPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

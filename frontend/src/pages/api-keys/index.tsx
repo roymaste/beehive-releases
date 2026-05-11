@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiKeysAPI, APIKeyResponse } from '../../api/client';
+import {apiKeysAPI} from '../../api/client';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RiKey2Line, RiAddLine, RiFileCopyLine, RiDeleteBinLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
 
 // 可用的权限范围
@@ -118,18 +119,26 @@ const APIKeysPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   // 删除 API Key
   const handleDelete = async (keyId: string) => {
-    try {
-      await apiKeysAPI.delete(keyId);
-      setKeys(prev => prev.filter(k => k.id !== keyId));
-      toast.success('Key 已停用');
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(detail || '删除失败');
-    } finally {
-      setDeletingId(null);
-    }
+    confirm({
+      title: '停用 API Key',
+      description: '确定要停用该 API Key 吗？此操作不可恢复。',
+      onConfirm: async () => {
+        try {
+          await apiKeysAPI.delete(keyId);
+          setKeys(prev => prev.filter(k => k.id !== keyId));
+          toast.success('Key 已停用');
+        } catch (err: unknown) {
+          const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+          toast.error(detail || '删除失败');
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
   };
 
   // 切换 scope 选择
@@ -156,7 +165,7 @@ const APIKeysPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold m-0" style={{ color: '#1c1917', letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             API 密钥
           </h1>
           <p className="text-sm mt-1" style={{ color: '#78716c' }}>
@@ -236,7 +245,7 @@ const APIKeysPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => setDeletingId(null)}
-                        className="apple-btn"
+                        className="btn"
                         style={{ padding: '6px 12px' }}
                       >
                         <RiCloseLine size={14} />
@@ -414,13 +423,13 @@ const APIKeysPage: React.FC = () => {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="apple-btn"
+                className="btn"
               >
                 取消
               </button>
               <button
                 onClick={handleCreate}
-                className="apple-btn"
+                className="btn"
                 disabled={creating}
                 style={{ background: '#1976d2', color: '#fff' }}
               >
@@ -483,7 +492,7 @@ const APIKeysPage: React.FC = () => {
             <div className="flex justify-center mt-6">
               <button
                 onClick={() => setCreatedKey(null)}
-                className="apple-btn"
+                className="btn"
                 style={{ background: '#1976d2', color: '#fff' }}
               >
                 我已保存
@@ -492,6 +501,7 @@ const APIKeysPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

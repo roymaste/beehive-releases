@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { PageTransition } from './components/ui/page-transition';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
@@ -12,6 +13,7 @@ import PlatformsSubPage from './pages/PlatformsSubPage';
 import IPsSubPage from './pages/IPsSubPage';
 import APIKeysSubPage from './pages/APIKeysSubPage';
 import AgentConsolePage from './pages/AgentConsolePage';
+import AIWorkflowPage from './pages/AIWorkflowPage';
 import ProfileListPage from './pages/profiles/index';
 import ProfileCreatePage from './pages/profiles/create';
 import ProfileDetailPage from './pages/profiles/detail';
@@ -35,9 +37,13 @@ import ReferralPage from './pages/referrals';
 import GroupListPage from './pages/groups';
 import BillingPage from './pages/billing';
 import AdminBillingPage from './pages/admin/BillingPage';
+import AdminLogsPage from './pages/admin/LogsPage';
+import ContentPolicyPage from './pages/admin/ContentPolicyPage';
+import KernelsPage from './pages/KernelsPage';
 import PricingPage from './pages/PricingPage';
 import AnalyticsPage from './pages/analytics/index';
 import MonitorPage from './pages/monitor/index';
+import PostsNewPage from './pages/posts/NewPage';
 
 // Auth guard wrapper
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -84,7 +90,8 @@ const withLayout = (Page: React.FC) => (
 
 const AppRoutes: React.FC = () => {
   return (
-    <Routes>
+    <PageTransition>
+      <Routes>
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -107,6 +114,12 @@ const AppRoutes: React.FC = () => {
 
       {/* 账号管理 */}
       <Route path="/accounts" element={withLayout(AccountListPage)} />
+
+      {/* 发帖 */}
+      <Route path="/posts/new" element={withLayout(PostsNewPage)} />
+
+      {/* AI 工作流 */}
+      <Route path="/ai-workflow" element={withLayout(AIWorkflowPage)} />
 
       {/* 自动化 */}
       <Route path="/automations" element={withLayout(TaskListPage)} />
@@ -139,6 +152,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/security" element={withLayout(() => <PlaceholderPage title="安全设置" />)} />
       <Route path="/plugins" element={withLayout(() => <PlaceholderPage title="插件管理" />)} />
       <Route path="/cloud-browser" element={withLayout(() => <PlaceholderPage title="云浏览器" />)} />
+      <Route path="/kernels" element={withLayout(KernelsPage)} />
       <Route path="/billing" element={withLayout(BillingPage)} />
       <Route path="/trash" element={withLayout(() => <PlaceholderPage title="回收站" />)} />
 
@@ -159,6 +173,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin/clients/:id" element={withLayout(AdminClientDetailPage)} />
       <Route path="/admin/executors" element={withLayout(ExecutorListPage)} />
       <Route path="/admin/billing" element={withLayout(AdminBillingPage)} />
+      <Route path="/admin/logs" element={withLayout(AdminLogsPage)} />
+      <Route path="/admin/content-policy" element={withLayout(ContentPolicyPage)} />
 
       {/* Public */}
       <Route path="/pricing" element={<PricingPage />} />
@@ -166,6 +182,7 @@ const AppRoutes: React.FC = () => {
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </PageTransition>
   );
 };
 

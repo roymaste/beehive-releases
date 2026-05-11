@@ -52,3 +52,43 @@ export const adminAPI = {
   }) => client.put<AdminClient>(`/admin/clients/${id}`, data),
   deleteClient: (id: string) => client.delete(`/admin/clients/${id}`),
 };
+
+// ── Content Policy API ────────────────────────────────────────
+
+export interface ContentRule {
+  id: string;
+  rule_type: string;
+  pattern: string;
+  is_regex: boolean;
+  enabled: boolean;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SystemPromptConfig {
+  id: number;
+  base_prompt: string;
+  prohibited_behaviors: string[];
+  enabled: boolean;
+  updated_at?: string;
+}
+
+const listRules = () => client.get<{ rules: ContentRule[]; total: number }>('/admin/content-policy/rules');
+const createRule = (data: { rule_type: string; pattern: string; is_regex?: boolean; description?: string }) =>
+  client.post<ContentRule>('/admin/content-policy/rules', data);
+const updateRule = (id: string, data: Partial<{ rule_type: string; pattern: string; is_regex: boolean; enabled: boolean; description: string }>) =>
+  client.put<ContentRule>(`/admin/content-policy/rules/${id}`, data);
+const deleteRule = (id: string) => client.delete(`/admin/content-policy/rules/${id}`);
+const getSystemPrompt = () => client.get<SystemPromptConfig>('/admin/content-policy/system-prompt');
+const updateSystemPrompt = (data: { base_prompt?: string; prohibited_behaviors?: string[]; enabled?: boolean }) =>
+  client.put<SystemPromptConfig>('/admin/content-policy/system-prompt', data);
+
+export const contentPolicyAPI = {
+  listRules,
+  createRule,
+  updateRule,
+  deleteRule,
+  getSystemPrompt,
+  updateSystemPrompt,
+};

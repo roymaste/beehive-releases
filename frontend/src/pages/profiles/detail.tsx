@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiArrowLeftLine,
   RiPlayLine,
@@ -38,6 +39,7 @@ const FINGERPRINT_FIELD_LABELS: Record<string, string> = {
   fingerprint_seed: '指纹种子',
   humanize: '人类行为',
   headless: '无头模式',
+  kernel_version: '浏览器内核版本',
 };
 
 const ProfileDetailPage: React.FC = () => {
@@ -126,12 +128,23 @@ const ProfileDetailPage: React.FC = () => {
     }
   };
 
-  const handleDelete = () => {
-    if (!id || !confirm('确定删除该环境？')) return;
-    profilesAPI.delete(id).then(() => {
-      toast.success('已删除');
-      navigate('/profiles');
-    }).catch(() => toast.error('删除失败'));
+  const { confirm, dialog } = useConfirmDialog();
+
+  const handleDelete = async () => {
+    if (!id) return;
+    confirm({
+      title: '删除环境',
+      description: '确定删除该环境？',
+      onConfirm: async () => {
+        try {
+          await profilesAPI.delete(id);
+          toast.success('已删除');
+          navigate('/profiles');
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -468,6 +481,7 @@ const ProfileDetailPage: React.FC = () => {
         {activeTab === 'account' && renderAccount()}
         {activeTab === 'logs' && renderLogs()}
       </div>
+      {dialog}
     </div>
   );
 };

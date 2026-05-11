@@ -10,6 +10,7 @@ import {
   RiTimeLine,
 } from 'react-icons/ri';
 import apiClient from '../../api/client';
+import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
 // ── Types ──
 
@@ -93,6 +94,7 @@ const WebhooksPage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [selectedWebhook, setSelectedWebhook] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   // Form state
   const [formName, setFormName] = useState('');
@@ -157,17 +159,22 @@ const WebhooksPage: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除此 Webhook？')) return;
-    try {
-      await apiClient.delete(`/webhooks/${id}`);
-      toast.success('已删除');
-      if (selectedWebhook === id) {
-        setSelectedWebhook(null);
-      }
-      fetchWebhooks();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除确认',
+      description: '确定删除此 Webhook？',
+      onConfirm: async () => {
+        try {
+          await apiClient.delete(`/webhooks/${id}`);
+          toast.success('已删除');
+          if (selectedWebhook === id) {
+            setSelectedWebhook(null);
+          }
+          fetchWebhooks();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const handleTest = async (id: string) => {
@@ -187,8 +194,6 @@ const WebhooksPage: React.FC = () => {
       prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]
     );
   };
-
-  const selected = webhooks.find((w) => w.id === selectedWebhook);
 
   if (loading) {
     return (
@@ -210,7 +215,7 @@ const WebhooksPage: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             Webhook 通知
           </h1>
           <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
@@ -559,6 +564,7 @@ const WebhooksPage: React.FC = () => {
           </div>
         )}
       </div>
+      {dialog}
     </div>
   );
 };

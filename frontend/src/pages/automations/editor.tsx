@@ -8,7 +8,6 @@ import {
   RiArrowUpLine,
   RiArrowDownLine,
   RiSaveLine,
-  RiRefreshLine,
   RiFileListLine,
   RiGlobeLine,
   RiTimeLine,
@@ -21,7 +20,10 @@ import {
   RiCameraLine,
   RiText,
   RiFlashlightLine,
+  RiBookLine,
 } from 'react-icons/ri';
+
+import { ScriptTemplate } from '@/api/client';
 
 // Icon mapping
 const ICON_MAP: Record<string, React.FC<{ size?: number; style?: React.CSSProperties }>> = {
@@ -81,13 +83,6 @@ interface TaskForm {
 
 // ── API ────────────────────────────────────────────────────────
 
-const CATEGORIES_CN: Record<string, string> = {
-  navigation: '导航',
-  interaction: '交互',
-  flow: '流程控制',
-  utility: '工具',
-};
-
 // ── Component ─────────────────────────────────────────────────
 
 const RpaEditorPage: React.FC = () => {
@@ -101,6 +96,8 @@ const RpaEditorPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [actionTypesError, setActionTypesError] = useState(false);
+  const [leftPanelTab, setLeftPanelTab] = useState<'actions' | 'templates'>('actions');
+  const [scriptTemplates, setScriptTemplates] = useState<ScriptTemplate[]>([]);
 
   const [form, setForm] = useState<TaskForm>({
     name: '',
@@ -124,6 +121,14 @@ const RpaEditorPage: React.FC = () => {
         setActionTypesError(true);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  // Load script templates
+  useEffect(() => {
+    fetch('/api/v1/script-templates')
+      .then((r) => r.json())
+      .then((data) => setScriptTemplates(data.templates || []))
+      .catch(() => {/* silent fail — templates are optional */});
   }, []);
 
   // Load existing task if editing
@@ -215,6 +220,23 @@ const RpaEditorPage: React.FC = () => {
     });
   };
 
+  // Convert a script template's steps to editor Step objects
+  const importTemplateSteps = (template: ScriptTemplate) => {
+    const convert = (tSteps: ScriptTemplate['steps']): Step[] =>
+      tSteps.map((ts) => ({
+        id: `step_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        action: ts.action,
+        params: { ...ts.params },
+        then_steps: ts.then_steps ? convert(ts.then_steps) : undefined,
+        else_steps: ts.else_steps ? convert(ts.else_steps) : undefined,
+        for_each_steps: ts.for_each_steps ? convert(ts.for_each_steps) : undefined,
+      }));
+
+    const newSteps = convert(template.steps);
+    setForm((f) => ({ ...f, steps: [...f.steps, ...newSteps] }));
+    toast.success(`已导入模板「${template.name}」共${template.steps.length}步`);
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) {
       toast.error('请输入任务名称');
@@ -259,7 +281,7 @@ const RpaEditorPage: React.FC = () => {
 
   // ── Render: Step card ─────────────────────────────────────────
 
-  const renderStepCard = (step: Step, index: number, depth = 0) => {
+  const renderStepCard = (step: Step, _index: number, depth = 0) => {
     const at = actionTypes.find((a) => a.id === step.action);
     if (!at) return null;
 
@@ -399,7 +421,7 @@ const RpaEditorPage: React.FC = () => {
             </label>
             {param.type === 'textarea' ? (
               <textarea
-                className="apple-input"
+                className="input"
                 value={String(value ?? '')}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={param.placeholder}
@@ -408,7 +430,7 @@ const RpaEditorPage: React.FC = () => {
               />
             ) : (
               <input
-                className="apple-input"
+                className="input"
                 value={String(value ?? '')}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={param.placeholder}
@@ -426,7 +448,7 @@ const RpaEditorPage: React.FC = () => {
             </label>
             <input
               type="number"
-              className="apple-input"
+              className="input"
               value={String(value ?? param.default ?? '')}
               onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
               min={param.min}
@@ -444,7 +466,7 @@ const RpaEditorPage: React.FC = () => {
               {param.label} {param.required && <span style={{ color: '#e11d48' }}>*</span>}
             </label>
             <select
-              className="apple-select"
+              className="select"
               value={String(value ?? param.default ?? '')}
               onChange={(e) => onChange(e.target.value)}
               style={{ fontSize: 13 }}
@@ -540,7 +562,7 @@ const RpaEditorPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={handleSave}
             disabled={saving}
             style={{ background: '#22c55e', color: '#fff' }}
@@ -556,7 +578,7 @@ const RpaEditorPage: React.FC = () => {
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>任务名称 *</label>
           <input
-            className="apple-input"
+            className="input"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="例如：Twitter自动发帖"
@@ -565,7 +587,7 @@ const RpaEditorPage: React.FC = () => {
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>任务类型</label>
           <select
-            className="apple-select"
+            className="select"
             value={form.action}
             onChange={(e) => setForm((f) => ({ ...f, action: e.target.value }))}
           >
@@ -580,7 +602,7 @@ const RpaEditorPage: React.FC = () => {
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Cron调度（可选）</label>
           <input
-            className="apple-input"
+            className="input"
             value={form.schedule}
             onChange={(e) => setForm((f) => ({ ...f, schedule: e.target.value }))}
             placeholder="0 9 * * *（每天9点）"
@@ -592,21 +614,127 @@ const RpaEditorPage: React.FC = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 280px', gap: 16, flex: 1, minHeight: 0, overflow: 'hidden' }}>
         {/* Left: Action type palette */}
         <div style={{ overflowY: 'auto', paddingRight: 4 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-            <RiFileListLine size={14} style={{ color: '#78716c' }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151' }}>操作类型</span>
+          {/* Tab switcher */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+            <button
+              onClick={() => setLeftPanelTab('actions')}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                fontSize: 12,
+                fontWeight: 600,
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                background: leftPanelTab === 'actions' ? '#22c55e' : '#f3f4f6',
+                color: leftPanelTab === 'actions' ? '#ffffff' : '#6b7280',
+                transition: 'all 0.15s',
+              }}
+            >
+              <RiFileListLine size={13} />
+              操作类型
+            </button>
+            <button
+              onClick={() => setLeftPanelTab('templates')}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                fontSize: 12,
+                fontWeight: 600,
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                background: leftPanelTab === 'templates' ? '#22c55e' : '#f3f4f6',
+                color: leftPanelTab === 'templates' ? '#ffffff' : '#6b7280',
+                transition: 'all 0.15s',
+              }}
+            >
+              <RiBookLine size={13} />
+              模板库
+            </button>
           </div>
 
-          {Object.entries(grouped).map(([cat, types]) => (
-            <div key={cat} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
-                {categories[cat] || cat}
+          {leftPanelTab === 'actions' ? (
+            /* Action types list */
+            Object.entries(grouped).map(([cat, types]) => (
+              <div key={cat} style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                  {categories[cat] || cat}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {types.map((at) => renderActionCard(at))}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {types.map((at) => renderActionCard(at))}
-              </div>
+            ))
+          ) : (
+            /* Template library */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {scriptTemplates.length === 0 ? (
+                <p style={{ fontSize: 12, color: '#9ca3af', textAlign: 'center', padding: '20px 0' }}>加载中...</p>
+              ) : (
+                (() => {
+                  // Group by platform
+                  const platformOrder = ['twitter', 'weibo', 'xiaohongshu', 'douyin', 'shop'];
+                  const platformLabels: Record<string, string> = {
+                    twitter: 'Twitter/X',
+                    weibo: '微博',
+                    xiaohongshu: '小红书',
+                    douyin: '抖音/TikTok',
+                    shop: '网店',
+                  };
+                  const groupedTemplates = scriptTemplates.reduce<Record<string, ScriptTemplate[]>>((acc, t) => {
+                    if (!acc[t.platform]) acc[t.platform] = [];
+                    acc[t.platform].push(t);
+                    return acc;
+                  }, {});
+                  return platformOrder
+                    .filter((p) => groupedTemplates[p])
+                    .map((platform) => (
+                      <div key={platform} style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                          {platformLabels[platform] || platform}
+                        </div>
+                        {groupedTemplates[platform].map((tmpl) => (
+                          <button
+                            key={tmpl.id}
+                            onClick={() => importTemplateSteps(tmpl)}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              gap: 3,
+                              padding: '9px 11px',
+                              background: '#ffffff',
+                              border: '1.5px solid #e5e7eb',
+                              borderRadius: 10,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              width: '100%',
+                              marginBottom: 5,
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#22c55e'; (e.currentTarget as HTMLButtonElement).style.background = '#f0fdf4'; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = '#e5e7eb'; (e.currentTarget as HTMLButtonElement).style.background = '#ffffff'; }}
+                          >
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#1c1917' }}>{tmpl.name}</span>
+                            <span style={{ fontSize: 11, color: '#78716c', lineHeight: 1.4 }}>{tmpl.description}</span>
+                            <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 600, marginTop: 2 }}>+ {tmpl.steps.length} 步</span>
+                          </button>
+                        ))}
+                      </div>
+                    ));
+                })()
+              )}
             </div>
-          ))}
+          )}
         </div>
 
         {/* Middle: Steps canvas */}
@@ -661,7 +789,7 @@ const RpaEditorPage: React.FC = () => {
               <p style={{ fontSize: 13, margin: 0, textAlign: 'center' }}>选择左侧步骤<br />配置参数</p>
             </div>
           ) : selectedActionType ? (
-            <div className="apple-card" style={{ padding: 16 }}>
+            <div className="card" style={{ padding: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
                 {(() => { const Ic = ICON_MAP[selectedActionType.icon] || RiFlashlightLine; return <Ic size={15} style={{ color: '#22c55e' }} />; })()}
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1917' }}>{selectedActionType.name}</span>

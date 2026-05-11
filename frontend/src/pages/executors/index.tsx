@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { RiComputerLine, RiServerLine, RiSmartphoneLine, RiRefreshLine, RiTimeLine } from 'react-icons/ri';
+import {RiRefreshLine, RiTimeLine} from 'react-icons/ri';
 
 // ── Types ──
 
@@ -113,8 +113,6 @@ const ExecutorListPage: React.FC = () => {
     { key: 'busy', label: '忙碌' },
   ];
 
-  const selected = executors.find((e) => e.id === selectedExecutor);
-
   if (loading) {
     return (
       <div style={{ padding: 32, color: C.textSecondary }}>
@@ -135,7 +133,7 @@ const ExecutorListPage: React.FC = () => {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             执行器管理
           </h1>
           <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>

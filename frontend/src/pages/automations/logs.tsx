@@ -59,7 +59,7 @@ const LogListPage: React.FC = () => {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             执行日志
           </h1>
           <p style={{ fontSize: 13, color: '#78716c', margin: '4px 0 0' }}>
@@ -69,7 +69,7 @@ const LogListPage: React.FC = () => {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <RiFilterLine size={16} style={{ color: '#78716c' }} />
           <select
-            className="apple-select"
+            className="select"
             value={levelFilter}
             onChange={(e) => setLevelFilter(e.target.value)}
             style={{ width: 100, fontSize: 12, padding: '4px 8px' }}
@@ -78,14 +78,14 @@ const LogListPage: React.FC = () => {
               <option key={l} value={l}>{l === 'all' ? '全部' : l}</option>
             ))}
           </select>
-          <button className="apple-btn" onClick={fetchLogs} style={{ padding: '6px 14px', fontSize: 12 }}>
+          <button className="btn" onClick={fetchLogs} style={{ padding: '6px 14px', fontSize: 12 }}>
             <RiRefreshLine size={14} />
             刷新
           </button>
         </div>
       </div>
 
-      <div className="apple-card" style={{ flex: 1, overflow: 'auto' }}>
+      <div className="card" style={{ flex: 1, overflow: 'auto' }}>
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center', color: '#78716c' }}>加载中...</div>
         ) : fetchError ? (
@@ -112,7 +112,7 @@ const LogListPage: React.FC = () => {
             <p style={{ margin: '4px 0 0', fontSize: 12 }}>执行任务后日志将在此处显示</p>
           </div>
         ) : (
-          <table className="apple-table">
+          <table className="table">
             <thead>
               <tr>
                 <th style={{ width: 80 }}>级别</th>

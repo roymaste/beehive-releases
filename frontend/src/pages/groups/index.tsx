@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiAddLine,
   RiRefreshLine,
@@ -35,7 +36,7 @@ const GroupsPage: React.FC = () => {
   const [groups, setGroups] = useState<GroupWithCount[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [countLoading, setCountLoading] = useState(false);
+  const [, _setCountLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
 
   // Modal states
@@ -47,9 +48,7 @@ const GroupsPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Delete confirmation
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingGroup, setDeletingGroup] = useState<Group | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   const fetchGroups = useCallback(async () => {
     setLoading(true);
@@ -73,7 +72,7 @@ const GroupsPage: React.FC = () => {
   // Fetch profile count per group
   const fetchProfileCounts = useCallback(async () => {
     if (groups.length === 0) return;
-    setCountLoading(true);
+    _setCountLoading(true);
     try {
       const counts = await Promise.all(
         groups.map(async (g) => {
@@ -90,7 +89,7 @@ const GroupsPage: React.FC = () => {
     } catch {
       // silently fail - counts are non-critical
     } finally {
-      setCountLoading(false);
+      _setCountLoading(false);
     }
   }, [groups.length]);
 
@@ -156,31 +155,20 @@ const GroupsPage: React.FC = () => {
     }
   };
 
-  const openDeleteConfirm = (group: Group) => {
-    setDeletingGroup(group);
-    setShowDeleteModal(true);
-  };
-
-  const closeDeleteModal = () => {
-    if (deleting) return;
-    setShowDeleteModal(false);
-    setDeletingGroup(null);
-  };
-
-  const handleDelete = async () => {
-    if (!deletingGroup) return;
-    setDeleting(true);
-    try {
-      await groupsAPI.delete(deletingGroup.id);
-      toast.success('分组已删除');
-      setShowDeleteModal(false);
-      setDeletingGroup(null);
-      fetchGroups();
-    } catch (err) {
-      toast.error('删除失败');
-    } finally {
-      setDeleting(false);
-    }
+  const handleDelete = async (group: GroupWithCount) => {
+    confirm({
+      title: '删除分组',
+      description: `确定要删除分组「${group.name}」吗？${group.profileCount !== undefined && group.profileCount > 0 ? `该分组下有 ${group.profileCount} 个环境，删除后这些环境将移至默认分组。` : ''}`,
+      onConfirm: async () => {
+        try {
+          await groupsAPI.delete(group.id);
+          toast.success('分组已删除');
+          fetchGroups();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const columns: Column<GroupWithCount>[] = [
@@ -270,7 +258,7 @@ const GroupsPage: React.FC = () => {
             <RiEditLine size={16} />
           </button>
           <button
-            onClick={() => openDeleteConfirm(row)}
+            onClick={() => handleDelete(row)}
             style={{
               background: 'none',
               border: 'none',
@@ -294,7 +282,7 @@ const GroupsPage: React.FC = () => {
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             环境分组
           </h1>
           <p style={{ fontSize: 13, color: C.textSecondary, margin: '4px 0 0' }}>
@@ -499,85 +487,7 @@ const GroupsPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && deletingGroup && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) closeDeleteModal();
-          }}
-        >
-          <div
-            style={{
-              background: C.surface,
-              borderRadius: 12,
-              padding: 24,
-              width: 400,
-              maxWidth: '90vw',
-              border: `1px solid ${C.border}`,
-            }}
-          >
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, marginBottom: 8 }}>
-              删除分组
-            </h2>
-            <p style={{ fontSize: 14, color: C.textSecondary, marginBottom: 24, lineHeight: 1.6 }}>
-              确定要删除分组「<strong style={{ color: C.textPrimary }}>{deletingGroup.name}</strong>」吗？
-              {deletingGroup.profileCount !== undefined && deletingGroup.profileCount > 0 && (
-                <span style={{ color: C.accent, display: 'block', marginTop: 8 }}>
-                  该分组下有 {deletingGroup.profileCount} 个环境，删除后这些环境将移至默认分组。
-                </span>
-              )}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                onClick={closeDeleteModal}
-                disabled={deleting}
-                style={{
-                  padding: '9px 20px',
-                  background: 'none',
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 8,
-                  color: C.textSecondary,
-                  fontSize: 13,
-                  cursor: deleting ? 'not-allowed' : 'pointer',
-                  opacity: deleting ? 0.6 : 1,
-                }}
-              >
-                取消
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleting}
-                style={{
-                  padding: '9px 20px',
-                  background: deleting ? C.textTertiary : C.danger,
-                  border: 'none',
-                  borderRadius: 8,
-                  color: deleting ? C.textSecondary : '#fff',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: deleting ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                }}
-              >
-                {deleting && <RiLoader4Line size={14} className="spin" />}
-                确认删除
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {dialog}
     </div>
   );
 };

@@ -1,20 +1,9 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
-@theme {
-  --color-apple-bg: #09090b;
-  --color-apple-bg-secondary: #0c0c0e;
-  --color-apple-text: #fafafa;
-  --color-apple-text-secondary: #a1a1aa;
-  --color-apple-text-tertiary: #52525b;
-  --color-apple-accent: #f59e0b;
-  --color-apple-accent-hover: #d97706;
-  --color-apple-accent-subtle: rgba(245,158,11,0.08);
-  --color-apple-danger: #ef4444;
-  --color-apple-success: #22c55e;
-  --color-apple-warning: #f59e0b;
-  --color-apple-border: #27272a;
-  --color-apple-border-hover: #3f3f46;
-}
+@custom-variant dark (&:is(.dark *));
 
 /* ── Global base ── */
 * {
@@ -36,15 +25,15 @@ body {
 }
 
 /* ── Card ── */
-.apple-card {
+.card {
   background-color: #18181b;
   border-radius: 10px;
   border: 1px solid #27272a;
 }
 
 /* ── Button ── */
-.apple-btn {
-  background: #f59e0b;
+.btn {
+  background: var(--hive-gold, #f59e0b);
   border: none;
   color: #09090b;
   padding: 8px 20px;
@@ -59,25 +48,27 @@ body {
   gap: 6px;
 }
 
-.apple-btn:hover {
-  background: #d97706;
+.btn:hover {
+  background: var(--hive-gold-hover, #d97706);
+  opacity: 0.8;
 }
 
-.apple-btn:disabled {
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.apple-btn-danger {
+.btn-danger {
   background: #ef4444;
 }
 
-.apple-btn-danger:hover {
+.btn-danger:hover {
   background: #dc2626;
+  opacity: 0.8;
 }
 
 /* ── Input ── */
-.apple-input {
+.input {
   background: #18181b;
   border: 1px solid #27272a;
   color: #fafafa;
@@ -90,17 +81,17 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.apple-input:focus {
-  border-color: #f59e0b;
+.input:focus {
+  border-color: var(--hive-gold, #f59e0b);
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
 }
 
-.apple-input::placeholder {
+.input::placeholder {
   color: #52525b;
 }
 
 /* ── Select ── */
-.apple-select {
+.select {
   background: #18181b;
   border: 1px solid #27272a;
   color: #fafafa;
@@ -114,18 +105,18 @@ body {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.apple-select:focus {
-  border-color: #f59e0b;
+.select:focus {
+  border-color: var(--hive-gold, #f59e0b);
   box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
 }
 
 /* ── Table ── */
-.apple-table {
+.table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.apple-table th {
+.table th {
   background: #0c0c0e;
   color: #52525b;
   padding: 12px 16px;
@@ -137,23 +128,23 @@ body {
   border-bottom: 1px solid #27272a;
 }
 
-.apple-table td {
+.table td {
   padding: 12px 16px;
   border-bottom: 1px solid #27272a;
   color: #a1a1aa;
   font-size: 14px;
 }
 
-.apple-table tr:last-child td {
+.table tr:last-child td {
   border-bottom: none;
 }
 
-.apple-table tbody tr:hover {
+.table tbody tr:hover {
   background: #0c0c0e;
 }
 
 /* ── Badge ── */
-.apple-badge {
+.badge {
   display: inline-block;
   padding: 3px 12px;
   border-radius: 100px;
@@ -163,25 +154,25 @@ body {
   letter-spacing: 0;
 }
 
-.apple-badge-active {
+.badge-active {
   background: rgba(34, 197, 94, 0.15);
   color: #22c55e;
   border: 1px solid rgba(34, 197, 94, 0.25);
 }
 
-.apple-badge-suspended, .apple-badge-stopped {
+.badge-suspended, .badge-stopped {
   background: #18181b;
   color: #a1a1aa;
   border: 1px solid #27272a;
 }
 
-.apple-badge-free {
+.badge-free {
   background: #0c0c0e;
   color: #a1a1aa;
   border: 1px solid #27272a;
 }
 
-.apple-badge-enterprise {
+.badge-enterprise {
   background: rgba(245, 158, 11, 0.12);
   color: #f59e0b;
   border: 1px solid rgba(245, 158, 11, 0.25);
@@ -206,7 +197,7 @@ body {
 }
 
 /* ── Tab navigation ── */
-.apple-tab {
+.tab {
   padding: 10px 20px;
   background: transparent;
   border: none;
@@ -220,17 +211,17 @@ body {
   margin-right: 4px;
 }
 
-.apple-tab:hover {
-  color: #f59e0b;
+.tab:hover {
+  color: var(--hive-gold, #f59e0b);
 }
 
-.apple-tab-active {
-  color: #f59e0b;
-  border-bottom-color: #f59e0b;
+.tab-active {
+  color: var(--hive-gold, #f59e0b);
+  border-bottom-color: var(--hive-gold, #f59e0b);
 }
 
 /* ── Modal ── */
-.apple-modal-overlay {
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
@@ -241,7 +232,7 @@ body {
   backdrop-filter: blur(4px);
 }
 
-.apple-modal {
+.modal {
   background: #18181b;
   border-radius: 12px;
   border: 1px solid #27272a;
@@ -253,7 +244,7 @@ body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Toast ── */
+/* ── Toast overrides ── */
 .toast-apple {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro', system-ui, sans-serif !important;
   background: #18181b !important;
@@ -263,7 +254,6 @@ body {
 }
 
 /* ── Global page content color fix for dark theme ── */
-/* Override inline 'color: #1c1917' (invisible on dark backgrounds) */
 .page-content h1,
 .page-content h2,
 .page-content h3,
@@ -287,14 +277,137 @@ body {
   color: inherit !important;
 }
 .page-content a {
-  color: #f59e0b !important;
+  color: var(--hive-gold, #f59e0b) !important;
 }
-.page-content .apple-card .text-sm,
-.page-content .apple-card .text-xs,
-.page-content .apple-card .text-base {
+.page-content .card .text-sm,
+.page-content .card .text-xs,
+.page-content .card .text-base {
   color: #a1a1aa !important;
 }
-/* Fix span text inside apple-card that uses #1c1917 */
-.page-content .apple-card span[style*="color: #1c1917"] {
+.page-content .card span[style*="color: #1c1917"] {
   color: #fafafa !important;
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: 'Geist Variable', sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

@@ -2,7 +2,6 @@ import React from 'react';
 import {
   RiPlayLine,
   RiStopLine,
-  RiShieldCheckLine,
   RiShareLine,
   RiSwapLine,
   RiLink,
@@ -48,7 +47,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({ selectedCount, actions, ext
         <button
           key={action.key}
           onClick={action.onClick}
-          className="apple-btn"
+          className="btn"
           style={{
             padding: '6px 14px',
             fontSize: 13,
@@ -62,7 +61,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({ selectedCount, actions, ext
       {extraActions && extraActions.length > 0 && (
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <button
-            className="apple-btn"
+            className="btn"
             style={{ padding: '6px 14px', fontSize: 13, background: '#3f3f46', color: '#a1a1aa' }}
           >
             <RiMoreLine size={14} />
@@ -76,7 +75,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({ selectedCount, actions, ext
 
 // Pre-built default batch actions for profiles
 export const defaultProfileBatchActions = (
-  selectedCount: number,
+  _selectedCount: number,
   handlers: {
     onStart: () => void;
     onStop: () => void;

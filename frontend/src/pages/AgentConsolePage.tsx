@@ -1,260 +1,573 @@
-import React, { useEffect, useState } from 'react';
-import { agentsAPI, AgentStatus, AgentAccount, AgentIPBrief } from '../api/client';
+import React, { useEffect, useRef, useState } from 'react';
+import apiClient from '../api/client';
 import toast from 'react-hot-toast';
+import { EmptyState } from '../components/ui/empty-state';
 import {
+  RiSendPlaneFill,
   RiRobot2Line,
-  RiRefreshLine,
-  RiLinksLine,
-  RiGlobalLine,
-  RiUserStarLine,
+  RiUserLine,
+  RiSparklingLine,
+  RiSettings3Line,
 } from 'react-icons/ri';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog';
+import { agentProfileAPI, AgentProfileUpdate } from '../api/client';
+
+// ── Beehive Dark Palette ──
+const C = {
+  bg: '#121212',
+  surface: '#1e1e1e',
+  cardBg: '#1a1a1a',
+  textPrimary: '#fafafa',
+  textSecondary: '#9e9e9e',
+  textTertiary: '#757575',
+  accent: '#FFC107',
+  accentHover: '#FFA000',
+  border: 'rgba(255,255,255,0.06)',
+};
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+interface ChatResponse {
+  reply: string;
+  session_id: string;
+  remaining: number;
+}
+
+const WRITING_STYLES = ['casual', 'professional', 'creative', 'technical'] as const;
+const TONES = ['friendly', 'formal', 'humorous', 'neutral'] as const;
 
 const AgentConsolePage: React.FC = () => {
-  const [status, setStatus] = useState<AgentStatus | null>(null);
-  const [accounts, setAccounts] = useState<AgentAccount[]>([]);
-  const [ips, setIps] = useState<AgentIPBrief[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  // Settings dialog state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Form state
+  const [writingStyle, setWritingStyle] = useState('');
+  const [tone, setTone] = useState('');
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [domains, setDomains] = useState('');
+  const [keywords, setKeywords] = useState('');
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = inputRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+    }
+  }, [input]);
+
+  const loadProfile = async () => {
+    setProfileLoading(true);
     try {
-      const [statusRes, accountsRes, ipsRes] = await Promise.allSettled([
-        agentsAPI.status(),
-        agentsAPI.accounts(),
-        agentsAPI.ips(),
-      ]);
+      const res = await agentProfileAPI.get();
+      const data = res.data;
+      setWritingStyle(data.writing_style || '');
+      setTone(data.tone || '');
+      setCustomInstructions(data.custom_instructions || '');
+      setDomains(data.knowledge_base?.domains?.join(', ') || '');
+      setKeywords(data.knowledge_base?.keywords?.join(', ') || '');
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || '加载配置失败';
+      toast.error(detail);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
-      if (statusRes.status === 'fulfilled') {
-        setStatus(statusRes.value.data);
-      }
-      if (accountsRes.status === 'fulfilled') {
-        setAccounts(accountsRes.value.data.accounts);
-      }
-      if (ipsRes.status === 'fulfilled') {
-        setIps(ipsRes.value.data.ips);
-      }
-    } catch {
-      toast.error('获取Agent数据失败');
+  const handleOpenSettings = () => {
+    setSettingsOpen(true);
+    loadProfile();
+  };
+
+  const handleSaveSettings = async () => {
+    setSaving(true);
+    try {
+      const payload: AgentProfileUpdate = {
+        writing_style: writingStyle || undefined,
+        tone: tone || undefined,
+        custom_instructions: customInstructions || undefined,
+        knowledge_base: {
+          domains: domains
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+          keywords: keywords
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean),
+        },
+      };
+      await agentProfileAPI.update(payload);
+      toast.success('配置已保存');
+      setSettingsOpen(false);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || '保存失败';
+      toast.error(detail);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSend = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+
+    const userMsg: ChatMessage = { role: 'user', content: text };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const res = await apiClient.post<ChatResponse>('/agent/chat', {
+        message: text,
+        session_id: sessionId,
+      });
+      const data = res.data;
+
+      const assistantMsg: ChatMessage = {
+        role: 'assistant',
+        content: data.reply,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+      setSessionId(data.session_id);
+      setRemaining(data.remaining);
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || '发送失败，请稍后重试';
+      toast.error(detail);
+      // Rollback user message on error so user can retry
+      setMessages((prev) => prev.slice(0, -1));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-  const ServiceCard: React.FC<{
-    icon: React.ReactNode;
-    title: string;
-    value: string;
-    subtitle?: string;
-    color?: string;
-  }> = ({ icon, title, value, subtitle, color = '#e11d48' }) => (
-    <div className="apple-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs tracking-wide font-normal" style={{ color: '#78716c' }}>
-          {title}
-        </span>
-        <span style={{ color }}>{icon}</span>
-      </div>
-      <div className="text-2xl font-bold" style={{ color }}>
-        {loading ? '—' : value}
-      </div>
-      {subtitle && (
-        <div className="text-xs mt-1" style={{ color: '#78716c' }}>
-          {subtitle}
-        </div>
-      )}
-    </div>
-  );
+  const isEmpty = messages.length === 0 && !loading;
 
   return (
-    <div>
+    <div className="flex flex-col h-[calc(100vh-64px)]" style={{ background: C.bg }}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold m-0" style={{ color: '#1c1917', letterSpacing: '-0.3px' }}>
-            Agent 控制台
-          </h1>
-          <p className="text-sm mt-1" style={{ color: '#78716c' }}>
-            AI 智能体运行状态与账号管理
-          </p>
+      <div
+        className="flex items-center justify-between px-6 py-4 border-b"
+        style={{ borderColor: C.border, background: C.cardBg }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center justify-center w-9 h-9 rounded-lg"
+            style={{ background: 'rgba(255,193,7,0.12)' }}
+          >
+            <RiRobot2Line size={20} style={{ color: C.accent }} />
+          </div>
+          <div>
+            <h1 className="text-base font-semibold m-0" style={{ color: C.textPrimary }}>
+              AI 智能助手
+            </h1>
+            <p className="text-xs m-0" style={{ color: C.textSecondary }}>
+              社交媒体运营专家
+            </p>
+          </div>
         </div>
-        <button onClick={fetchData} className="apple-btn flex items-center gap-2" disabled={loading}>
-          <RiRefreshLine size={16} />
-          刷新
-        </button>
+        <div className="flex items-center gap-3">
+          {remaining !== null && (
+            <div
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                color: remaining <= 5 ? '#F44336' : C.textSecondary,
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              <RiSparklingLine size={14} />
+              剩余对话次数：{remaining}
+            </div>
+          )}
+          <button
+            onClick={handleOpenSettings}
+            className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
+            style={{
+              background: 'rgba(255,255,255,0.04)',
+              color: C.textSecondary,
+              border: `1px solid ${C.border}`,
+            }}
+            title="设置"
+          >
+            <RiSettings3Line size={18} />
+          </button>
+        </div>
       </div>
 
-      {/* Status overview cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <ServiceCard
-          icon={<RiRobot2Line size={28} />}
-          title="Agent 状态"
-          value={status ? `${status.service} ${status.version}` : '—'}
-          color="#0071e3"
-       />
-        <ServiceCard
-          icon={<RiLinksLine size={28} />}
-          title="API 版本"
-          value={status?.api_version || '—'}
-          color="#86868b"
-       />
-        <ServiceCard
-          icon={<RiUserStarLine size={28} />}
-          title="管理账号"
-          value={String(accounts.length)}
-          subtitle="平台账号总数"
-          color="#0071e3"
-       />
-        <ServiceCard
-          icon={<RiGlobalLine size={28} />}
-          title="IP 代理"
-          value={String(ips.length)}
-          subtitle="IP 资产总数"
-          color="#ff3b30"
-       />
-      </div>
+      {/* Messages area */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+        {isEmpty ? (
+          <EmptyState
+            icon={<RiRobot2Line size={32} className="text-muted-foreground" />}
+            title="开始与 AI 助手对话"
+            description="我可以帮你策划内容、优化文案、分析数据。输入你的问题，开始对话吧！"
+            action={{
+              label: '开始对话',
+              onClick: () => inputRef.current?.focus(),
+            }}
+          />
+        ) : (
+          <div className="max-w-3xl mx-auto space-y-5">
+            {messages.map((msg, idx) => (
+              <div
+                key={idx}
+                className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+              >
+                {/* Avatar */}
+                <div
+                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{
+                    background:
+                      msg.role === 'user'
+                        ? 'rgba(25,118,210,0.15)'
+                        : 'rgba(255,193,7,0.12)',
+                  }}
+                >
+                  {msg.role === 'user' ? (
+                    <RiUserLine size={16} style={{ color: '#1976D2' }} />
+                  ) : (
+                    <RiRobot2Line size={16} style={{ color: C.accent }} />
+                  )}
+                </div>
 
-      {/* Agent Info */}
-      {status && (
-        <div className="apple-card p-6 mb-6">
-          <h2 className="text-lg font-bold mb-4" style={{ color: '#1c1917' }}>
-            服务详情
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="text-xs" style={{ color: '#78716c' }}>服务名</span>
-              <p className="text-sm mt-1" style={{ color: '#1c1917' }}>{status.service}</p>
-            </div>
-            <div>
-              <span className="text-xs" style={{ color: '#78716c' }}>版本号</span>
-              <p className="text-sm mt-1" style={{ color: '#1c1917' }}>{status.version}</p>
-            </div>
-            {status.tenant_id && (
-              <div>
-                <span className="text-xs" style={{ color: '#78716c' }}>当前住户</span>
-                <p className="text-sm mt-1" style={{ color: '#1c1917' }}>
-                  {status.tenant_name} <span className="apple-badge apple-badge-active ml-2">{status.tenant_plan}</span>
-                </p>
+                {/* Bubble */}
+                <div
+                  className="relative max-w-[80%] sm:max-w-[70%] px-4 py-3 text-sm leading-relaxed rounded-2xl"
+                  style={{
+                    background:
+                      msg.role === 'user' ? '#1976D2' : C.surface,
+                    color: msg.role === 'user' ? '#FFFFFF' : C.textPrimary,
+                    border:
+                      msg.role === 'user'
+                        ? 'none'
+                        : `1px solid ${C.border}`,
+                    borderRadius:
+                      msg.role === 'user'
+                        ? '18px 18px 4px 18px'
+                        : '18px 18px 18px 4px',
+                  }}
+                >
+                  {msg.content}
+                </div>
               </div>
-            )}
-            {status.endpoints && Object.keys(status.endpoints).length > 0 && (
-              <div>
-                <span className="text-xs" style={{ color: '#78716c' }}>API 端点</span>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {Object.entries(status.endpoints).map(([key, url]) => (
-                    <code
-                      key={key}
-                      className="text-xs px-2 py-1 rounded"
-                      style={{ background: '#fafaf9', border: '1px solid #d2d2d7', color: '#0077ed' }}
-                    >
-                      {key}: {url}
-                    </code>
-                  ))}
+            ))}
+
+            {/* Loading indicator */}
+            {loading && (
+              <div className="flex gap-3 flex-row">
+                <div
+                  className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(255,193,7,0.12)' }}
+                >
+                  <RiRobot2Line size={16} style={{ color: C.accent }} />
+                </div>
+                <div
+                  className="px-4 py-3 rounded-2xl flex items-center gap-2"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: '18px 18px 18px 4px',
+                  }}
+                >
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full animate-bounce"
+                    style={{ background: '#9E9E9E', animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full animate-bounce"
+                    style={{ background: '#9E9E9E', animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full animate-bounce"
+                    style={{ background: '#9E9E9E', animationDelay: '300ms' }}
+                  />
                 </div>
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Accounts table */}
-      <div className="apple-card overflow-x-auto mb-6">
-        <div className="p-4 border-b" style={{ borderColor: '#e7e5e4' }}>
-          <h2 className="text-lg font-bold m-0 flex items-center gap-2" style={{ color: '#1c1917' }}>
-            <RiUserStarLine size={20} />
-            平台账号列表
-          </h2>
-        </div>
-        <table className="apple-table">
-          <thead>
-            <tr>
-              <th>平台</th>
-              <th>用户名</th>
-              <th>状态</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={3} className="text-center py-8" style={{ color: '#78716c' }}>加载中...</td>
-              </tr>
-            ) : accounts.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="text-center py-8" style={{ color: '#78716c' }}>暂无账号数据</td>
-              </tr>
-            ) : (
-              accounts.map((acc) => (
-                <tr key={acc.id}>
-                  <td>
-                    <span className="apple-badge apple-badge-active">{acc.platform}</span>
-                  </td>
-                  <td style={{ color: '#1c1917' }}>{acc.username}</td>
-                  <td>
-                    <span className={`apple-badge ${acc.status === 'active' ? 'apple-badge-active' : 'apple-badge-suspended'}`}>
-                      {acc.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        )}
       </div>
 
-      {/* IPs table */}
-      <div className="apple-card overflow-x-auto">
-        <div className="p-4 border-b" style={{ borderColor: '#e7e5e4' }}>
-          <h2 className="text-lg font-bold m-0 flex items-center gap-2" style={{ color: '#1c1917' }}>
-            <RiGlobalLine size={20} />
-            IP 代理资产
-          </h2>
+      {/* Input area */}
+      <div
+        className="px-4 py-4 sm:px-6 border-t"
+        style={{ borderColor: C.border, background: C.cardBg }}
+      >
+        <div className="max-w-3xl mx-auto flex items-end gap-3">
+          <div className="flex-1 relative">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="输入你的问题…"
+              rows={1}
+              disabled={loading}
+              className="input w-full resize-none pr-12"
+              style={{
+                background: C.surface,
+                borderColor: 'rgba(255,255,255,0.10)',
+                color: C.textPrimary,
+                borderRadius: '12px',
+                padding: '12px 48px 12px 16px',
+                minHeight: '48px',
+                maxHeight: '160px',
+                lineHeight: '1.5',
+              }}
+            />
+            <span
+              className="absolute right-3 bottom-3 text-xs"
+              style={{ color: '#616161' }}
+            >
+              ↵
+            </span>
+          </div>
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || loading}
+            className="btn flex items-center justify-center w-12 h-12 p-0 rounded-xl flex-shrink-0"
+            style={{
+              background:
+                input.trim() && !loading ? C.accent : 'rgba(255,255,255,0.06)',
+              color: input.trim() && !loading ? C.bg : '#616161',
+              borderRadius: '12px',
+            }}
+          >
+            <RiSendPlaneFill size={20} />
+          </button>
         </div>
-        <table className="apple-table">
-          <thead>
-            <tr>
-              <th>类型</th>
-              <th>协议</th>
-              <th>服务器</th>
-              <th>端口</th>
-              <th>地区</th>
-              <th>状态</th>
-              <th>绑定到</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={7} className="text-center py-8" style={{ color: '#78716c' }}>加载中...</td>
-              </tr>
-            ) : ips.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-8" style={{ color: '#78716c' }}>暂无IP数据</td>
-              </tr>
-            ) : (
-              ips.map((ip) => (
-                <tr key={ip.id}>
-                  <td>
-                    <span className="apple-badge apple-badge-active">{ip.type}</span>
-                  </td>
-                  <td style={{ color: '#78716c' }}>{ip.protocol}</td>
-                  <td style={{ color: '#1c1917', fontFamily: 'monospace' }}>{ip.server}</td>
-                  <td style={{ color: '#e11d48', fontFamily: 'monospace' }}>{ip.port}</td>
-                  <td style={{ color: '#78716c' }}>{ip.location || '—'}</td>
-                  <td>
-                    <span className={`apple-badge ${ip.status === 'active' ? 'apple-badge-active' : 'apple-badge-suspended'}`}>
-                      {ip.status}
-                    </span>
-                  </td>
-                  <td style={{ color: '#78716c', fontSize: '13px' }}>{ip.bound_to || '—'}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <p className="text-center text-xs mt-2" style={{ color: '#616161' }}>
+          AI 生成内容仅供参考，请核实后使用
+        </p>
       </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent
+          className="sm:max-w-md"
+          style={{
+            background: C.cardBg,
+            border: `1px solid ${C.border}`,
+            color: C.textPrimary,
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle style={{ color: C.textPrimary }}>智能体设置</DialogTitle>
+          </DialogHeader>
+
+          {profileLoading ? (
+            <div className="py-8 text-center text-sm" style={{ color: C.textSecondary }}>
+              加载中…
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              {/* Writing Style */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: C.textSecondary }}
+                >
+                  写作风格
+                </label>
+                <select
+                  value={writingStyle}
+                  onChange={(e) => setWritingStyle(e.target.value)}
+                  className="w-full rounded-lg text-sm outline-none"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    padding: '9px 14px',
+                    appearance: 'auto',
+                  }}
+                >
+                  <option value="">默认</option>
+                  {WRITING_STYLES.map((s) => (
+                    <option key={s} value={s}>
+                      {s === 'casual'
+                        ? '轻松随意'
+                        : s === 'professional'
+                        ? '专业严谨'
+                        : s === 'creative'
+                        ? '创意发散'
+                        : '技术深度'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Tone */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: C.textSecondary }}
+                >
+                  语气
+                </label>
+                <select
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  className="w-full rounded-lg text-sm outline-none"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    padding: '9px 14px',
+                    appearance: 'auto',
+                  }}
+                >
+                  <option value="">默认</option>
+                  {TONES.map((t) => (
+                    <option key={t} value={t}>
+                      {t === 'friendly'
+                        ? '友好亲切'
+                        : t === 'formal'
+                        ? '正式庄重'
+                        : t === 'humorous'
+                        ? '幽默风趣'
+                        : '中性客观'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Custom Instructions */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: C.textSecondary }}
+                >
+                  自定义指令
+                </label>
+                <textarea
+                  value={customInstructions}
+                  onChange={(e) => setCustomInstructions(e.target.value)}
+                  placeholder="输入额外的行为指令…"
+                  rows={4}
+                  className="w-full rounded-lg text-sm outline-none resize-none"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    padding: '10px 14px',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              {/* Domains */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: C.textSecondary }}
+                >
+                  知识领域（逗号分隔）
+                </label>
+                <input
+                  type="text"
+                  value={domains}
+                  onChange={(e) => setDomains(e.target.value)}
+                  placeholder="例如：科技, 金融, 教育"
+                  className="w-full rounded-lg text-sm outline-none"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    padding: '9px 14px',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+
+              {/* Keywords */}
+              <div>
+                <label
+                  className="block text-xs font-medium mb-1.5"
+                  style={{ color: C.textSecondary }}
+                >
+                  关键词（逗号分隔）
+                </label>
+                <input
+                  type="text"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="例如：AI, 区块链, 自媒体"
+                  className="w-full rounded-lg text-sm outline-none"
+                  style={{
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    color: C.textPrimary,
+                    padding: '9px 14px',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2" style={{ borderColor: C.border }}>
+            <button
+              onClick={() => setSettingsOpen(false)}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                background: 'rgba(255,255,255,0.04)',
+                color: C.textSecondary,
+                border: `1px solid ${C.border}`,
+              }}
+            >
+              取消
+            </button>
+            <button
+              onClick={handleSaveSettings}
+              disabled={saving || profileLoading}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                background: C.accent,
+                color: C.bg,
+                opacity: saving || profileLoading ? 0.6 : 1,
+              }}
+            >
+              {saving ? '保存中…' : '保存'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

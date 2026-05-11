@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "identifier": "com.beehive.browser",
   "build": {
-    "devUrl": "http://localhost:5173",
-    "frontendDist": "../../frontend/dist"
+    "devUrl": "http://107.173.70.124:8000",
+    "frontendDist": "http://107.173.70.124:8000"
   },
   "app": {
     "security": {
@@ -28,6 +28,7 @@
         "language": "zh-CN"
       },
       "nsis": {
+        "installerIcon": "icons/icon.ico",
         "languages": ["SimpChinese", "English"],
         "displayLanguageSelector": true
       }
@@ -43,7 +44,7 @@
       "active": true,
       "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQxNDcxOTk2RUQ5ODUxNApSV1FVaGRsdW1YRVVCSHdPRVl2VmF0bVl4Q2dCRXNTdklKM0FXZ0ZhM01YN1BXeEdyWmFHSXFaQQo=",
-      "endpoints": ["https://YOUR_VPS_IP:8008/updates/{{target}}-{{arch}}/{{current_version}}"]
+      "endpoints": ["https://107.173.70.124:8000/updates/{{target}}-{{arch}}/{{current_version}}"]
     }
   }
 }

@@ -7,6 +7,7 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import apiClient from '../../api/client';
+import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
 interface TeamMember {
   id: string;
@@ -22,6 +23,7 @@ const TeamPage: React.FC = () => {
   const [showInvite, setShowInvite] = useState(false);
   const [form, setForm] = useState({ email: '', name: '', role: 'member' });
   const [submitting, setSubmitting] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -60,14 +62,19 @@ const TeamPage: React.FC = () => {
   };
 
   const handleRemove = async (id: string, name: string) => {
-    if (!confirm(`确定移除成员「${name}」？`)) return;
-    try {
-      await apiClient.delete(`/team/members/${id}`);
-      toast.success('已移除');
-      fetchMembers();
-    } catch {
-      toast.error('移除失败');
-    }
+    confirm({
+      title: '移除确认',
+      description: `确定移除成员「${name}」？`,
+      onConfirm: async () => {
+        try {
+          await apiClient.delete(`/team/members/${id}`);
+          toast.success('已移除');
+          fetchMembers();
+        } catch {
+          toast.error('移除失败');
+        }
+      },
+    });
   };
 
   const roleBadge = (role: string) => {
@@ -82,7 +89,7 @@ const TeamPage: React.FC = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold m-0" style={{ color: '#1c1917', letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             团队管理
           </h1>
           <p className="text-sm mt-1" style={{ color: '#78716c' }}>
@@ -102,7 +109,7 @@ const TeamPage: React.FC = () => {
       </div>
 
       <div className="apple-card overflow-x-auto">
-        <table className="apple-table">
+        <table className="table">
           <thead>
             <tr>
               <th>姓名</th>
@@ -136,7 +143,7 @@ const TeamPage: React.FC = () => {
                   <td>
                     <button
                       onClick={() => handleRemove(m.id, m.name)}
-                      className="apple-btn apple-btn-danger flex items-center gap-1"
+                      className="apple-btn btn-danger flex items-center gap-1"
                       style={{ padding: '4px 10px', fontSize: '12px' }}
                     >
                       <RiDeleteBinLine size={12} />
@@ -151,17 +158,17 @@ const TeamPage: React.FC = () => {
       </div>
 
       {showInvite && (
-        <div className="apple-modal-overlay" onClick={() => setShowInvite(false)}>
+        <div className="modal-overlay" onClick={() => setShowInvite(false)}>
           <div className="apple-modal relative" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4" style={{ color: '#1c1917' }}>邀请成员</h2>
             <form onSubmit={handleInvite}>
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>姓名 *</label>
-                <input className="apple-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="成员姓名" required />
+                <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="成员姓名" required />
               </div>
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>邮箱 *</label>
-                <input className="apple-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="member@example.com" required />
+                <input className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="member@example.com" required />
               </div>
               <div className="mb-6">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>角色</label>
@@ -172,8 +179,8 @@ const TeamPage: React.FC = () => {
                 </select>
               </div>
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setShowInvite(false)} className="apple-btn">取消</button>
-                <button type="submit" className="apple-btn" disabled={submitting}>
+                <button type="button" onClick={() => setShowInvite(false)} className="btn">取消</button>
+                <button type="submit" className="btn" disabled={submitting}>
                   {submitting ? '邀请中...' : '发送邀请'}
                 </button>
               </div>
@@ -181,6 +188,7 @@ const TeamPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

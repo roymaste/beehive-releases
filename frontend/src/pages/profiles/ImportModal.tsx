@@ -7,7 +7,7 @@ import {
   RiErrorWarningLine,
   RiFileTextLine,
 } from 'react-icons/ri';
-import { profilesAPI, BatchImportResponse, BatchImportError } from '../../api/profiles';
+import {profilesAPI, BatchImportResponse} from '../../api/profiles';
 
 interface ImportModalProps {
   onClose: () => void;
@@ -30,7 +30,7 @@ const CSV_TEMPLATE = `name,platform,proxy_id,os,timezone,locale
 日本推特#2,twitter,JP-02,windows,Asia/Tokyo,ja-JP
 美国脸书#1,facebook,US-01,windows,America/New_York,en-US`;
 
-const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImportComplete }) => {
+const ImportModal: React.FC<ImportModalProps> = ({ onClose }) => {
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
@@ -190,7 +190,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImportComplete }) 
               {/* Download Template */}
               <button
                 onClick={handleDownloadTemplate}
-                className="apple-btn"
+                className="btn"
                 style={{ width: '100%', marginBottom: 16, justifyContent: 'center', gap: 8 }}
               >
                 <RiDownloadLine size={18} />
@@ -419,7 +419,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ onClose, onImportComplete }) 
         }}>
           {step === 'preview' && (
             <>
-              <button onClick={handleBack} className="apple-btn" style={{ padding: '10px 20px' }}>
+              <button onClick={handleBack} className="btn" style={{ padding: '10px 20px' }}>
                 返回
               </button>
               <button

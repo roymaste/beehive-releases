@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { ipsAPI, IPAsset } from '../api/client';
 import toast from 'react-hot-toast';
-import { RiAddLine, RiDeleteBinLine, RiRefreshLine, RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBinLine, RiRefreshLine } from 'react-icons/ri';
+import { useConfirmDialog } from '../components/ui/confirm-dialog';
 
 const IPsSubPage: React.FC = () => {
   const { id: tenantId } = useParams<{ id: string }>();
@@ -10,7 +11,6 @@ const IPsSubPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     type: 'purchased',
     provider: '',
@@ -24,6 +24,7 @@ const IPsSubPage: React.FC = () => {
     notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   const fetchIPs = useCallback(async () => {
     if (!tenantId) return;
@@ -78,14 +79,19 @@ const IPsSubPage: React.FC = () => {
 
   const handleDelete = async (ipId: string, server: string) => {
     if (!tenantId) return;
-    if (!confirm(`确定要删除IP资产「${server}」吗？`)) return;
-    try {
-      await ipsAPI.delete(tenantId, ipId);
-      toast.success('已删除');
-      fetchIPs();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除确认',
+      description: `确定要删除IP资产「${server}」吗？`,
+      onConfirm: async () => {
+        try {
+          await ipsAPI.delete(tenantId, ipId);
+          toast.success('已删除');
+          fetchIPs();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const ipTypeOptions = ['purchased', 'owned'];
@@ -98,11 +104,11 @@ const IPsSubPage: React.FC = () => {
           共 {total} 个IP资产
         </p>
         <div className="flex gap-2">
-          <button onClick={fetchIPs} className="apple-btn flex items-center gap-1" style={{ padding: '4px 12px', fontSize: '12px' }} disabled={loading}>
+          <button onClick={fetchIPs} className="btn flex items-center gap-1" style={{ padding: '4px 12px', fontSize: '12px' }} disabled={loading}>
             <RiRefreshLine size={14} />
             刷新
           </button>
-          <button onClick={() => setShowCreate(true)} className="apple-btn flex items-center gap-1" style={{ padding: '4px 12px', fontSize: '12px' }}>
+          <button onClick={() => setShowCreate(true)} className="btn flex items-center gap-1" style={{ padding: '4px 12px', fontSize: '12px' }}>
             <RiAddLine size={14} />
             添加IP
           </button>
@@ -110,8 +116,8 @@ const IPsSubPage: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="apple-card overflow-x-auto">
-        <table className="apple-table">
+      <div className="card overflow-x-auto">
+        <table className="table">
           <thead>
             <tr>
               <th>类型</th>
@@ -137,14 +143,14 @@ const IPsSubPage: React.FC = () => {
               ips.map((ip) => (
                 <tr key={ip.id}>
                   <td>
-                    <span className="apple-badge apple-badge-active">{ip.type}</span>
+                    <span className="badge badge-active">{ip.type}</span>
                   </td>
                   <td style={{ color: '#78716c' }}>{ip.protocol}</td>
                   <td style={{ color: '#1c1917', fontFamily: 'monospace' }}>{ip.server}</td>
                   <td style={{ color: '#e11d48', fontFamily: 'monospace' }}>{ip.port}</td>
                   <td style={{ color: '#78716c' }}>{ip.location || '—'}</td>
                   <td>
-                    <span className={`apple-badge ${ip.status === 'active' ? 'apple-badge-active' : 'apple-badge-suspended'}`}>
+                    <span className={`badge ${ip.status === 'active' ? 'badge-active' : 'badge-suspended'}`}>
                       {ip.status}
                     </span>
                   </td>
@@ -153,7 +159,7 @@ const IPsSubPage: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleDelete(ip.id, ip.server)}
-                        className="apple-btn apple-btn-danger flex items-center gap-1"
+                        className="btn btn-danger flex items-center gap-1"
                         style={{ padding: '3px 8px', fontSize: '11px' }}
                       >
                         <RiDeleteBinLine size={11} />
@@ -170,7 +176,7 @@ const IPsSubPage: React.FC = () => {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="apple-modal-overlay" onClick={() => setShowCreate(false)}>
+        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="apple-modal relative" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4" style={{ color: '#1c1917' }}>添加IP资产</h2>
             <form onSubmit={handleCreate}>
@@ -195,44 +201,44 @@ const IPsSubPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>服务器地址 *</label>
-                  <input className="apple-input" value={form.server} onChange={(e) => setForm({ ...form, server: e.target.value })} placeholder="192.168.1.1" required />
+                  <input className="input" value={form.server} onChange={(e) => setForm({ ...form, server: e.target.value })} placeholder="192.168.1.1" required />
                 </div>
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>端口 *</label>
-                  <input className="apple-input" value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="8080" required />
+                  <input className="input" value={form.port} onChange={(e) => setForm({ ...form, port: e.target.value })} placeholder="8080" required />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>用户名</label>
-                  <input className="apple-input" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="可选" />
+                  <input className="input" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="可选" />
                 </div>
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>密码</label>
-                  <input className="apple-input" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="可选" />
+                  <input className="input" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="可选" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>地区</label>
-                  <input className="apple-input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="如：US, JP" />
+                  <input className="input" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="如：US, JP" />
                 </div>
                 <div>
                   <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>服务商</label>
-                  <input className="apple-input" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="如：BrightData" />
+                  <input className="input" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} placeholder="如：BrightData" />
                 </div>
               </div>
               <div className="mt-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>绑定账号ID</label>
-                <input className="apple-input" value={form.bound_to} onChange={(e) => setForm({ ...form, bound_to: e.target.value })} placeholder="平台账号ID" />
+                <input className="input" value={form.bound_to} onChange={(e) => setForm({ ...form, bound_to: e.target.value })} placeholder="平台账号ID" />
               </div>
               <div className="mt-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>备注</label>
-                <input className="apple-input" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="可选" />
+                <input className="input" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="可选" />
               </div>
               <div className="flex gap-3 justify-end mt-6">
-                <button type="button" onClick={() => setShowCreate(false)} className="apple-btn">取消</button>
-                <button type="submit" className="apple-btn" disabled={submitting}>
+                <button type="button" onClick={() => setShowCreate(false)} className="btn">取消</button>
+                <button type="submit" className="btn" disabled={submitting}>
                   {submitting ? '创建中...' : '确认添加'}
                 </button>
               </div>
@@ -240,6 +246,7 @@ const IPsSubPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

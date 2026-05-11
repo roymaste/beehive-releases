@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiAddLine,
   RiRefreshLine,
@@ -66,27 +67,39 @@ const ClientsPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   const handleToggleStatus = async (client: AdminClient) => {
     const action = client.is_active ? '禁用' : '启用';
-    if (!confirm(`确定${action}客户「${client.name}」？`)) return;
-    try {
-      await adminAPI.updateClient(client.id, { is_active: !client.is_active });
-      toast.success(`已${action}`);
-      fetchClients();
-    } catch {
-      toast.error(`${action}失败`);
-    }
+    confirm({
+      title: `${action}客户`,
+      description: `确定${action}客户「${client.name}」？`,
+      onConfirm: async () => {
+        try {
+          await adminAPI.updateClient(client.id, { is_active: !client.is_active });
+          toast.success(`已${action}`);
+          fetchClients();
+        } catch {
+          toast.error(`${action}失败`);
+        }
+      },
+    });
   };
 
   const handleDelete = async (client: AdminClient) => {
-    if (!confirm(`确定删除客户「${client.name}」？此操作不可恢复。`)) return;
-    try {
-      await adminAPI.deleteClient(client.id);
-      toast.success('已删除');
-      fetchClients();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除客户',
+      description: `确定删除客户「${client.name}」？此操作不可恢复。`,
+      onConfirm: async () => {
+        try {
+          await adminAPI.deleteClient(client.id);
+          toast.success('已删除');
+          fetchClients();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const paginatedClients = clients.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -100,7 +113,7 @@ const ClientsPage: React.FC = () => {
       return <span className="apple-badge apple-badge-suspended">已停用</span>;
     }
     if (client.status === 'pending') {
-      return <span className="apple-badge" style={{ background: 'rgba(255, 149, 0, 0.12)', color: '#ff9500' }}>待激活</span>;
+      return <span className="badge" style={{ background: 'rgba(255, 149, 0, 0.12)', color: '#ff9500' }}>待激活</span>;
     }
     return <span className="apple-badge apple-badge-free">{client.status}</span>;
   };
@@ -124,12 +137,12 @@ const ClientsPage: React.FC = () => {
       render: (row) => (
         <div>
           <div
-            style={{ color: '#e11d48', fontWeight: 500, cursor: 'pointer' }}
+            className="text-primary cursor-pointer font-medium"
             onClick={() => navigate(`/admin/clients/${row.id}`)}
           >
             {row.name}
           </div>
-          <div style={{ fontSize: 12, color: '#78716c', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>
             ID: {row.id.slice(0, 8)}...
           </div>
         </div>
@@ -141,7 +154,7 @@ const ClientsPage: React.FC = () => {
       sortable: true,
       width: '180px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>{row.email}</span>
+        <span className="text-sm text-muted-foreground">{row.email}</span>
       ),
     },
     {
@@ -150,7 +163,7 @@ const ClientsPage: React.FC = () => {
       sortable: true,
       width: '140px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>{row.company || '—'}</span>
+        <span className="text-sm text-muted-foreground">{row.company || '—'}</span>
       ),
     },
     {
@@ -165,7 +178,7 @@ const ClientsPage: React.FC = () => {
       sortable: true,
       width: '80px',
       render: (row) => (
-        <span style={{ fontSize: 14, fontWeight: 500, color: '#fafafa' }}>{row.environment_count}</span>
+        <span className="text-sm font-medium text-foreground">{row.environment_count}</span>
       ),
     },
     {
@@ -180,7 +193,7 @@ const ClientsPage: React.FC = () => {
       sortable: true,
       width: '120px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>
+        <span className="text-sm text-muted-foreground">
           {new Date(row.created_at).toLocaleDateString('zh-CN')}
         </span>
       ),
@@ -193,7 +206,7 @@ const ClientsPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/admin/clients/${row.id}`)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#e11d48' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'hsl(var(--primary))' }}
             title="编辑"
           >
             <RiEditLine size={16} />
@@ -205,7 +218,7 @@ const ClientsPage: React.FC = () => {
               border: 'none',
               cursor: 'pointer',
               padding: 4,
-              color: row.is_active ? '#ff9500' : '#16a34a',
+              color: row.is_active ? 'hsl(var(--warning))' : 'hsl(var(--success))',
             }}
             title={row.is_active ? '禁用' : '启用'}
           >
@@ -213,7 +226,7 @@ const ClientsPage: React.FC = () => {
           </button>
           <button
             onClick={() => handleDelete(row)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#a1a1aa' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'hsl(var(--muted-foreground))' }}
             title="删除"
           >
             <RiDeleteBinLine size={16} />
@@ -228,24 +241,24 @@ const ClientsPage: React.FC = () => {
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#fafafa', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             客户管理
           </h1>
-          <p style={{ fontSize: 13, color: '#a1a1aa', margin: '4px 0 0' }}>
+          <p className="text-sm text-muted-foreground" style={{ margin: '4px 0 0' }}>
             共 {clients.length} 个客户
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={fetchClients}
-            style={{ padding: '10px 16px', background: '#3f3f46', color: '#fafafa' }}
+            style={{ padding: '10px 16px', background: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
           >
             <RiRefreshLine size={18} />
             刷新
           </button>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={() => navigate('/admin/clients/create')}
             style={{ padding: '10px 22px' }}
           >
@@ -273,26 +286,27 @@ const ClientsPage: React.FC = () => {
       {totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
           <button
-            className="apple-btn"
+            className="btn"
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? '#27272a' : '#e11d48', color: page === 0 ? '#52525b' : '#fff' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? 'hsl(var(--muted))' : 'hsl(var(--primary))', color: page === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary-foreground))' }}
           >
             上一页
           </button>
-          <span style={{ fontSize: 13, color: '#a1a1aa' }}>
+          <span className="text-sm text-muted-foreground">
             第 {page + 1} / {totalPages} 页（共 {clients.length} 条）
           </span>
           <button
-            className="apple-btn"
+            className="btn"
             disabled={page >= totalPages - 1}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? '#27272a' : '#e11d48', color: page >= totalPages - 1 ? '#52525b' : '#fff' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? 'hsl(var(--muted))' : 'hsl(var(--primary))', color: page >= totalPages - 1 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary-foreground))' }}
           >
             下一页
           </button>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

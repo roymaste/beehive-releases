@@ -1,5 +1,7 @@
 import React from 'react';
 import { RiArrowUpSLine, RiArrowDownSLine, RiCheckboxBlankLine, RiCheckboxLine, RiCheckboxIndeterminateLine } from 'react-icons/ri';
+import { TableSkeleton } from '@/components/ui/skeleton';
+import { EmptyState, EmptyStateTable } from '@/components/ui/empty-state';
 
 export interface Column<T> {
   key: string;
@@ -71,14 +73,14 @@ function DataTable<T>({
     if (!col.sortable) return null;
     const isActive = sortKey === col.key;
     return (
-      <span style={{ display: 'inline-flex', flexDirection: 'column', marginLeft: 4, lineHeight: 1 }}>
+      <span className="inline-flex flex-col ml-1 leading-none">
         <RiArrowUpSLine
           size={12}
-          style={{ color: isActive && sortDir === 'asc' ? '#e11d48' : '#d6d3d1', marginBottom: -2 }}
+          className={isActive && sortDir === 'asc' ? 'text-[#e11d48] -mb-0.5' : 'text-[#d6d3d1] -mb-0.5'}
         />
         <RiArrowDownSLine
           size={12}
-          style={{ color: isActive && sortDir === 'desc' ? '#e11d48' : '#d6d3d1', marginTop: -2 }}
+          className={isActive && sortDir === 'desc' ? 'text-[#e11d48] -mt-0.5' : 'text-[#d6d3d1] -mt-0.5'}
         />
       </span>
     );
@@ -86,61 +88,42 @@ function DataTable<T>({
 
   if (loading) {
     return (
-      <div className="apple-card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
-        加载中...
+      <div className="card">
+        <TableSkeleton rows={5} columns={columns.length} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="apple-card" style={{ padding: '60px 0', textAlign: 'center', color: '#e11d48' }}>
-        <p style={{ margin: '0 0 16px', fontSize: 14 }}>加载失败，请稍后重试</p>
-        {onRetry && (
-          <button
-            onClick={onRetry}
-            style={{
-              padding: '8px 20px',
-              background: '#e11d48',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            重试
-          </button>
-        )}
+      <div className="card">
+        <EmptyState
+          title="加载失败"
+          description="数据加载失败，请稍后重试"
+          action={onRetry ? { label: '重试', onClick: onRetry } : undefined}
+        />
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="apple-card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
-        {emptyText}
+      <div className="card">
+        <EmptyStateTable title={emptyText} />
       </div>
     );
   }
 
   return (
-    <div className="apple-card" style={{ overflow: 'auto' }}>
-      <table className="apple-table">
+    <div className="card overflow-auto">
+      <table className="table">
         <thead>
           <tr>
             {onSelectionChange && (
-              <th style={{ width: 44, padding: '12px 8px 12px 16px' }}>
+              <th className="w-11 py-3 pl-4 pr-2">
                 <button
                   onClick={toggleAll}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
+                  className="bg-transparent border-none cursor-pointer p-0 flex items-center hover:opacity-80 transition-opacity"
                 >
                   {allSelected ? (
                     <RiCheckboxLine size={18} style={{ color: '#e11d48' }} />
@@ -155,10 +138,8 @@ function DataTable<T>({
             {columns.map((col) => (
               <th
                 key={col.key}
-                style={{
-                  width: col.width,
-                  cursor: col.sortable ? 'pointer' : 'default',
-                }}
+                style={{ width: col.width }}
+                className={col.sortable ? 'cursor-pointer' : 'cursor-default'}
                 onClick={() => handleSort(col)}
               >
                 {col.title}
@@ -172,19 +153,12 @@ function DataTable<T>({
             const id = rowKey(row);
             const isSelected = selectedIds?.has(id);
             return (
-              <tr key={id}>
+              <tr key={id} className="hover:bg-muted/50 transition-colors">
                 {onSelectionChange && (
-                  <td style={{ width: 44, padding: '12px 8px 12px 16px' }}>
+                  <td className="w-11 py-3 pl-4 pr-2">
                     <button
                       onClick={() => toggleRow(id)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                      }}
+                      className="bg-transparent border-none cursor-pointer p-0 flex items-center hover:opacity-80 transition-opacity"
                     >
                       {isSelected ? (
                         <RiCheckboxLine size={18} style={{ color: '#e11d48' }} />

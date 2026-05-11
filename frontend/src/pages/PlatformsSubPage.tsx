@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { platformsAPI, PlatformAccount } from '../api/client';
 import toast from 'react-hot-toast';
-import { RiAddLine, RiDeleteBinLine, RiEyeLine, RiEyeOffLine, RiRefreshLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBinLine, RiRefreshLine } from 'react-icons/ri';
+import { useConfirmDialog } from '../components/ui/confirm-dialog';
 
 const PlatformsSubPage: React.FC = () => {
   const { id: tenantId } = useParams<{ id: string }>();
@@ -10,7 +11,6 @@ const PlatformsSubPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     platform: 'weibo',
     account_username: '',
@@ -19,6 +19,7 @@ const PlatformsSubPage: React.FC = () => {
     notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
 
   const fetchPlatforms = useCallback(async () => {
     if (!tenantId) return;
@@ -68,18 +69,19 @@ const PlatformsSubPage: React.FC = () => {
 
   const handleDelete = async (platformId: string, username: string) => {
     if (!tenantId) return;
-    if (!confirm(`确定要删除平台账号「${username}」吗？`)) return;
-    try {
-      await platformsAPI.delete(tenantId, platformId);
-      toast.success('已删除');
-      fetchPlatforms();
-    } catch {
-      toast.error('删除失败');
-    }
-  };
-
-  const togglePassword = (id: string) => {
-    setShowPassword((prev) => ({ ...prev, [id]: !prev[id] }));
+    confirm({
+      title: '删除确认',
+      description: `确定要删除平台账号「${username}」吗？`,
+      onConfirm: async () => {
+        try {
+          await platformsAPI.delete(tenantId, platformId);
+          toast.success('已删除');
+          fetchPlatforms();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const platformOptions = ['weibo', 'xiaohongshu', 'douyin', 'bilibili', 'zhihu', 'twitter', 'facebook', 'instagram'];
@@ -104,7 +106,7 @@ const PlatformsSubPage: React.FC = () => {
 
       {/* Table */}
       <div className="apple-card overflow-x-auto">
-        <table className="apple-table">
+        <table className="table">
           <thead>
             <tr>
               <th>平台</th>
@@ -148,7 +150,7 @@ const PlatformsSubPage: React.FC = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleDelete(p.id, p.account_username)}
-                        className="apple-btn apple-btn-danger flex items-center gap-1"
+                        className="apple-btn btn-danger flex items-center gap-1"
                         style={{ padding: '3px 8px', fontSize: '11px' }}
                       >
                         <RiDeleteBinLine size={11} />
@@ -165,7 +167,7 @@ const PlatformsSubPage: React.FC = () => {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="apple-modal-overlay" onClick={() => setShowCreate(false)}>
+        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="apple-modal relative" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4" style={{ color: '#1c1917' }}>添加平台账号</h2>
             <form onSubmit={handleCreate}>
@@ -184,7 +186,7 @@ const PlatformsSubPage: React.FC = () => {
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>账号用户名 *</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   value={form.account_username}
                   onChange={(e) => setForm({ ...form, account_username: e.target.value })}
                   placeholder="输入平台账号用户名"
@@ -194,7 +196,7 @@ const PlatformsSubPage: React.FC = () => {
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>账号密码 *</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   type="password"
                   value={form.account_password}
                   onChange={(e) => setForm({ ...form, account_password: e.target.value })}
@@ -205,7 +207,7 @@ const PlatformsSubPage: React.FC = () => {
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>关联邮箱</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   type="email"
                   value={form.account_email}
                   onChange={(e) => setForm({ ...form, account_email: e.target.value })}
@@ -215,15 +217,15 @@ const PlatformsSubPage: React.FC = () => {
               <div className="mb-6">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>备注</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   placeholder="可选备注"
                />
               </div>
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setShowCreate(false)} className="apple-btn">取消</button>
-                <button type="submit" className="apple-btn" disabled={submitting}>
+                <button type="button" onClick={() => setShowCreate(false)} className="btn">取消</button>
+                <button type="submit" className="btn" disabled={submitting}>
                   {submitting ? '创建中...' : '确认添加'}
                 </button>
               </div>
@@ -231,6 +233,7 @@ const PlatformsSubPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

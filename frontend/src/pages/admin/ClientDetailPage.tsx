@@ -14,6 +14,7 @@ import {
   RiRefreshLine,
 } from 'react-icons/ri';
 import { adminAPI, AdminClient } from '../../api/admin';
+import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
 const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #27272a' }}>
@@ -27,6 +28,7 @@ const ClientDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [client, setClient] = useState<AdminClient | null>(null);
   const [loading, setLoading] = useState(true);
+  const { confirm, dialog } = useConfirmDialog();
 
   const fetchClient = async () => {
     if (!id) return;
@@ -49,26 +51,36 @@ const ClientDetailPage: React.FC = () => {
   const handleToggleStatus = async () => {
     if (!client) return;
     const action = client.is_active ? '禁用' : '启用';
-    if (!confirm(`确定${action}客户「${client.name}」？`)) return;
-    try {
-      const res = await adminAPI.updateClient(client.id, { is_active: !client.is_active });
-      setClient(res.data);
-      toast.success(`已${action}`);
-    } catch {
-      toast.error(`${action}失败`);
-    }
+    confirm({
+      title: `${action}确认`,
+      description: `确定${action}客户「${client.name}」？`,
+      onConfirm: async () => {
+        try {
+          const res = await adminAPI.updateClient(client.id, { is_active: !client.is_active });
+          setClient(res.data);
+          toast.success(`已${action}`);
+        } catch {
+          toast.error(`${action}失败`);
+        }
+      },
+    });
   };
 
   const handleDelete = async () => {
     if (!client) return;
-    if (!confirm(`确定删除客户「${client.name}」？此操作不可恢复。`)) return;
-    try {
-      await adminAPI.deleteClient(client.id);
-      toast.success('已删除');
-      navigate('/admin/clients');
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除确认',
+      description: `确定删除客户「${client.name}」？此操作不可恢复。`,
+      onConfirm: async () => {
+        try {
+          await adminAPI.deleteClient(client.id);
+          toast.success('已删除');
+          navigate('/admin/clients');
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const planLabel = (plan: string) => {
@@ -92,7 +104,7 @@ const ClientDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div style={{ padding: '24px 32px' }}>
-        <div className="apple-card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
+        <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
           加载中...
         </div>
       </div>
@@ -102,7 +114,7 @@ const ClientDetailPage: React.FC = () => {
   if (!client) {
     return (
       <div style={{ padding: '24px 32px' }}>
-        <div className="apple-card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
+        <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
           客户不存在
         </div>
       </div>
@@ -135,7 +147,7 @@ const ClientDetailPage: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             {client.name}
           </h1>
           <p style={{ fontSize: 13, color: '#78716c', margin: '4px 0 0' }}>
@@ -144,7 +156,7 @@ const ClientDetailPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={fetchClient}
             style={{ padding: '10px 16px', background: '#e7e5e4', color: '#1c1917' }}
           >
@@ -152,7 +164,7 @@ const ClientDetailPage: React.FC = () => {
             刷新
           </button>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={() => navigate(`/admin/clients/${client.id}/edit`)}
             style={{ padding: '10px 22px' }}
           >
@@ -160,7 +172,7 @@ const ClientDetailPage: React.FC = () => {
             编辑
           </button>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={handleToggleStatus}
             style={{
               padding: '10px 22px',
@@ -171,7 +183,7 @@ const ClientDetailPage: React.FC = () => {
             {client.is_active ? '禁用' : '启用'}
           </button>
           <button
-            className="apple-btn apple-btn-danger"
+            className="apple-btn btn-danger"
             onClick={handleDelete}
             style={{ padding: '10px 22px' }}
           >
@@ -184,7 +196,7 @@ const ClientDetailPage: React.FC = () => {
       {/* Info Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 16 }}>
         {/* Basic Info Card */}
-        <div className="apple-card" style={{ padding: '20px 24px' }}>
+        <div className="card" style={{ padding: '20px 24px' }}>
           <h3 style={{ fontSize: 15, fontWeight: 600, color: '#1c1917', margin: '0 0 16px' }}>
             基本信息
           </h3>
@@ -223,7 +235,7 @@ const ClientDetailPage: React.FC = () => {
         </div>
 
         {/* Quota & Usage Card */}
-        <div className="apple-card" style={{ padding: '20px 24px' }}>
+        <div className="card" style={{ padding: '20px 24px' }}>
           <h3 style={{ fontSize: 15, fontWeight: 600, color: '#1c1917', margin: '0 0 16px' }}>
             配额与用量
           </h3>
@@ -256,6 +268,7 @@ const ClientDetailPage: React.FC = () => {
           />
         </div>
       </div>
+      {dialog}
     </div>
   );
 };

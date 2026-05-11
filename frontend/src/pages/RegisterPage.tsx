@@ -5,6 +5,17 @@ import { authAPI } from '../api/client';
 import toast from 'react-hot-toast';
 import { RiUserAddLine } from 'react-icons/ri';
 
+// UX: Design System colors — centralized to avoid hard-coded hex drift
+const C = {
+  bg: '#121212',
+  surface: '#1e1e1e',
+  textPrimary: '#fafafa',
+  textSecondary: '#9e9e9e',
+  textTertiary: '#757575',
+  accent: '#FFC107',
+  border: 'rgba(255,255,255,0.06)',
+};
+
 const COUNTDOWN_SECONDS = 60;
 
 const RegisterPage: React.FC = () => {
@@ -15,6 +26,14 @@ const RegisterPage: React.FC = () => {
   const [company, setCompany] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    verificationCode?: string;
+    agreed?: string;
+  }>({});
 
   // 验证码相关
   const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
@@ -97,30 +116,26 @@ const RegisterPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      toast.error('请填写所有必填字段');
-      return;
+    const newErrors: typeof errors = {};
+    if (!name.trim()) newErrors.name = '请输入住户名称';
+    if (!email.trim()) newErrors.email = '请输入邮箱地址';
+    if (!password.trim()) newErrors.password = '请输入密码';
+    if (!confirmPassword.trim()) newErrors.confirmPassword = '请确认密码';
+    if (!agreed) newErrors.agreed = '请阅读并同意服务条款';
+    if (password && confirmPassword && password !== confirmPassword) {
+      newErrors.confirmPassword = '两次输入的密码不一致';
     }
-    if (!agreed) {
-      toast.error('请阅读并同意服务条款');
-      return;
+    if (password && password.length < 6) {
+      newErrors.password = '密码长度至少6位';
     }
-    if (password !== confirmPassword) {
-      toast.error('两次输入的密码不一致');
-      return;
-    }
-    if (password.length < 6) {
-      toast.error('密码长度至少6位');
-      return;
-    }
-    // 验证码校验
     const code = verificationCode.join('');
     if (code.length !== 6) {
-      toast.error('请输入完整的6位验证码');
-      return;
+      newErrors.verificationCode = '请输入完整的6位验证码';
+    } else if (!/^\d{6}$/.test(code)) {
+      newErrors.verificationCode = '验证码必须是6位数字';
     }
-    if (!/^\d{6}$/.test(code)) {
-      toast.error('验证码必须是6位数字');
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
     setLoading(true);
@@ -149,33 +164,33 @@ const RegisterPage: React.FC = () => {
           </div>
           <h1
             className="text-2xl font-bold mb-1"
-            style={{ color: '#fafafa', letterSpacing: '-0.3px' }}
+            style={{ color: C.textPrimary, letterSpacing: '-0.3px' }}
           >
             注册住户账号
           </h1>
-          <p style={{ color: '#9e9e9e', fontSize: '13px' }}>
+          <p style={{ color: C.textSecondary, fontSize: '13px' }}>
             BEEHIVE AGENT · 创建你的智能体空间
           </p>
         </div>
 
         {/* Divider */}
-        <div className="border-t mb-6" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="border-t mb-6" style={{ borderColor: C.border }} />
 
         <form onSubmit={handleSubmit}>
           {/* 邮箱 */}
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: '#9e9e9e' }}
+              style={{ color: C.textSecondary }}
             >
-              邮箱 <span style={{ color: '#FFC107' }}>*</span>
+              邮箱 <span style={{ color: C.accent }}>*</span>
             </label>
             <div className="flex gap-2">
               <input
                 type="email"
-                className="apple-input flex-1"
+                className={`apple-input flex-1 ${errors.email ? 'border-red-500' : ''}`}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((prev) => ({ ...prev, email: undefined })); }}
                 placeholder="输入邮箱地址"
               />
               <button
@@ -183,13 +198,15 @@ const RegisterPage: React.FC = () => {
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
                 className="apple-btn px-3 py-2 text-sm whitespace-nowrap"
+                // UX: unify countdown colors with C.accent; add opacity when sendingCode
                 style={{
-                  background: countdown > 0 ? 'rgba(255,193,7,0.15)' : '#FFC107',
-                  color: countdown > 0 ? '#9e9e9e' : '#121212',
+                  background: countdown > 0 ? 'rgba(255,193,7,0.15)' : C.accent,
+                  color: countdown > 0 ? C.textSecondary : C.bg,
                   border: 'none',
                   cursor: countdown > 0 || sendingCode ? 'not-allowed' : 'pointer',
                   minWidth: 96,
                   fontWeight: 600,
+                  opacity: sendingCode ? 0.7 : 1,
                 }}
               >
                 {sendingCode
@@ -206,9 +223,9 @@ const RegisterPage: React.FC = () => {
             <div className="mb-4">
               <label
                 className="block text-sm mb-2 font-medium"
-                style={{ color: '#9e9e9e' }}
+                style={{ color: C.textSecondary }}
               >
-                邮箱验证码 <span style={{ color: '#FFC107' }}>*</span>
+                邮箱验证码 <span style={{ color: C.accent }}>*</span>
               </label>
               <div className="flex gap-2" onPaste={handleCodePaste}>
                 {verificationCode.map((digit, i) => (
@@ -219,15 +236,16 @@ const RegisterPage: React.FC = () => {
                     inputMode="numeric"
                     maxLength={1}
                     value={digit}
-                    onChange={(e) => handleCodeChange(i, e.target.value)}
+                    onChange={(e) => { handleCodeChange(i, e.target.value); if (errors.verificationCode) setErrors((prev) => ({ ...prev, verificationCode: undefined })); }}
                     onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                    className="apple-input text-center text-xl font-bold tracking-widest"
+                    className={`apple-input text-center text-xl font-bold tracking-widest ${errors.verificationCode ? 'border-red-500' : ''}`}
                     style={{ width: 44, textAlign: 'center' }}
                     autoFocus={i === 0}
                   />
                 ))}
               </div>
-              <p style={{ color: '#757575', fontSize: 12, marginTop: 6 }}>
+              {errors.verificationCode && <p className="text-sm text-destructive mt-1">{errors.verificationCode}</p>}
+              <p style={{ color: C.textTertiary, fontSize: 12, marginTop: 6 }}>
                 没收到？检查一下垃圾邮件，或等待 {countdown === 0 ? '60' : countdown} 秒后重新发送
               </p>
             </div>
@@ -237,64 +255,67 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: '#9e9e9e' }}
+              style={{ color: C.textSecondary }}
             >
-              密码 <span style={{ color: '#FFC107' }}>*</span>
+              密码 <span style={{ color: C.accent }}>*</span>
             </label>
             <input
               type="password"
-              className="apple-input"
+              className={`input ${errors.password ? 'border-red-500' : ''}`}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((prev) => ({ ...prev, password: undefined })); }}
               placeholder="输入密码（至少6位）"
             />
+            {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
           </div>
 
           {/* 确认密码 */}
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: '#9e9e9e' }}
+              style={{ color: C.textSecondary }}
             >
-              确认密码 <span style={{ color: '#FFC107' }}>*</span>
+              确认密码 <span style={{ color: C.accent }}>*</span>
             </label>
             <input
               type="password"
-              className="apple-input"
+              className={`input ${errors.confirmPassword ? 'border-red-500' : ''}`}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined })); }}
               placeholder="再次输入密码"
             />
+            {errors.confirmPassword && <p className="text-sm text-destructive mt-1">{errors.confirmPassword}</p>}
           </div>
 
           {/* 住户名称 */}
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: '#9e9e9e' }}
+              style={{ color: C.textSecondary }}
             >
-              住户名称 <span style={{ color: '#FFC107' }}>*</span>
+              住户名称 <span style={{ color: C.accent }}>*</span>
             </label>
             <input
               type="text"
-              className="apple-input"
+              className={`input ${errors.name ? 'border-red-500' : ''}`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: undefined })); }}
               placeholder="输入住户名称"
             />
+            {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
           </div>
 
           {/* 公司名（可选） */}
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: '#9e9e9e' }}
+              style={{ color: C.textSecondary }}
             >
               公司名称
             </label>
             <input
               type="text"
-              className="apple-input"
+              className="input"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="输入公司名称（选填）"
@@ -307,7 +328,7 @@ const RegisterPage: React.FC = () => {
               type="checkbox"
               id="tos-agree"
               checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
+              onChange={(e) => { setAgreed(e.target.checked); if (errors.agreed) setErrors((prev) => ({ ...prev, agreed: undefined })); }}
               style={{
                 marginTop: 3,
                 accentColor: '#FFC107',
@@ -318,7 +339,7 @@ const RegisterPage: React.FC = () => {
             />
             <label
               htmlFor="tos-agree"
-              style={{ color: '#757575', fontSize: 12, lineHeight: 1.5, cursor: 'pointer' }}
+              style={{ color: C.textTertiary, fontSize: 12, lineHeight: 1.5, cursor: 'pointer' }}
             >
               我已阅读并同意{' '}
               <a
@@ -330,6 +351,7 @@ const RegisterPage: React.FC = () => {
                 服务条款
               </a>
             </label>
+            {errors.agreed && <p className="text-sm text-destructive mt-1">{errors.agreed}</p>}
           </div>
 
           {/* Submit */}
@@ -337,6 +359,8 @@ const RegisterPage: React.FC = () => {
             type="submit"
             className="apple-btn w-full py-3 text-base"
             disabled={loading}
+            // UX: loading state must show both opacity reduction and not-allowed cursor
+            style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
           >
             {loading ? '注册中...' : '创建账号'}
           </button>
@@ -344,11 +368,11 @@ const RegisterPage: React.FC = () => {
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p style={{ color: '#757575', fontSize: '13px' }}>
+          <p style={{ color: C.textTertiary, fontSize: '13px' }}>
             已有账号？{' '}
             <Link
               to="/login"
-              style={{ color: '#FFC107', fontWeight: 500, textDecoration: 'none' }}
+              style={{ color: C.accent, fontWeight: 500, textDecoration: 'none' }}
             >
               立即登录
             </Link>

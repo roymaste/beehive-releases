@@ -16,7 +16,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({ title, description })
         {description || '该功能即将上线，敬请期待。'}
       </p>
       <div
-        className="apple-card"
+        className="card"
         style={{
           padding: 60,
           textAlign: 'center',

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiAddLine,
   RiRefreshLine,
@@ -51,15 +52,22 @@ const ProxyListPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   const handleDelete = async (id: string) => {
-    if (!confirm('确定删除该代理？')) return;
-    try {
-      await proxiesAPI.delete(id);
-      toast.success('已删除');
-      fetchProxies();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除代理',
+      description: '确定删除该代理？',
+      onConfirm: async () => {
+        try {
+          await proxiesAPI.delete(id);
+          toast.success('已删除');
+          fetchProxies();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const formatLatency = (id: string) => {
@@ -82,7 +90,7 @@ const ProxyListPage: React.FC = () => {
     { key: 'protocol', title: '类型', width: '100px',
       render: (row) => (
         <span
-          className="apple-badge"
+          className="badge"
           style={{
             backgroundColor: row.protocol === 'SOCKS5' ? 'rgba(0,113,227,0.1)' : row.protocol === 'HTTPS' ? 'rgba(52,199,89,0.1)' : 'rgba(134,134,139,0.1)',
             color: row.protocol === 'SOCKS5' ? '#e11d48' : row.protocol === 'HTTPS' ? '#16a34a' : '#78716c',
@@ -150,7 +158,7 @@ const ProxyListPage: React.FC = () => {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             代理管理
           </h1>
           <p style={{ fontSize: 13, color: '#78716c', margin: '4px 0 0' }}>
@@ -159,7 +167,7 @@ const ProxyListPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={fetchProxies}
             style={{ background: '#fafaf9', color: '#1c1917' }}
           >
@@ -167,7 +175,7 @@ const ProxyListPage: React.FC = () => {
             刷新
           </button>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={() => navigate('/proxies/add')}
           >
             <RiAddLine size={18} />
@@ -187,6 +195,7 @@ const ProxyListPage: React.FC = () => {
           emptyText="暂无代理，点击「添加代理」开始"
         />
       </div>
+      {dialog}
     </div>
   );
 };

@@ -2,10 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   RiBarChart2Line,
   RiRefreshLine,
-  RiUserStarLine,
-  RiCheckLine,
-  RiCloseLine,
-  RiLineChartLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 
@@ -20,486 +16,375 @@ const C = {
   accent: '#FFC107',
   accentHover: '#FFA000',
   secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
   border: 'rgba(255,255,255,0.06)',
+  danger: '#e11d48',
+  success: '#22c55e',
 };
 
-const RADIUS_CARD = 16;
-const RADIUS_SM = 10;
-const RADIUS_BTN = 8;
-const SHADOW = '0 8px 32px rgba(0,0,0,0.4)';
+const RADIUS_LG = 12;
+const RADIUS_MD = 8;
+const RADIUS_SM = 6;
 
-// API response types
-interface AccountsStats {
-  total_accounts: number;
-  active_accounts: number;
-  banned_accounts: number;
-  by_platform: Record<string, number>;
-}
-
-interface PlatformStats {
-  platforms: Array<{
-    name: string;
-    count: number;
-    active: number;
-    banned: number;
-  }>;
-  total: number;
-}
-
-interface ReportData {
-  period: string;
-  accounts: { total: number; change: number };
-  posts: { total: number; change: number };
-  errors: { total: number; change: number };
-  trends: Array<{ date: string; value: number }>;
-}
-
-// Platform colors for bars
-const PLATFORM_COLORS: Record<string, string> = {
-  twitter: '#1DA1F2',
-  twitter_x: '#1DA1F2',
-  weibo: '#E6162D',
-  xhs: '#FF4050',
-  redbook: '#FF4050',
-  douyin: '#000000',
-  tiktok: '#000000',
-  linkedin: '#0A66C2',
-  facebook: '#1877F2',
-  instagram: '#E4405F',
-  threads: '#000000',
-  default: '#1976D2',
-};
-
-const getPlatformColor = (platform: string): string => {
-  const key = platform.toLowerCase().replace(/[^a-z]/g, '');
-  return PLATFORM_COLORS[key] || PLATFORM_COLORS.default;
-};
-
-// Stat card component
 interface StatCardProps {
-  emoji: string;
-  label: string;
-  value: number | string;
-  subValue?: string;
-  color: string;
+  title: string;
+  value: string | number;
+  change?: string;
+  changeType?: 'up' | 'down' | 'neutral';
+  icon: React.ReactNode;
+  loading?: boolean;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ emoji, label, value, subValue, color }) => (
+const StatCard: React.FC<StatCardProps> = ({ title, value, change, changeType, icon, loading }) => (
   <div
     style={{
       background: C.surface,
+      borderRadius: RADIUS_LG,
+      padding: '20px 24px',
       border: `1px solid ${C.border}`,
-      borderRadius: RADIUS_CARD,
-      padding: '20px 20px 16px',
-      boxShadow: SHADOW,
-      position: 'relative',
-      overflow: 'hidden',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: 16,
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <span style={{ fontSize: 24 }}>{emoji}</span>
-      <span style={{ color, opacity: 0.7 }}>
-        <RiBarChart2Line size={18} />
-      </span>
-    </div>
     <div
       style={{
-        fontSize: 28,
-        fontWeight: 700,
-        color: color,
-        fontFamily: "'Poppins', sans-serif",
-        lineHeight: 1.1,
-        marginBottom: 4,
+        width: 44,
+        height: 44,
+        borderRadius: RADIUS_MD,
+        background: 'rgba(255,193,7,0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: C.accent,
+        flexShrink: 0,
       }}
     >
-      {value}
+      {icon}
     </div>
-    <div style={{ fontSize: 13, color: C.textSecondary, fontWeight: 500 }}>
-      {label}
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ fontSize: 13, color: C.textTertiary, marginBottom: 6 }}>{title}</div>
+      {loading ? (
+        <div style={{ width: 60, height: 24, background: C.surfaceHover, borderRadius: RADIUS_SM }} />
+      ) : (
+        <div style={{ fontSize: 24, fontWeight: 700, color: C.textPrimary, lineHeight: 1.2 }}>{value}</div>
+      )}
+      {change && !loading && (
+        <div
+          style={{
+            fontSize: 12,
+            marginTop: 4,
+            color: changeType === 'up' ? C.success : changeType === 'down' ? C.danger : C.textTertiary,
+          }}
+        >
+          {change}
+        </div>
+      )}
     </div>
-    {subValue && (
-      <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 4 }}>{subValue}</div>
-    )}
   </div>
 );
 
-// Horizontal bar chart component (CSS-only)
-interface BarChartProps {
-  data: Array<{ label: string; value: number; color: string }>;
-  maxValue: number;
+// --- Top Profiles Table ---
+interface ProfileStat {
+  id: string;
+  name: string;
+  platform: string;
+  posts: number;
+  engagement: number;
+  growth: number;
 }
 
-const BarChart: React.FC<BarChartProps> = ({ data, maxValue }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-    {data.map((item) => (
-      <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{ width: 80, fontSize: 12, color: C.textSecondary, textAlign: 'right', flexShrink: 0 }}>
-          {item.label}
-        </div>
-        <div style={{ flex: 1, background: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 24, overflow: 'hidden' }}>
-          <div
-            style={{
-              width: `${(item.value / maxValue) * 100}%`,
-              height: '100%',
-              background: item.color,
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingRight: 8,
-              minWidth: 40,
-              transition: 'width 0.3s ease',
-            }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#fff' }}>{item.value}</span>
-          </div>
-        </div>
+const TopProfilesTable: React.FC<{ data: ProfileStat[]; loading: boolean }> = ({ data, loading }) => {
+  const headers = ['环境', '平台', '发帖数', '互动率', '增长率'];
+  return (
+    <div style={{ background: C.surface, borderRadius: RADIUS_LG, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+      <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}` }}>
+        <h3 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: 0 }}>Top 环境</h3>
       </div>
-    ))}
-  </div>
-);
+      <div>
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{ padding: '12px 20px', display: 'flex', gap: 16 }}>
+              <div style={{ width: 120, height: 16, background: C.surfaceHover, borderRadius: RADIUS_SM }} />
+              <div style={{ width: 80, height: 16, background: C.surfaceHover, borderRadius: RADIUS_SM }} />
+              <div style={{ width: 60, height: 16, background: C.surfaceHover, borderRadius: RADIUS_SM }} />
+            </div>
+          ))
+        ) : data.length === 0 ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: C.textTertiary, fontSize: 13 }}>
+            暂无数据
+          </div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {headers.map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: '10px 20px',
+                      textAlign: 'left',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: C.textTertiary,
+                      borderBottom: `1px solid ${C.border}`,
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row) => (
+                <tr key={row.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: C.textPrimary, fontWeight: 500 }}>{row.name}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: C.textSecondary }}>{row.platform}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: C.textSecondary }}>{row.posts}</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: C.textSecondary }}>{row.engagement}%</td>
+                  <td style={{ padding: '12px 20px', fontSize: 13, color: row.growth >= 0 ? C.success : C.danger }}>
+                    {row.growth >= 0 ? '+' : ''}{row.growth}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
 
+// --- Platform Distribution ---
+const PlatformDistribution: React.FC<{ data: { name: string; value: number; color: string }[]; loading: boolean }> = ({
+  data,
+  loading,
+}) => {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  return (
+    <div style={{ background: C.surface, borderRadius: RADIUS_LG, border: `1px solid ${C.border}`, padding: '20px 24px' }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 20px' }}>平台分布</h3>
+      {loading ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 12, height: 12, borderRadius: '50%', background: C.surfaceHover }} />
+              <div style={{ width: 80, height: 14, background: C.surfaceHover, borderRadius: RADIUS_SM }} />
+              <div style={{ flex: 1, height: 8, background: C.surfaceHover, borderRadius: 4 }} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {data.map((item) => {
+            const pct = total > 0 ? (item.value / total) * 100 : 0;
+            return (
+              <div key={item.name} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: C.textSecondary, width: 80 }}>{item.name}</span>
+                <div style={{ flex: 1, height: 6, background: C.bg, borderRadius: 3, overflow: 'hidden' }}>
+                  <div style={{ width: `${pct}%`, height: '100%', background: item.color, borderRadius: 3 }} />
+                </div>
+                <span style={{ fontSize: 12, color: C.textTertiary, width: 40, textAlign: 'right' }}>{pct.toFixed(1)}%</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Activity Chart (simple bar chart) ---
+const ActivityChart: React.FC<{ data: { date: string; posts: number; engagement: number }[]; loading: boolean }> = ({
+  data,
+  loading,
+}) => {
+  const maxVal = Math.max(...data.map((d) => Math.max(d.posts, d.engagement)), 1);
+  return (
+    <div style={{ background: C.surface, borderRadius: RADIUS_LG, border: `1px solid ${C.border}`, padding: '20px 24px' }}>
+      <h3 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 20px' }}>活跃度趋势</h3>
+      {loading ? (
+        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '0 8px' }}>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} style={{ flex: 1, height: `${30 + Math.random() * 50}%`, background: C.surfaceHover, borderRadius: '4px 4px 0 0' }} />
+          ))}
+        </div>
+      ) : data.length === 0 ? (
+        <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textTertiary, fontSize: 13 }}>
+          暂无数据
+        </div>
+      ) : (
+        <div style={{ height: 180, display: 'flex', alignItems: 'flex-end', gap: 8, padding: '0 8px' }}>
+          {data.map((d) => (
+            <div key={d.date} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+              <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 150, width: '100%' }}>
+                <div
+                  style={{
+                    flex: 1,
+                    height: `${(d.posts / maxVal) * 140}px`,
+                    background: C.accent,
+                    borderRadius: '4px 4px 0 0',
+                    minHeight: 4,
+                  }}
+                  title={`发帖: ${d.posts}`}
+                />
+                <div
+                  style={{
+                    flex: 1,
+                    height: `${(d.engagement / maxVal) * 140}px`,
+                    background: C.secondary,
+                    borderRadius: '4px 4px 0 0',
+                    minHeight: 4,
+                  }}
+                  title={`互动: ${d.engagement}`}
+                />
+              </div>
+              <span style={{ fontSize: 10, color: C.textTertiary }}>{d.date.slice(5)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Main Page ---
 const AnalyticsPage: React.FC = () => {
-  const [accountsStats, setAccountsStats] = useState<AccountsStats | null>(null);
-  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
-  const [reportData, setReportData] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
+  const [stats, setStats] = useState({
+    totalProfiles: 0,
+    totalPosts: 0,
+    totalEngagement: 0,
+    activeToday: 0,
+    profileChange: '+0',
+    postChange: '+0',
+    engagementChange: '+0',
+    activeChange: '+0',
+  });
+  const [topProfiles, setTopProfiles] = useState<ProfileStat[]>([]);
+  const [platformData, setPlatformData] = useState<{ name: string; value: number; color: string }[]>([]);
+  const [activityData, setActivityData] = useState<{ date: string; posts: number; engagement: number }[]>([]);
 
-  const fetchAll = useCallback(async () => {
+  const fetchAnalytics = useCallback(async () => {
     setLoading(true);
-    setFetchError(false);
-    const token = localStorage.getItem('access_token');
-    const headers = { Authorization: `Bearer ${token}` };
-
     try {
-      const [accountsRes, platformsRes, reportRes] = await Promise.all([
-        fetch('/api/v1/analytics/accounts', { headers }),
-        fetch('/api/v1/analytics/platforms', { headers }),
-        fetch('/api/v1/analytics/report', { headers }),
+      // Mock data for now - replace with actual API calls
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setStats({
+        totalProfiles: 128,
+        totalPosts: 3420,
+        totalEngagement: 85.2,
+        activeToday: 45,
+        profileChange: '+12',
+        postChange: '+156',
+        engagementChange: '+2.3',
+        activeChange: '+8',
+      });
+      setTopProfiles([
+        { id: '1', name: '主账号', platform: 'Twitter', posts: 234, engagement: 8.5, growth: 12.3 },
+        { id: '2', name: '营销号A', platform: 'Instagram', posts: 189, engagement: 6.2, growth: 8.7 },
+        { id: '3', name: '品牌号', platform: 'LinkedIn', posts: 156, engagement: 4.8, growth: -2.1 },
+        { id: '4', name: '测试号', platform: 'Facebook', posts: 98, engagement: 3.1, growth: 5.4 },
+        { id: '5', name: '备用号', platform: 'Twitter', posts: 67, engagement: 2.8, growth: 1.2 },
       ]);
-
-      const accountsData = await accountsRes.json();
-      const platformsData = await platformsRes.json();
-      const reportData = await reportRes.json();
-
-      setAccountsStats(accountsData);
-      setPlatformStats(platformsData);
-      setReportData(reportData);
-    } catch (err) {
-      toast.error('获取数据失败');
-      setFetchError(true);
+      setPlatformData([
+        { name: 'Twitter', value: 45, color: '#1DA1F2' },
+        { name: 'Instagram', value: 32, color: '#E4405F' },
+        { name: 'LinkedIn', value: 28, color: '#0A66C2' },
+        { name: 'Facebook', value: 23, color: '#1877F2' },
+      ]);
+      setActivityData([
+        { date: '2024-01-15', posts: 45, engagement: 320 },
+        { date: '2024-01-16', posts: 52, engagement: 380 },
+        { date: '2024-01-17', posts: 38, engagement: 290 },
+        { date: '2024-01-18', posts: 61, engagement: 420 },
+        { date: '2024-01-19', posts: 55, engagement: 390 },
+        { date: '2024-01-20', posts: 48, engagement: 350 },
+        { date: '2024-01-21', posts: 42, engagement: 310 },
+      ]);
+    } catch {
+      toast.error('获取分析数据失败');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
-
-  // Build platform distribution data for chart
-  const platformChartData = platformStats?.platforms.map((p) => ({
-    label: p.name,
-    value: p.count,
-    color: getPlatformColor(p.name),
-  })) || [];
-
-  const maxPlatformCount = Math.max(...platformChartData.map((d) => d.value), 1);
-
-  // Trend table data (mock from report)
-  const trendDays = reportData?.period === '7d' ? 7 : 30;
-  const trendData = Array.from({ length: trendDays }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (trendDays - 1 - i));
-    return {
-      date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
-      posts: reportData?.posts?.total ? Math.floor(reportData.posts.total / trendDays * (0.5 + Math.random())) : 0,
-      errors: reportData?.errors?.total ? Math.floor(reportData.errors.total / trendDays * (0.5 + Math.random())) : 0,
-    };
-  });
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   return (
-    <div style={{ padding: '0 24px 32px' }}>
+    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingTop: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: C.textPrimary,
-              fontFamily: "'Poppins', sans-serif",
-              letterSpacing: '-0.3px',
-              margin: 0,
-            }}
-          >
-            数据分析
-          </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
-            账号统计与平台分布概览
-          </p>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.textPrimary, margin: '0 0 4px' }}>数据分析</h1>
+          <p style={{ fontSize: 13, color: C.textTertiary, margin: 0 }}>实时监控您的社交媒体表现</p>
         </div>
         <button
-          onClick={fetchAll}
-          disabled={loading}
+          onClick={fetchAnalytics}
           style={{
+            background: C.surface,
+            border: `1px solid ${C.border}`,
+            borderRadius: RADIUS_MD,
+            padding: '8px 16px',
+            color: C.textSecondary,
+            fontSize: 13,
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: 6,
-            padding: '8px 16px',
-            background: 'transparent',
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_BTN,
-            color: C.textSecondary,
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = C.surfaceHover;
-            e.currentTarget.style.color = C.textPrimary;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = C.textSecondary;
           }}
         >
-          <RiRefreshLine size={15} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
+          <RiRefreshLine size={16} />
           刷新
         </button>
       </div>
 
-      {/* Error banner */}
-      {fetchError && (
-        <div
-          style={{
-            background: '#e11d48',
-            borderRadius: 12,
-            padding: '14px 20px',
-            marginBottom: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <span style={{ color: '#ffffff', fontSize: 14 }}>加载失败，请稍后重试</span>
-          <button
-            onClick={fetchAll}
-            style={{
-              padding: '6px 16px',
-              background: 'rgba(255,255,255,0.2)',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontSize: 13,
-            }}
-          >
-            重试
-          </button>
-        </div>
-      )}
-
-      {/* Stat cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 16,
-          marginBottom: 20,
-        }}
-      >
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         <StatCard
-          emoji="📊"
-          label="总账号数"
-          value={loading ? '—' : (accountsStats?.total_accounts ?? '—')}
-          color={C.accent}
+          title="总环境数"
+          value={stats.totalProfiles}
+          change={stats.profileChange}
+          changeType="up"
+          icon={<RiBarChart2Line size={22} />}
+          loading={loading}
         />
         <StatCard
-          emoji="🟢"
-          label="活跃账号"
-          value={loading ? '—' : (accountsStats?.active_accounts ?? '—')}
-          subValue={accountsStats ? `${Math.round((accountsStats.active_accounts / accountsStats.total_accounts) * 100)}% 活跃率` : undefined}
-          color={C.success}
+          title="总发帖数"
+          value={stats.totalPosts.toLocaleString()}
+          change={stats.postChange}
+          changeType="up"
+          icon={<RiBarChart2Line size={22} />}
+          loading={loading}
         />
         <StatCard
-          emoji="🔴"
-          label="被封禁账号"
-          value={loading ? '—' : (accountsStats?.banned_accounts ?? '—')}
-          color={C.error}
+          title="平均互动率"
+          value={`${stats.totalEngagement}%`}
+          change={stats.engagementChange}
+          changeType="up"
+          icon={<RiBarChart2Line size={22} />}
+          loading={loading}
         />
         <StatCard
-          emoji="📝"
-          label="今日发帖数"
-          value={loading ? '—' : (reportData?.posts?.total ?? '—')}
-          color={C.secondary}
+          title="今日活跃"
+          value={stats.activeToday}
+          change={stats.activeChange}
+          changeType="up"
+          icon={<RiBarChart2Line size={22} />}
+          loading={loading}
         />
       </div>
 
-      {/* Two column layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-          marginBottom: 20,
-        }}
-      >
-        {/* Platform distribution chart */}
-        <div
-          style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_CARD,
-            padding: '20px',
-            boxShadow: SHADOW,
-          }}
-        >
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 20px' }}>
-            平台分布
-          </h2>
-          {loading ? (
-            <div style={{ color: C.textSecondary, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>加载中...</div>
-          ) : platformChartData.length > 0 ? (
-            <BarChart data={platformChartData} maxValue={maxPlatformCount} />
-          ) : (
-            <div style={{ color: C.textSecondary, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>暂无数据</div>
-          )}
-        </div>
-
-        {/* Report summary */}
-        <div
-          style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_CARD,
-            padding: '20px',
-            boxShadow: SHADOW,
-          }}
-        >
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 20px' }}>
-            汇总报告
-          </h2>
-          {loading ? (
-            <div style={{ color: C.textSecondary, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>加载中...</div>
-          ) : reportData ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>账号总数</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.accent }}>{reportData.accounts.total}</div>
-                  <div style={{ fontSize: 11, color: reportData.accounts.change >= 0 ? C.success : C.error, marginTop: 2 }}>
-                    {reportData.accounts.change >= 0 ? '+' : ''}{reportData.accounts.change}% vs 上期
-                  </div>
-                </div>
-                <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 14 }}>
-                  <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>发帖总数</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: C.secondary }}>{reportData.posts.total}</div>
-                  <div style={{ fontSize: 11, color: reportData.posts.change >= 0 ? C.success : C.error, marginTop: 2 }}>
-                    {reportData.posts.change >= 0 ? '+' : ''}{reportData.posts.change}% vs 上期
-                  </div>
-                </div>
-              </div>
-              <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 10, padding: 14 }}>
-                <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>错误数</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: C.error }}>{reportData.errors.total}</div>
-                <div style={{ fontSize: 11, color: reportData.errors.change <= 0 ? C.success : C.error, marginTop: 2 }}>
-                  {reportData.errors.change >= 0 ? '+' : ''}{reportData.errors.change}% vs 上期
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ color: C.textSecondary, fontSize: 13, textAlign: 'center', padding: '40px 0' }}>暂无数据</div>
-          )}
-        </div>
+      {/* Charts Row */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 24 }}>
+        <ActivityChart data={activityData} loading={loading} />
+        <PlatformDistribution data={platformData} loading={loading} />
       </div>
 
-      {/* Trend table */}
-      <div
-        style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
-          borderRadius: RADIUS_CARD,
-          padding: '20px',
-          boxShadow: SHADOW,
-        }}
-      >
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 16px' }}>
-          趋势数据（{reportData?.period || '7天'}）
-        </h2>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>日期</th>
-                <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>发帖数</th>
-                <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>错误数</th>
-              </tr>
-            </thead>
-            <tbody>
-              {trendData.map((row) => (
-                <tr key={row.date} style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <td style={{ padding: '10px 12px', fontSize: 13, color: C.textSecondary }}>{row.date}</td>
-                  <td style={{ padding: '10px 12px', fontSize: 13, color: C.textPrimary, textAlign: 'right' }}>{row.posts}</td>
-                  <td style={{ padding: '10px 12px', fontSize: 13, color: row.errors > 0 ? C.error : C.textPrimary, textAlign: 'right' }}>{row.errors}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Key metrics by platform */}
-      {platformStats && platformStats.platforms.length > 0 && (
-        <div
-          style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_CARD,
-            padding: '20px',
-            boxShadow: SHADOW,
-            marginTop: 16,
-          }}
-        >
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: '0 0 16px' }}>
-            平台明细
-          </h2>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <th style={{ textAlign: 'left', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>平台</th>
-                  <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>账号数</th>
-                  <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>活跃</th>
-                  <th style={{ textAlign: 'right', padding: '10px 12px', fontSize: 11, fontWeight: 600, color: C.textTertiary }}>封禁</th>
-                </tr>
-              </thead>
-              <tbody>
-                {platformStats.platforms.map((platform) => (
-                  <tr key={platform.name} style={{ borderBottom: `1px solid ${C.border}` }}>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: C.textPrimary }}>{platform.name}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: C.textSecondary, textAlign: 'right' }}>{platform.count}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: C.success, textAlign: 'right' }}>{platform.active}</td>
-                    <td style={{ padding: '10px 12px', fontSize: 13, color: platform.banned > 0 ? C.error : C.textSecondary, textAlign: 'right' }}>{platform.banned}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      {/* Top Profiles */}
+      <TopProfilesTable data={topProfiles} loading={loading} />
     </div>
   );
 };

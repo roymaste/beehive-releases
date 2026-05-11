@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { tenantsAPI, Tenant } from '../api/client';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RiAddLine, RiDeleteBinLine, RiEditLine, RiRefreshLine } from 'react-icons/ri';
 
 const TenantsPage: React.FC = () => {
@@ -50,15 +51,22 @@ const TenantsPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`确定要删除住户「${name}」吗？此操作将级联删除所有关联数据，不可恢复。`)) return;
-    try {
-      await tenantsAPI.delete(id);
-      toast.success('住户已删除');
-      fetchTenants();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除住户',
+      description: `确定要删除住户「${name}」吗？此操作将级联删除所有关联数据，不可恢复。`,
+      onConfirm: async () => {
+        try {
+          await tenantsAPI.delete(id);
+          toast.success('住户已删除');
+          fetchTenants();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const statusBadge = (status: string) => {
@@ -97,7 +105,7 @@ const TenantsPage: React.FC = () => {
 
       {/* Table */}
       <div className="apple-card overflow-x-auto">
-        <table className="apple-table">
+        <table className="table">
           <thead>
             <tr>
               <th>住户名称</th>
@@ -147,7 +155,7 @@ const TenantsPage: React.FC = () => {
                       </Link>
                       <button
                         onClick={() => handleDelete(t.id, t.name)}
-                        className="apple-btn apple-btn-danger flex items-center gap-1"
+                        className="apple-btn btn-danger flex items-center gap-1"
                         style={{ padding: '4px 10px', fontSize: '12px' }}
                       >
                         <RiDeleteBinLine size={12} />
@@ -164,14 +172,14 @@ const TenantsPage: React.FC = () => {
 
       {/* Create Modal */}
       {showCreate && (
-        <div className="apple-modal-overlay" onClick={() => setShowCreate(false)}>
+        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="apple-modal relative" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-bold mb-4" style={{ color: '#1c1917' }}>创建住户</h2>
             <form onSubmit={handleCreate}>
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>住户名称 *</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="输入住户名称"
@@ -181,7 +189,7 @@ const TenantsPage: React.FC = () => {
               <div className="mb-4">
                 <label className="block text-sm mb-2" style={{ color: '#1c1917' }}>联系邮箱 *</label>
                 <input
-                  className="apple-input"
+                  className="input"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -205,8 +213,8 @@ const TenantsPage: React.FC = () => {
                 </select>
               </div>
               <div className="flex gap-3 justify-end">
-                <button type="button" onClick={() => setShowCreate(false)} className="apple-btn">取消</button>
-                <button type="submit" className="apple-btn" disabled={submitting}>
+                <button type="button" onClick={() => setShowCreate(false)} className="btn">取消</button>
+                <button type="submit" className="btn" disabled={submitting}>
                   {submitting ? '创建中...' : '确认创建'}
                 </button>
               </div>
@@ -214,6 +222,7 @@ const TenantsPage: React.FC = () => {
           </div>
         </div>
       )}
+      {dialog}
     </div>
   );
 };

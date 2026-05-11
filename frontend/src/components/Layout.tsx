@@ -18,6 +18,10 @@ import {
   RiFoldersLine,
   RiBarChart2Line,
   RiHeartPulseLine,
+  RiFileListLine,
+  RiFlashlightFill,
+  RiChromeLine,
+  RiShieldLine,
 } from 'react-icons/ri';
 
 // ── Beehive Design System Dark Palette ──
@@ -38,8 +42,10 @@ const C = {
 const menuItems = [
   { to: '/profiles', label: '环境管理', Icon: RiWindowLine },
   { to: '/groups', label: '环境分组', Icon: RiFoldersLine },
+  { to: '/kernels', label: '浏览器内核', Icon: RiChromeLine },
   { to: '/proxies', label: '代理管理', Icon: RiGlobalLine },
   { to: '/accounts', label: '账号管理', Icon: RiUserStarLine },
+  { to: '/ai-workflow', label: 'AI 工作流', Icon: RiFlashlightFill },
   { to: '/automations', label: '自动化', Icon: RiRobot2Line },
   { to: '/analytics', label: '数据分析', Icon: RiBarChart2Line },
   { to: '/monitor', label: '账号监控', Icon: RiHeartPulseLine },
@@ -239,6 +245,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 label="客户管理"
                 Icon={RiTeamLine}
                 active={location.pathname.startsWith('/admin/clients')}
+              />
+              <NavItem
+                to="/admin/logs"
+                label="操作日志"
+                Icon={RiFileListLine}
+                active={location.pathname.startsWith('/admin/logs')}
+              />
+              <NavItem
+                to="/admin/content-policy"
+                label="内容安全"
+                Icon={RiShieldLine}
+                active={location.pathname.startsWith('/admin/content-policy')}
               />
             </>
           )}

@@ -6,8 +6,21 @@
 // 3. 用户在前端点击「启动」→ 本地弹出伪装浏览器窗口
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+use std::io::Write;
+
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+#[cfg(windows)]
+fn run_hidden(program: &str) -> Command {
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
 use std::sync::Mutex;
 use std::time::Duration;
 
@@ -28,7 +41,7 @@ async fn register_executor(api_base: &str) -> Result<(String, String), String> {
         "cpu_cores": num_cpus(),
     });
     let resp = client
-        .post(format!("{}/api/v1/executors/register", api_base))
+        .post(format!("{}/api/v1/executors", api_base))
         .json(&body)
         .send()
         .await
@@ -208,14 +221,18 @@ fn is_process_alive(pid: u32) -> bool {
         let result = unsafe { libc::kill(pid as i32, 0) };
         result == 0
     }
-    #[cfg(not(unix))]
+    #[cfg(windows)]
     {
-        std::process::Command::new("tasklist")
+        run_hidden("tasklist")
             .arg("/FI")
             .arg(format!("PID eq {}", pid))
             .output()
             .map(|o| o.status.success())
             .unwrap_or(false)
+    }
+    #[cfg(not(any(unix, windows)))]
+    {
+        false
     }
 }
 
@@ -344,8 +361,8 @@ fn stop_cloak(profile_id: String, state: tauri::State<CloakState>) -> Result<Str
                 unsafe {
                     libc::kill(pid as i32, libc::SIGTERM);
                 }
-                #[cfg(not(unix))]
-                let _ = Command::new("taskkill")
+                #[cfg(windows)]
+                let _ = run_hidden("taskkill")
                     .args(&["/PID", &pid.to_string(), "/F"])
                     .output();
             }
@@ -612,8 +629,74 @@ fn check_cloak_binary_setup(app: &tauri::AppHandle) {
 
 // ── 应用入口 ───────────────────────────────────────────────
 
+fn get_log_dir() -> PathBuf {
+    let base = if cfg!(target_os = "windows") {
+        std::env::var("LOCALAPPDATA")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| std::env::temp_dir())
+    } else {
+        std::env::var("HOME")
+            .map(|h| PathBuf::from(h).join(".local/share"))
+            .unwrap_or_else(|_| std::env::temp_dir())
+    };
+    base.join("com.beehive.browser").join("logs")
+}
+
+fn init_logging() {
+    let log_dir = get_log_dir();
+    let _ = std::fs::create_dir_all(&log_dir);
+    let log_path = log_dir.join("beehive.log");
+
+    // 文件 appender：5MB 滚动，保留 3 个备份
+    let file_appender = log4rs::append::rolling_file::RollingFileAppender::builder()
+        .encoder(Box::new(log4rs::encode::pattern::PatternEncoder::new(
+            "{d(%Y-%m-%d %H:%M:%S)} [{l}] {f}:{L} - {m}\n"
+        )))
+        .build(
+            log_path.to_string_lossy().to_string(),
+            Box::new(log4rs::append::rolling_file::policy::compound::CompoundPolicy::new(
+                Box::new(log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger::new(5_000_000)),  // 5MB
+                Box::new(log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWindowRoller::builder()
+                    .build("beehive.log.{{}}.bak", 3)
+                    .expect("roll pattern")),
+            )),
+        ).expect("file appender");
+
+    let config = log4rs::Config::builder()
+        .appender(log4rs::config::Appender::builder().build("file", Box::new(file_appender)))
+        .build(log4rs::config::Root::builder().appender("file").build(log::LevelFilter::Info))
+        .expect("log4rs config");
+
+    log4rs::init_config(config).expect("log4rs init");
+
+    // panic hook：未捕获的 panic 也记入日志
+    std::panic::set_hook(Box::new(|panic_info| {
+        let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            "未知 panic".to_string()
+        };
+        let location = panic_info.location()
+            .map(|l| format!("{}:{}", l.file(), l.line()))
+            .unwrap_or_else(|| "?".to_string());
+        log::error!("=== PANIC === {} at {}", msg, location);
+    }));
+
+    log::info!("╔══════════════════════════════════════╗");
+    log::info!("║     蜂巢浏览器 Beehive Browser       ║");
+    log::info!("╚══════════════════════════════════════╝");
+    log::info!("日志目录: {}", log_dir.display());
+    log::info!("版本: {}", env!("CARGO_PKG_VERSION"));
+    log::info!("平台: {} {}", std::env::consts::OS, std::env::consts::ARCH);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    init_logging();
+
+    log::info!("启动单实例控制...");
     // ── 单实例控制：旧进程直接kill掉 ──────────────────────
     let lock_path = {
         let base = dirs::runtime_dir()
@@ -625,7 +708,7 @@ pub fn run() {
         if let Ok(pid_str) = std::fs::read_to_string(&lock_path) {
             if let Ok(pid) = pid_str.trim().parse::<i32>() {
                 if is_process_alive(pid as u32) {
-                    eprintln!("蜂巢浏览器旧实例(PID={})还活着，杀掉重新启动", pid);
+                    log::info!("旧实例(PID={})还活着，杀掉重新启动", pid);
                     #[cfg(unix)]
                     {
                         // Unix (Linux/macOS)
@@ -646,12 +729,9 @@ pub fn run() {
                     #[cfg(windows)]
                     {
                         // Windows：/T = 杀进程树（含所有子进程）
-                        let _ = std::process::Command::new("taskkill")
+                        // 注意：不用 /IM 参数 — 它会杀掉当前进程自己！
+                        let _ = run_hidden("taskkill")
                             .args(&["/F", "/T", "/PID", &pid.to_string()])
-                            .output();
-                        // 补刀：杀所有同名进程（排除自己）
-                        let _ = std::process::Command::new("taskkill")
-                            .args(&["/F", "/IM", "beehive-browser.exe"])
                             .output();
                     }
                     std::thread::sleep(std::time::Duration::from_millis(500));
@@ -683,13 +763,13 @@ pub fn run() {
             extract_core,
         ])
         .setup(|app| {
-            // TODO: re-enable after fixing updater endpoint (needs https + valid sig)
-            // #[cfg(desktop)]
-            // app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+            // Auto-update 启动时检查更新
+            #[cfg(desktop)]
+            let _ = app.handle().plugin(tauri_plugin_updater::Builder::new().build());
 
             // 后台任务：注册+心跳+轮询（基于 tauri async runtime）
             let api_base = std::env::var("BEEHIVE_API_URL")
-                .unwrap_or_else(|_| "http://localhost:8002".to_string());
+                .unwrap_or_else(|_| "http://107.173.70.124:8000".to_string());
             let handle = app.handle().clone();
 
             tauri::async_runtime::spawn(async move {
@@ -881,15 +961,11 @@ pub fn run() {
                 }
             });
 
-            // 创建主窗口，根据 CloakBrowser 安装状态加载不同页面
-            let start_url = match find_cloak_binary() {
-                Ok(_) => "index.html",
-                Err(_) => "onboarding.html",
-            };
+            // 创建主窗口 — 始终指向 index.html
             let window = tauri::WebviewWindowBuilder::new(
                 app,
                 "beehive-main",
-                tauri::WebviewUrl::App(start_url.into()),
+                tauri::WebviewUrl::App("index.html".into()),
             )
             .title("蜂巢智能体")
             .inner_size(1280.0, 800.0)
@@ -918,12 +994,8 @@ pub fn run() {
                         #[cfg(windows)]
                         {
                             // Windows：/T 杀进程树（所有子进程）
-                            let _ = std::process::Command::new("taskkill")
+                            let _ = run_hidden("taskkill")
                                 .args(&["/F", "/T", "/PID", &my_pid.to_string()])
-                                .output();
-                            // 补刀：所有 beehive-browser.exe 实例
-                            let _ = std::process::Command::new("taskkill")
-                                .args(&["/F", "/IM", "beehive-browser.exe"])
                                 .output();
                         }
                         // 3) 删除锁文件

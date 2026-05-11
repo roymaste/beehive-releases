@@ -63,7 +63,7 @@ const PricingPage: React.FC = () => {
   // Check if user is logged in
   const isLoggedIn = !!localStorage.getItem('access_token');
 
-  const handleSubscribe = (planId: number) => {
+  const handleSubscribe = (_planId: number) => {
     if (!isLoggedIn) {
       navigate('/register');
       return;

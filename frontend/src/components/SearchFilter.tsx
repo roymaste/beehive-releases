@@ -1,5 +1,5 @@
 import React from 'react';
-import { RiSearchLine, RiFilter3Line } from 'react-icons/ri';
+import { RiSearchLine } from 'react-icons/ri';
 
 interface FilterTab {
   key: string;
@@ -37,7 +37,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             <button
               key={tab.key}
               onClick={() => onTabChange(tab.key)}
-              className="apple-tab"
+              className="tab"
               style={{
                 ...(activeTab === tab.key ? {
                   color: '#e11d48',
@@ -76,7 +76,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
           />
           <input
             type="text"
-            className="apple-input"
+            className="input px-3 py-2 w-60"
             placeholder={searchPlaceholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}

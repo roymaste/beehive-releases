@@ -92,12 +92,12 @@ const TenantDetailPage: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold m-0" style={{ color: '#1c1917' }}>基本信息</h2>
           {!editing ? (
-            <button onClick={() => setEditing(true)} className="apple-btn" style={{ padding: '4px 14px', fontSize: '12px' }}>
+            <button onClick={() => setEditing(true)} className="btn" style={{ padding: '4px 14px', fontSize: '12px' }}>
               编辑
             </button>
           ) : (
             <div className="flex gap-2">
-              <button onClick={() => { setEditing(false); setForm({ name: tenant.name, email: tenant.email, plan_type: tenant.plan_type, status: tenant.status }); }} className="apple-btn" style={{ padding: '4px 14px', fontSize: '12px' }}>
+              <button onClick={() => { setEditing(false); setForm({ name: tenant.name, email: tenant.email, plan_type: tenant.plan_type, status: tenant.status }); }} className="btn" style={{ padding: '4px 14px', fontSize: '12px' }}>
                 取消
               </button>
               <button onClick={handleSave} className="apple-btn flex items-center gap-1" style={{ padding: '4px 14px', fontSize: '12px' }} disabled={saving}>
@@ -112,7 +112,7 @@ const TenantDetailPage: React.FC = () => {
           <div>
             <label className="block text-xs mb-1" style={{ color: '#1c1917' }}>名称</label>
             {editing ? (
-              <input className="apple-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             ) : (
               <p className="text-sm" style={{ color: '#1c1917' }}>{tenant.name}</p>
             )}
@@ -120,7 +120,7 @@ const TenantDetailPage: React.FC = () => {
           <div>
             <label className="block text-xs mb-1" style={{ color: '#1c1917' }}>邮箱</label>
             {editing ? (
-              <input className="apple-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <input className="input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             ) : (
               <p className="text-sm" style={{ color: '#1c1917' }}>{tenant.email}</p>
             )}
@@ -156,7 +156,7 @@ const TenantDetailPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="apple-card">
+      <div className="card">
         <div className="flex border-b" style={{ borderColor: '#e7e5e4' }}>
           {[
             { label: '平台账号', path: `/tenants/${id}/platforms`, active: isPlatforms },

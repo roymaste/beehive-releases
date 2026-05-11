@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import {
   RiBarChart2Line,
   RiCheckLine,
-  RiPlayLine,
   RiUserLine,
   RiAddLine,
   RiEditLine,
@@ -320,8 +319,7 @@ const RecordRow: React.FC<RecordRowProps> = ({ platform, name, content, status, 
 const TenantDashboard: React.FC<{
   stats: DashboardStats;
   loading: boolean;
-  fetchStats: () => void;
-}> = ({ stats, loading, fetchStats }) => {
+}> = ({ stats, loading }) => {
   const navigate = useNavigate();
 
   const statCards = [
@@ -567,8 +565,7 @@ const TenantDashboard: React.FC<{
 const AdminDashboard: React.FC<{
   stats: DashboardStats;
   loading: boolean;
-  fetchStats: () => void;
-}> = ({ stats, loading, fetchStats }) => {
+}> = ({ stats, loading }) => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<AdminClientResponse[]>([]);
   const [clientsTotal, setClientsTotal] = useState(0);
@@ -827,7 +824,6 @@ const AdminDashboard: React.FC<{
 // =====================
 const DashboardPage: React.FC = () => {
   const { isAdmin } = useAuth();
-  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     total_envs: 0,
     running_envs: 0,
@@ -914,9 +910,9 @@ const DashboardPage: React.FC = () => {
 
       {/* Role-specific content */}
       {isAdmin ? (
-        <AdminDashboard stats={stats} loading={loading} fetchStats={fetchStats} />
+        <AdminDashboard stats={stats} loading={loading} />
       ) : (
-        <TenantDashboard stats={stats} loading={loading} fetchStats={fetchStats} />
+        <TenantDashboard stats={stats} loading={loading} />
       )}
     </div>
   );

@@ -2,8 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   RiHeartPulseLine,
   RiRefreshLine,
-  RiCheckLine,
-  RiCloseLine,
   RiSearchLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
@@ -25,7 +23,6 @@ const C = {
 };
 
 const RADIUS_CARD = 16;
-const RADIUS_SM = 10;
 const RADIUS_BTN = 8;
 const SHADOW = '0 8px 32px rgba(0,0,0,0.4)';
 
@@ -170,16 +167,7 @@ const MonitorPage: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingTop: 24 }}>
         <div>
-          <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: C.textPrimary,
-              fontFamily: "'Poppins', sans-serif",
-              letterSpacing: '-0.3px',
-              margin: 0,
-            }}
-          >
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             账号监控
           </h1>
           <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
@@ -270,18 +258,7 @@ const MonitorPage: React.FC = () => {
               value={checkAccountId}
               onChange={(e) => setCheckAccountId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCheckOne()}
-              style={{
-                padding: '10px 14px',
-                background: C.bg,
-                border: `1px solid ${C.border}`,
-                borderRadius: RADIUS_BTN,
-                color: C.textPrimary,
-                fontSize: 13,
-                width: 200,
-                outline: 'none',
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = C.secondary)}
-              onBlur={(e) => (e.currentTarget.style.borderColor = C.border)}
+              className="px-3 py-2 bg-background border border-border rounded-md text-sm text-foreground w-[200px] outline-none focus:border-primary"
             />
             <button
               onClick={handleCheckOne}

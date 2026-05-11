@@ -38,6 +38,7 @@ export interface Profile {
   account_username?: string;
   account_platform?: string;
   fingerprint?: ProfileFingerprint;
+  kernel_version?: string | null;
 }
 
 export interface ProfileResponse {
@@ -57,6 +58,7 @@ export interface ProfileCreate {
   proxy_id?: string;
   tags?: string[];
   notes?: string;
+  kernel_version?: string;
   fingerprint?: {
     platform: string;
     timezone?: string;
@@ -82,6 +84,7 @@ export interface ProfileUpdate {
   runtime_status?: string;
   tags?: string[];
   notes?: string;
+  kernel_version?: string;
 }
 
 export interface ProfileBatchAction {

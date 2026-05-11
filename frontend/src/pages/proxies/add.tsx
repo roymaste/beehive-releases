@@ -9,6 +9,7 @@ const PROXY_TYPES = ['HTTP', 'HTTPS', 'SOCKS5'];
 const AddProxyPage: React.FC = () => {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ host?: string; port?: string }>({});
   const [form, setForm] = useState({
     protocol: 'HTTP',
     host: '',
@@ -20,8 +21,11 @@ const AddProxyPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.host.trim() || !form.port.trim()) {
-      toast.error('请填写代理主机和端口');
+    const newErrors: typeof errors = {};
+    if (!form.host.trim()) newErrors.host = '请填写代理主机';
+    if (!form.port.trim()) newErrors.port = '请填写代理端口';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
     setSubmitting(true);
@@ -60,7 +64,7 @@ const AddProxyPage: React.FC = () => {
         配置一个新的代理服务器
       </p>
 
-      <div className="apple-card" style={{ padding: 28 }}>
+      <div className="card" style={{ padding: 28 }}>
         <form onSubmit={handleSubmit}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
@@ -68,7 +72,7 @@ const AddProxyPage: React.FC = () => {
                 代理名称 / 备注
               </label>
               <input
-                className="apple-input"
+                className="input"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="例如：美国住宅代理-01"
@@ -81,7 +85,7 @@ const AddProxyPage: React.FC = () => {
                   类型
                 </label>
                 <select
-                  className="apple-select"
+                  className="select"
                   value={form.protocol}
                   onChange={(e) => setForm({ ...form, protocol: e.target.value })}
                   style={{ width: '100%' }}
@@ -96,11 +100,12 @@ const AddProxyPage: React.FC = () => {
                   主机 *
                 </label>
                 <input
-                  className="apple-input"
+                  className={`input ${errors.host ? 'border-red-500' : ''}`}
                   value={form.host}
-                  onChange={(e) => setForm({ ...form, host: e.target.value })}
+                  onChange={(e) => { setForm({ ...form, host: e.target.value }); if (errors.host) setErrors((prev) => ({ ...prev, host: undefined })); }}
                   placeholder="192.168.1.1"
                 />
+                {errors.host && <p className="text-sm text-destructive mt-1">{errors.host}</p>}
               </div>
             </div>
 
@@ -110,18 +115,19 @@ const AddProxyPage: React.FC = () => {
                   端口 *
                 </label>
                 <input
-                  className="apple-input"
+                  className={`input ${errors.port ? 'border-red-500' : ''}`}
                   value={form.port}
-                  onChange={(e) => setForm({ ...form, port: e.target.value })}
+                  onChange={(e) => { setForm({ ...form, port: e.target.value }); if (errors.port) setErrors((prev) => ({ ...prev, port: undefined })); }}
                   placeholder="8080"
                 />
+                {errors.port && <p className="text-sm text-destructive mt-1">{errors.port}</p>}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1c1917', marginBottom: 6 }}>
                   用户名
                 </label>
                 <input
-                  className="apple-input"
+                  className="input"
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   placeholder="选填"
@@ -135,7 +141,7 @@ const AddProxyPage: React.FC = () => {
               </label>
               <input
                 type="password"
-                className="apple-input"
+                className="input"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="选填"
@@ -146,13 +152,13 @@ const AddProxyPage: React.FC = () => {
           <div style={{ marginTop: 28, display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
             <button
               type="button"
-              className="apple-btn"
+              className="btn"
               onClick={() => navigate('/proxies')}
               style={{ background: '#fafaf9', color: '#1c1917' }}
             >
               取消
             </button>
-            <button type="submit" className="apple-btn" disabled={submitting}>
+            <button type="submit" className="btn" disabled={submitting}>
               <RiAddLine size={16} />
               {submitting ? '添加中...' : '添加代理'}
             </button>

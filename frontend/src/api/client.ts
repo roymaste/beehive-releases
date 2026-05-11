@@ -4,10 +4,11 @@ import axios from 'axios';
 // Tauri 下相对路径指向 tauri://localhost，API 请求会失败
 // 所以 desktop 模式下强制指向 VPS 后端
 const DESKTOP_MODE = typeof window !== 'undefined' && (
-  window.__TAURI__ || window.__TAURI_INTERNALS__
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__TAURI__ || (window as any).__TAURI_INTERNALS__
 );
 const API_BASE = DESKTOP_MODE
-  ? 'http://YOUR_VPS_IP:8000/api/v1'
+  ? 'http://107.173.70.124:8000/api/v1'
   : '/api/v1';
 
 const apiClient = axios.create({
@@ -258,6 +259,20 @@ export interface TaskSubmit {
   params?: Record<string, unknown>;
 }
 
+export interface ContentGenerateRequest {
+  topic: string;
+  platform: string;
+  style: string;
+}
+
+export interface ContentGenerateResponse {
+  content: string;
+  platform: string;
+  style: string;
+  word_count: number;
+  tags: string[];
+}
+
 // --- Dashboard (tenant-level) ---
 export interface DashboardStats {
   total_envs: number;
@@ -426,6 +441,74 @@ export const adminAPI = {
     apiClient.get<AdminDashboardStats>('/admin/dashboard'),
   listClients: (skip = 0, limit = 50) =>
     apiClient.get<{ clients: AdminClientResponse[]; total: number }>('/admin/clients', { params: { skip, limit } }),
+};
+
+// --- Agent Profile ---
+export interface AgentProfile {
+  id: string;
+  name: string;
+  writing_style?: string;
+  tone?: string;
+  knowledge_base: {
+    domains?: string[];
+    keywords?: string[];
+  };
+  custom_instructions?: string;
+}
+
+export interface AgentProfileUpdate {
+  name?: string;
+  writing_style?: string;
+  tone?: string;
+  knowledge_base?: {
+    domains?: string[];
+    keywords?: string[];
+  };
+  custom_instructions?: string;
+}
+
+export const agentProfileAPI = {
+  get: () => apiClient.get<AgentProfile>('/agent/profile'),
+  update: (data: AgentProfileUpdate) => apiClient.put<AgentProfile>('/agent/profile', data),
+};
+
+// --- Script Templates API ---
+export interface ScriptTemplate {
+  id: string;
+  name: string;
+  platform: string;
+  description: string;
+  steps: ScriptTemplateStep[];
+}
+
+export interface ScriptTemplateStep {
+  action: string;
+  params: Record<string, unknown>;
+  then_steps?: ScriptTemplateStep[];
+  else_steps?: ScriptTemplateStep[];
+  for_each_steps?: ScriptTemplateStep[];
+}
+
+export const scriptTemplatesAPI = {
+  list: () => apiClient.get<{ templates: ScriptTemplate[] }>('/script-templates'),
+};
+
+// --- AI Script Generation API ---
+export interface GenerateScriptRequest {
+  platform: string;
+  goal: string;
+}
+
+export interface GenerateScriptResponse {
+  steps: ScriptTemplateStep[];
+  platform: string;
+  goal: string;
+  model: string;
+}
+
+export const aiScriptAPI = {
+  generateScript: (data: GenerateScriptRequest) =>
+    apiClient.post<GenerateScriptResponse>('/ai/generate-script', data),
 };
 
 // --- Dashboard (composite from multiple endpoints) ---

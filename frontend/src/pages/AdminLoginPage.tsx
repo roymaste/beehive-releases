@@ -4,6 +4,17 @@ import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api/client';
 import toast from 'react-hot-toast';
 
+// UX: Design System colors — centralized to avoid hard-coded hex drift
+const C = {
+  bg: '#121212',
+  surface: '#1e1e1e',
+  textSecondary: '#9e9e9e',
+  textTertiary: '#757575',
+  accent: '#FFC107',
+  secondary: '#1976D2',
+  border: 'rgba(255,255,255,0.06)',
+};
+
 const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -71,7 +82,7 @@ const AdminLoginPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="border-t mb-6" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+        <div className="border-t mb-6" style={{ borderColor: C.border }} />
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -80,7 +91,7 @@ const AdminLoginPage: React.FC = () => {
             </label>
             <input
               type="text"
-              className="apple-input"
+              className="input"
               value={username}
               onChange={(e) => { setUsername(e.target.value); setPwdSent(false); }}
               placeholder="输入管理员账号"
@@ -94,7 +105,7 @@ const AdminLoginPage: React.FC = () => {
             </label>
             <input
               type="password"
-              className="apple-input"
+              className="input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="输入密码"
@@ -115,7 +126,8 @@ const AdminLoginPage: React.FC = () => {
               type="submit"
               className="apple-btn flex-1 py-3 text-base"
               disabled={loading}
-              style={loading ? { opacity: 0.7 } : {}}
+              // UX: loading state must show both opacity reduction and not-allowed cursor
+              style={loading ? { opacity: 0.7, cursor: 'not-allowed' } : {}}
             >
               {loading ? '验证中...' : '登录后台'}
             </button>
@@ -124,11 +136,12 @@ const AdminLoginPage: React.FC = () => {
               className="apple-btn py-3 text-base"
               disabled={sendingPwd}
               onClick={handleGetPassword}
+              // UX: use C.secondary instead of hard-coded #1976D2 for color consistency
               style={{
                 flex: '0 0 auto',
                 background: 'transparent',
-                color: '#1976D2',
-                border: '1px solid #1976D2',
+                color: C.secondary,
+                border: `1px solid ${C.secondary}`,
                 padding: '12px 16px',
                 whiteSpace: 'nowrap',
                 cursor: sendingPwd ? 'not-allowed' : 'pointer',
@@ -141,7 +154,7 @@ const AdminLoginPage: React.FC = () => {
         </form>
 
         <div className="mt-6 text-center">
-          <p style={{ color: '#757575', fontSize: '11px' }}>
+          <p style={{ color: C.textTertiary, fontSize: '11px' }}>
             默认账号 admin · 忘记密码可点「获取密码」
           </p>
         </div>

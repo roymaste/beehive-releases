@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiAddLine,
   RiRefreshLine,
@@ -11,7 +12,6 @@ import {
   RiLayoutGridLine,
   RiListCheck2,
   RiSettings3Line,
-  RiFileCopyLine,
   RiLoader4Line,
   RiFolderLine,
   RiUploadLine,
@@ -40,8 +40,8 @@ const StatusDot: React.FC<{ status: string; error?: string }> = ({ status, error
   if (status === 'loading') {
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        <RiLoader4Line size={14} className="spin" style={{ color: '#78716c' }} />
-        <span style={{ fontSize: 13, color: '#78716c' }}>加载中</span>
+        <RiLoader4Line size={14} className="spin" style={{ color: 'var(--text-tertiary)' }} />
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>加载中</span>
       </span>
     );
   }
@@ -53,8 +53,8 @@ const StatusDot: React.FC<{ status: string; error?: string }> = ({ status, error
         onMouseEnter={() => setShowError(true)}
         onMouseLeave={() => setShowError(false)}
       >
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e11d48', display: 'inline-block' }} />
-        <span style={{ fontSize: 13, color: '#e11d48' }}>错误</span>
+        <span className="status-dot" style={{ background: 'var(--error)' }} />
+        <span style={{ fontSize: 13, color: 'var(--error)' }}>错误</span>
         {showError && error && (
           <span style={{
             position: 'absolute', top: '100%', left: 0, zIndex: 100,
@@ -72,16 +72,16 @@ const StatusDot: React.FC<{ status: string; error?: string }> = ({ status, error
   if (status === 'running' || status === 'active') {
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
-        <span style={{ fontSize: 13, color: '#16a34a' }}>运行中</span>
+        <span className="status-dot" style={{ background: 'var(--success)' }} />
+        <span style={{ fontSize: 13, color: 'var(--success)' }}>运行中</span>
       </span>
     );
   }
 
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#78716c', display: 'inline-block' }} />
-      <span style={{ fontSize: 13, color: '#78716c' }}>已停止</span>
+      <span className="status-dot" style={{ background: 'var(--gray-500)' }} />
+      <span style={{ fontSize: 13, color: 'var(--gray-500)' }}>已停止</span>
     </span>
   );
 };
@@ -302,12 +302,22 @@ const ProfilesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('确定删除该环境？')) return;
-    profilesAPI.delete(id).then(() => {
-      toast.success('已删除');
-      fetchProfiles();
-    }).catch(() => toast.error('删除失败'));
+  const { confirm, dialog } = useConfirmDialog();
+
+  const handleDelete = async (id: string) => {
+    confirm({
+      title: '删除环境',
+      description: '确定删除该环境？',
+      onConfirm: async () => {
+        try {
+          await profilesAPI.delete(id);
+          toast.success('已删除');
+          fetchProfiles();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   // Get effective status for a profile
@@ -321,12 +331,12 @@ const ProfilesPage: React.FC = () => {
       render: (row) => (
         <div>
           <div
-            style={{ color: '#e11d48', fontWeight: 500, cursor: 'pointer' }}
+            style={{ color: 'var(--error)', fontWeight: 500, cursor: 'pointer' }}
             onClick={() => navigate(`/profiles/${row.id}`)}
           >
             {row.name}
           </div>
-          <div style={{ fontSize: 12, color: '#78716c', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
             ID: {row.id.slice(0, 8)}...
           </div>
         </div>
@@ -336,18 +346,18 @@ const ProfilesPage: React.FC = () => {
       render: (row) => (
         <div>
           <div style={{ fontWeight: 500 }}>{row.account_username}</div>
-          <div style={{ fontSize: 12, color: '#78716c' }}>{row.account_platform || '—'}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{row.account_platform || '—'}</div>
         </div>
       ),
     },
     { key: 'proxy_ip', title: '代理IP', width: '160px',
       render: (row) => (
         <div>
-          <span style={{ fontSize: 13, color: row.proxy_info ? '#1c1917' : '#d6d3d1' }}>
+          <span style={{ fontSize: 13, color: row.proxy_info ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
             {row.proxy_info ? row.proxy_info.split(':')[0] : '直连'}
           </span>
           {row.proxy_info && (
-            <span className="apple-badge apple-badge-active" style={{ fontSize: 10, marginLeft: 6 }}>
+            <span className="badge badge-active" style={{ fontSize: 10, marginLeft: 6 }}>
               已绑定
             </span>
           )}
@@ -356,14 +366,14 @@ const ProfilesPage: React.FC = () => {
     },
     { key: 'platform', title: '所属平台', width: '120px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
           {row.account_platform ? row.account_platform.charAt(0).toUpperCase() + row.account_platform.slice(1) : '—'}
         </span>
       ),
     },
     { key: 'last_operation', title: '最后操作', width: '130px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
           {row.last_launched_at
             ? new Date(row.last_launched_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
             : '—'}
@@ -372,7 +382,7 @@ const ProfilesPage: React.FC = () => {
     },
     { key: 'created_at', title: '创建时间', sortable: true, width: '140px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#78716c' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
           {new Date(row.created_at).toLocaleDateString('zh-CN')}
         </span>
       ),
@@ -385,7 +395,7 @@ const ProfilesPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <StatusDot status={effectiveStatus} error={error} />
             {isDesktop && localPids[row.id] && (
-              <span style={{ fontSize: 11, color: '#78716c' }}>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
                 PID: {localPids[row.id]}
               </span>
             )}
@@ -396,7 +406,6 @@ const ProfilesPage: React.FC = () => {
     { key: 'actions', title: '操作', width: '140px',
       render: (row) => {
         const loadingState = buttonLoading[row.id];
-        const isRunning = getEffectiveStatus(row) === 'running' || getEffectiveStatus(row) === 'active';
         return (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <button
@@ -404,7 +413,7 @@ const ProfilesPage: React.FC = () => {
               disabled={!!loadingState}
               style={{
                 background: 'none', border: 'none', cursor: loadingState ? 'not-allowed' : 'pointer',
-                padding: 4, color: loadingState ? '#d6d3d1' : '#16a34a', opacity: loadingState ? 0.6 : 1,
+                padding: 4, color: loadingState ? 'var(--text-tertiary)' : 'var(--success)', opacity: loadingState ? 0.6 : 1,
               }}
               title="启动"
             >
@@ -415,7 +424,7 @@ const ProfilesPage: React.FC = () => {
               disabled={!!loadingState}
               style={{
                 background: 'none', border: 'none', cursor: loadingState ? 'not-allowed' : 'pointer',
-                padding: 4, color: loadingState ? '#d6d3d1' : '#e11d48', opacity: loadingState ? 0.6 : 1,
+                padding: 4, color: loadingState ? 'var(--text-tertiary)' : 'var(--error)', opacity: loadingState ? 0.6 : 1,
               }}
               title="关闭"
             >
@@ -423,14 +432,14 @@ const ProfilesPage: React.FC = () => {
             </button>
             <button
               onClick={() => navigate(`/profiles/${row.id}`)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#e11d48' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--error)' }}
               title="编辑"
             >
               <RiEditLine size={16} />
             </button>
             <button
               onClick={() => handleDelete(row.id)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#78716c' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-tertiary)' }}
               title="删除"
             >
               <RiDeleteBinLine size={16} />
@@ -478,13 +487,13 @@ const ProfilesPage: React.FC = () => {
       {/* Page Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             环境管理
           </h1>
-          <p style={{ fontSize: 13, color: '#78716c', margin: '4px 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
             共 {total} 个浏览器环境
             {isDesktop && Object.keys(localPids).length > 0 && (
-              <span style={{ marginLeft: 8, color: '#16a34a' }}>
+              <span style={{ marginLeft: 8, color: 'var(--success)' }}>
                 · {Object.keys(localPids).length} 个本地运行中
               </span>
             )}
@@ -492,7 +501,7 @@ const ProfilesPage: React.FC = () => {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={() => setShowImportModal(true)}
             style={{ padding: '10px 22px' }}
           >
@@ -500,7 +509,7 @@ const ProfilesPage: React.FC = () => {
             批量导入
           </button>
           <button
-            className="apple-btn"
+            className="btn"
             onClick={() => navigate('/profiles/create')}
             style={{ padding: '10px 22px' }}
           >
@@ -514,9 +523,9 @@ const ProfilesPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         {/* 分组筛选 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <RiFolderLine size={16} style={{ color: '#78716c' }} />
+          <RiFolderLine size={16} style={{ color: 'var(--text-tertiary)' }} />
           <select
-            className="apple-select"
+            className="select"
             value={selectedGroupId}
             onChange={(e) => {
               setSelectedGroupId(e.target.value);
@@ -543,20 +552,20 @@ const ProfilesPage: React.FC = () => {
           <>
             <button
               onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#78716c', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}
               title={viewMode === 'list' ? '切换为网格视图' : '切换为列表视图'}
             >
               {viewMode === 'list' ? <RiLayoutGridLine size={18} /> : <RiListCheck2 size={18} />}
             </button>
             <button
               onClick={handleRefresh}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#78716c', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}
               title="刷新"
             >
               <RiRefreshLine size={18} />
             </button>
             <button
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: '#78716c', display: 'flex', alignItems: 'center' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center' }}
               title="列设置"
             >
               <RiSettings3Line size={18} />
@@ -580,17 +589,17 @@ const ProfilesPage: React.FC = () => {
             alignItems: 'center',
             gap: 8,
             padding: '10px 16px',
-            background: '#f4f4f5',
-            border: '1px solid #e4e4e7',
+            background: 'var(--hover-bg)',
+            border: '1px solid var(--card-border)',
             borderRadius: 10,
             marginBottom: 12,
           }}
         >
-          <span style={{ fontSize: 13, color: '#18181b', fontWeight: 500 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500 }}>
             移动到分组：
           </span>
           <select
-            className="apple-select"
+            className="select"
             value=""
             onChange={(e) => {
               if (e.target.value === '__remove__') {
@@ -632,21 +641,21 @@ const ProfilesPage: React.FC = () => {
       {totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
           <button
-            className="apple-btn"
+            className="btn"
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? '#27272a' : '#e11d48', color: page === 0 ? '#52525b' : '#fff' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? '#27272a' : 'var(--error)', color: page === 0 ? 'var(--text-tertiary)' : '#fff' }}
           >
             上一页
           </button>
-          <span style={{ fontSize: 13, color: '#78716c' }}>
+          <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
             第 {page + 1} / {totalPages} 页（共 {total} 条）
           </span>
           <button
-            className="apple-btn"
+            className="btn"
             disabled={page >= totalPages - 1}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? '#27272a' : '#e11d48', color: page >= totalPages - 1 ? '#52525b' : '#fff' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? '#27272a' : 'var(--error)', color: page >= totalPages - 1 ? 'var(--text-tertiary)' : '#fff' }}
           >
             下一页
           </button>
@@ -663,6 +672,7 @@ const ProfilesPage: React.FC = () => {
           }}
         />
       )}
+      {dialog}
     </div>
   );
 };

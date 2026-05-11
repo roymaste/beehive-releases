@@ -15,7 +15,6 @@ interface SystemSettings {
 }
 
 const SystemPage: React.FC = () => {
-  const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<SystemSettings>({
@@ -30,7 +29,6 @@ const SystemPage: React.FC = () => {
     try {
       const res = await apiClient.get<{ settings: SystemSettings }>('/system/settings');
       const s = res.data.settings;
-      setSettings(s);
       setForm(s);
     } catch {
       toast.error('获取系统设置失败');
@@ -47,7 +45,6 @@ const SystemPage: React.FC = () => {
     setSaving(true);
     try {
       await apiClient.put('/system/settings', form);
-      setSettings(form);
       toast.success('设置已保存');
     } catch {
       toast.error('保存失败');
@@ -69,7 +66,7 @@ const SystemPage: React.FC = () => {
     <div style={{ maxWidth: 720 }}>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold m-0" style={{ color: '#1c1917', letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             系统设置
           </h1>
           <p className="text-sm mt-1" style={{ color: '#78716c' }}>
@@ -96,7 +93,7 @@ const SystemPage: React.FC = () => {
               每住户最大环境数
             </label>
             <input
-              className="apple-input"
+              className="input"
               type="number"
               value={form.max_profiles_per_tenant}
               onChange={(e) => setForm({ ...form, max_profiles_per_tenant: parseInt(e.target.value) || 0 })}
@@ -113,7 +110,7 @@ const SystemPage: React.FC = () => {
               每住户最大代理数
             </label>
             <input
-              className="apple-input"
+              className="input"
               type="number"
               value={form.max_proxies_per_tenant}
               onChange={(e) => setForm({ ...form, max_proxies_per_tenant: parseInt(e.target.value) || 0 })}
@@ -133,7 +130,7 @@ const SystemPage: React.FC = () => {
               会话超时（分钟）
             </label>
             <input
-              className="apple-input"
+              className="input"
               type="number"
               value={form.session_timeout_minutes}
               onChange={(e) => setForm({ ...form, session_timeout_minutes: parseInt(e.target.value) || 0 })}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiLoginBoxLine,
   RiSendPlaneLine,
@@ -93,15 +94,22 @@ const AccountListPage: React.FC = () => {
     }
   };
 
+  const { confirm, dialog } = useConfirmDialog();
+
   const handleDelete = async (id: string, tenantId: string, username: string) => {
-    if (!confirm(`确定删除账号「${username}」？`)) return;
-    try {
-      await platformsAPI.delete(tenantId, id);
-      toast.success('已删除');
-      fetchAccounts();
-    } catch {
-      toast.error('删除失败');
-    }
+    confirm({
+      title: '删除账号',
+      description: `确定删除账号「${username}」？`,
+      onConfirm: async () => {
+        try {
+          await platformsAPI.delete(tenantId, id);
+          toast.success('已删除');
+          fetchAccounts();
+        } catch {
+          toast.error('删除失败');
+        }
+      },
+    });
   };
 
   const columns: Column<AccountWithTenant>[] = [
@@ -190,7 +198,7 @@ const AccountListPage: React.FC = () => {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#121212', minHeight: '100vh', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#fafafa', margin: 0, letterSpacing: '-0.3px' }}>
+          <h1 className="text-2xl font-semibold text-foreground mb-6">
             账号管理
           </h1>
           <p style={{ fontSize: 13, color: '#9e9e9e', margin: '4px 0 0' }}>
@@ -236,6 +244,7 @@ const AccountListPage: React.FC = () => {
           emptyText="暂无账号"
         />
       </div>
+      {dialog}
     </div>
   );
 };
