@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { dashboardAPI, adminAPI, DashboardStats, AdminClientResponse } from '../api/client';
-import { useAuth } from '../context/AuthContext';
 import {
-  RiBarChart2Line,
+  dashboardAPI,
+  adminAPI,
+  DashboardStats,
+  AdminClientResponse,
+} from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
+
+import {
   RiCheckLine,
   RiUserLine,
   RiAddLine,
@@ -14,240 +20,266 @@ import {
   RiTimeLine,
   RiArrowLeftSLine,
   RiArrowRightSLine as RiArrowRight,
+  RiGlobalLine,
+  RiServerLine,
+  RiShieldCheckLine,
+  RiPulseLine,
+  RiLinkM,
+  RiSendPlaneLine,
+  RiSettings3Line,
+  RiRobot2Line,
 } from 'react-icons/ri';
-import toast from 'react-hot-toast';
 
-// Beehive Design System Colors
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
-  border: 'rgba(255,255,255,0.06)',
+/* ═══════════════════════════════════════════
+   HiveAgent Dashboard — 暗色科技风重设计
+   ═══════════════════════════════════════════ */
+
+// ── 设计系统 Token ──
+
+
+const RADIUS = {
+  card: 16,
+  sm: 12,
+  btn: 10,
+  badge: 999,
 };
 
-// Radius tokens
-const RADIUS_CARD = 16;
-const RADIUS_SM = 10;
-const RADIUS_BTN = 8;
+const SHADOW = {
+  card: '0 4px 24px rgba(0,0,0,0.4)',
+  cardHover: '0 8px 32px rgba(0,0,0,0.5)',
+  glow: (color: string) => `0 0 20px ${color}`,
+};
 
-// Shadow
-const SHADOW = '0 8px 32px rgba(0,0,0,0.4)';
-
-// Platform emoji mapping
+// ── 平台 emoji 映射 ──
 const platformEmoji: Record<string, string> = {
-  twitter: '🐦',
-  twitter_x: '🐦',
-  weibo: '📮',
-  xhs: '📕',
-  redbook: '📕',
-  douyin: '🎵',
-  tiktok: '🎵',
-  linkedin: '💼',
-  facebook: '📘',
-  instagram: '📷',
-  threads: '🧵',
+  twitter: '🐦', twitter_x: '🐦', weibo: '📮', xhs: '📕',
+  redbook: '📕', douyin: '🎵', tiktok: '🎵', linkedin: '💼',
+  facebook: '📘', instagram: '📷', threads: '🧵',
 };
+const getPlatformEmoji = (p?: string) =>
+  p ? (platformEmoji[p.toLowerCase().replace(/[^a-z]/g, '')] || platformEmoji[p.toLowerCase()] || '🌐') : '🌐';
 
-const getPlatformEmoji = (platform?: string): string => {
-  if (!platform) return '🌐';
-  const key = platform.toLowerCase().replace(/[^a-z]/g, '');
-  return platformEmoji[key] || platformEmoji[platform.toLowerCase()] || '🌐';
-};
-
-// Format relative time
+// ── 时间格式化 ──
 const formatRelativeTime = (dateStr?: string): string => {
   if (!dateStr) return '—';
   try {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
     if (diff < 60) return `${diff}秒前`;
     if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`;
     if (diff < 604800) return `${Math.floor(diff / 86400)}天前`;
-    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-  } catch {
-    return '—';
-  }
+    return new Date(dateStr).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  } catch { return '—'; }
 };
 
-// Status badge component
+// ═══════════════════════════════════════════
+//  子组件
+// ═══════════════════════════════════════════
+
+/** 状态徽标 */
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const isSuccess = status === 'success' || status === 'published' || status === 'completed' || status === 'active';
+  const ok = ['success', 'published', 'completed', 'active', 'running'].includes(status);
   return (
     <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded-full border"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '3px 8px',
-        borderRadius: 999,
-        fontSize: 11,
-        fontWeight: 500,
-        background: isSuccess ? 'rgba(76,175,80,0.12)' : 'rgba(244,67,54,0.12)',
-        color: isSuccess ? C.success : C.error,
-        border: `1px solid ${isSuccess ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)'}`,
+        background: ok ? 'rgba(76,175,80,0.20)' : 'rgba(244,67,54,0.20)',
+        color: ok ? 'var(--success)' : 'var(--error)',
+        borderColor: ok ? 'rgba(76,175,80,0.2)' : 'rgba(244,67,54,0.2)',
       }}
     >
-      {isSuccess ? '成功' : '失败'}
+      <span
+        className="w-1.5 h-1.5 rounded-full"
+        style={{
+          background: ok ? 'var(--success)' : 'var(--error)',
+          boxShadow: ok ? `0 0 6px ${'var(--success)'}` : `0 0 6px ${'var(--error)'}`,
+        }}
+      />
+      {ok ? '成功' : '失败'}
     </span>
   );
 };
 
-// Plan type badge
+/** 套餐徽标 */
 const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
   const colors: Record<string, string> = {
-    free: '#9e9e9e',
-    basic: '#2196F3',
-    pro: '#9C27B0',
-    enterprise: '#FF9800',
+    free: '#9E9E9E', basic: '#2196F3', pro: '#9C27B0', enterprise: '#FF9800',
   };
-  const color = colors[plan.toLowerCase()] || '#9e9e9e';
+  const color = colors[plan.toLowerCase()] || '#9E9E9E';
   return (
     <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: '2px 8px',
-        borderRadius: 999,
-        fontSize: 11,
-        fontWeight: 500,
-        background: `${color}18`,
-        color: color,
-        border: `1px solid ${color}30`,
-        textTransform: 'capitalize',
-      }}
+      className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full border capitalize"
+      style={{ background: `${color}18`, color, borderColor: `${color}30` }}
     >
       {plan}
     </span>
   );
 };
 
-// Stat card component
+/** 数据卡片 — 带发光效果 */
 interface StatCardProps {
-  emoji: string;
+  icon: React.ReactNode;
   label: string;
   value: number | string;
+  subLabel?: string;
   subValue?: string;
   color: string;
+  glowColor: string;
   onClick?: () => void;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ emoji, label, value, subValue, color, onClick }) => (
-  <div
-    onClick={onClick}
-    style={{
-      background: C.surface,
-      border: `1px solid ${C.border}`,
-      borderRadius: RADIUS_CARD,
-      padding: '20px 20px 16px',
-      cursor: onClick ? 'pointer' : 'default',
-      transition: 'all 0.15s ease',
-      boxShadow: SHADOW,
-      position: 'relative',
-      overflow: 'hidden',
-    }}
-    onMouseEnter={(e) => {
-      if (onClick) e.currentTarget.style.background = C.surfaceHover;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = C.surface;
-    }}
-  >
-    {/* Top row: emoji + icon */}
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <span style={{ fontSize: 24 }}>{emoji}</span>
-      <span style={{ color, opacity: 0.7 }}>
-        <RiBarChart2Line size={18} />
-      </span>
-    </div>
-    {/* Value */}
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, subLabel, subValue, color, glowColor, onClick }) => {
+  const [hover, setHover] = useState(false);
+  return (
     <div
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="relative overflow-hidden cursor-pointer select-none"
       style={{
-        fontSize: 28,
-        fontWeight: 700,
-        color: color,
-        fontFamily: "'Poppins', sans-serif",
-        lineHeight: 1.1,
-        marginBottom: 4,
+        background: 'var(--card-bg)',
+        border: `1px solid ${hover ? 'var(--divider)' : 'var(--divider)'}`,
+        borderRadius: RADIUS.card,
+        padding: '22px 20px 18px',
+        transition: 'all 0.25s ease',
+        boxShadow: hover ? SHADOW.cardHover : SHADOW.card,
       }}
     >
-      {value}
-    </div>
-    {/* Label */}
-    <div
-      style={{
-        fontSize: 13,
-        color: C.textSecondary,
-        fontWeight: 500,
-      }}
-    >
-      {label}
-    </div>
-    {/* Sub value */}
-    {subValue && (
-      <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 4 }}>{subValue}</div>
-    )}
-  </div>
-);
+      {/* 顶部发光条 */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[2px]"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
+          opacity: hover ? 1 : 0.5,
+          transition: 'opacity 0.25s',
+        }}
+      />
+      {/* 悬停背景光 */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at 50% 0%, ${glowColor}, transparent 70%)`,
+          opacity: hover ? 0.6 : 0.2,
+          transition: 'opacity 0.25s',
+        }}
+      />
 
-// Quick action button component
+      <div className="relative z-10">
+        {/* 顶部：图标 + 标签 */}
+        <div className="flex items-center justify-between mb-3">
+          <div
+            className="flex items-center justify-center w-10 h-10 rounded-xl"
+            style={{ background: glowColor, color }}
+          >
+            {icon}
+          </div>
+          <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
+            {label}
+          </span>
+        </div>
+
+        {/* 数值 */}
+        <div
+          className="text-[32px] font-bold leading-none tracking-tight"
+          style={{ color, fontFamily: "'Poppins', sans-serif" }}
+        >
+          {value}
+        </div>
+
+        {/* 子信息 */}
+        {(subLabel || subValue) && (
+          <div className="flex items-center gap-2 mt-2">
+            {subValue && (
+              <span className="text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                {subValue}
+              </span>
+            )}
+            {subLabel && (
+              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
+                {subLabel}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/** 迷你环形图 — 成功率 */
+const SuccessRing: React.FC<{ rate: number; size?: number }> = ({ rate, size = 120 }) => {
+  const stroke = 8;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (Math.min(rate, 100) / 100) * circ;
+
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={'var(--divider)'} strokeWidth={stroke} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none"
+          stroke={rate >= 80 ? 'var(--success)' : rate >= 50 ? 'var(--hive-gold)' : 'var(--error)'}
+          strokeWidth={stroke}
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-[22px] font-bold" style={{ color: 'var(--text-primary)', fontFamily: "'Poppins', sans-serif" }}>
+          {Math.round(rate)}%
+        </span>
+        <span className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>成功率</span>
+      </div>
+    </div>
+  );
+};
+
+/** 快捷操作按钮 */
 interface QuickActionProps {
   icon: React.ReactNode;
   label: string;
   desc: string;
   onClick?: () => void;
-  accent?: boolean;
+  variant?: 'primary' | 'secondary' | 'ghost';
 }
 
-const QuickAction: React.FC<QuickActionProps> = ({ icon, label, desc, onClick, accent }) => (
-  <button
-    onClick={onClick}
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 6,
-      padding: '16px 12px',
-      background: accent ? C.accent : C.surface,
-      border: `1px solid ${accent ? C.accent : C.border}`,
-      borderRadius: RADIUS_SM,
-      cursor: 'pointer',
-      transition: 'all 0.15s ease',
-      color: accent ? C.bg : C.textPrimary,
-      minWidth: 0,
-    }}
-    onMouseEnter={(e) => {
-      if (accent) {
-        e.currentTarget.style.background = C.accentHover;
-        e.currentTarget.style.borderColor = C.accentHover;
-      } else {
-        e.currentTarget.style.background = C.surfaceHover;
-      }
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = accent ? C.accent : C.surface;
-      e.currentTarget.style.borderColor = accent ? C.accent : C.border;
-    }}
-  >
-    <span style={{ color: accent ? C.bg : C.accent }}>{icon}</span>
-    <span style={{ fontSize: 12, fontWeight: 600, color: 'inherit' }}>{label}</span>
-    <span style={{ fontSize: 10, color: accent ? 'rgba(18,18,18,0.6)' : C.textTertiary, textAlign: 'center', lineHeight: 1.3 }}>
-      {desc}
-    </span>
-  </button>
-);
+const QuickAction: React.FC<QuickActionProps> = ({ icon, label, desc, onClick, variant = 'ghost' }) => {
+  const [hover, setHover] = useState(false);
+  const isPrimary = variant === 'primary';
+  const isSecondary = variant === 'secondary';
 
-// Recent record row component
+  const bg = isPrimary ? 'var(--hive-gold)' : isSecondary ? 'var(--hive-blue)' : 'var(--card-bg)';
+  const bgHover = isPrimary ? 'var(--hive-gold-hover)' : isSecondary ? '#1565C0' : 'rgba(255,255,255,0.06)';
+  const text = isPrimary ? 'var(--page-bg)' : isSecondary ? '#fff' : 'var(--text-primary)';
+  const iconColor = isPrimary ? 'var(--page-bg)' : isSecondary ? '#fff' : 'var(--hive-gold)';
+  const border = isPrimary ? 'var(--hive-gold)' : isSecondary ? 'var(--hive-blue)' : 'var(--divider)';
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="flex flex-col items-center justify-center gap-1.5 p-4 rounded-xl cursor-pointer text-center w-full"
+      style={{
+        background: hover ? bgHover : bg,
+        border: `1px solid ${hover ? (isPrimary ? 'var(--hive-gold)' : isSecondary ? '#1565C0' : 'var(--divider)') : border}`,
+        transition: 'all 0.2s ease',
+        color: text,
+      }}
+    >
+      <span style={{ color: iconColor }}>{icon}</span>
+      <span className="text-[13px] font-semibold">{label}</span>
+      <span className="text-[11px] leading-tight" style={{ color: isPrimary || isSecondary ? 'rgba(255,255,255,0.6)' : 'var(--text-tertiary)' }}>
+        {desc}
+      </span>
+    </button>
+  );
+};
+
+/** 最近记录行 */
 interface RecordRowProps {
   platform?: string;
   name: string;
@@ -257,315 +289,218 @@ interface RecordRowProps {
   onClick?: () => void;
 }
 
-const RecordRow: React.FC<RecordRowProps> = ({ platform, name, content, status, time, onClick }) => (
-  <div
-    onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      padding: '10px 12px',
-      borderRadius: RADIUS_BTN,
-      cursor: 'pointer',
-      transition: 'background 0.12s',
-    }}
-    onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceHover)}
-    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-  >
-    {/* Platform emoji */}
-    <span style={{ fontSize: 18, flexShrink: 0 }}>{getPlatformEmoji(platform)}</span>
-    {/* Content */}
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div
-        style={{
-          color: C.textPrimary,
-          fontSize: 13,
-          fontWeight: 500,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {name}
-      </div>
-      <div
-        style={{
-          color: C.textTertiary,
-          fontSize: 11,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          marginTop: 2,
-        }}
-      >
-        {content || '无内容预览'}
-      </div>
-    </div>
-    {/* Status + time */}
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-      <StatusBadge status={status} />
-      {time && (
-        <span style={{ fontSize: 10, color: C.textTertiary, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <RiTimeLine size={10} /> {time}
-        </span>
-      )}
-    </div>
-  </div>
-);
-
-// =====================
-// Tenant View (default)
-// =====================
-const TenantDashboard: React.FC<{
-  stats: DashboardStats;
-  loading: boolean;
-}> = ({ stats, loading }) => {
-  const navigate = useNavigate();
-
-  const statCards = [
-    {
-      emoji: '📊',
-      label: '今日发帖',
-      value: loading ? '—' : stats.today_posts,
-      color: C.accent,
-      href: '/profiles',
-    },
-    {
-      emoji: '✅',
-      label: '成功发布',
-      value: loading ? '—' : `${Math.round(stats.success_rate)}%`,
-      color: C.success,
-      href: '/profiles',
-    },
-    {
-      emoji: '🟢',
-      label: '活跃账号',
-      value: loading ? '—' : stats.running_envs,
-      color: C.success,
-      href: '/profiles?status=running',
-    },
-    {
-      emoji: '📈',
-      label: '账号总数',
-      value: loading ? '—' : (stats.platform_count || stats.total_envs),
-      color: C.secondary,
-      href: '/profiles',
-    },
-  ];
-
-  const quickActions = [
-    {
-      icon: <RiAddLine size={20} />,
-      label: '新建环境',
-      desc: '创建浏览器环境',
-      href: '/profiles/create',
-    },
-    {
-      icon: <RiEditLine size={20} />,
-      label: '发帖',
-      desc: '快速发布内容',
-      href: '/posts/new',
-    },
-    {
-      icon: <RiCheckLine size={20} />,
-      label: '检查账号',
-      desc: '验证账号状态',
-      href: '/accounts',
-    },
-    {
-      icon: <RiFileChartLine size={20} />,
-      label: '数据报告',
-      desc: '查看运营报表',
-      href: '/reports',
-    },
-  ];
-
-  const recentRecords = stats.recent_profiles.slice(0, 10);
-
+const RecordRow: React.FC<RecordRowProps> = ({ platform, name, content, status, time, onClick }) => {
+  const [hover, setHover] = useState(false);
   return (
-    <>
-      {/* Stat cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 16,
-          marginBottom: 20,
-        }}
-      >
-        {statCards.map((card) => (
-          <StatCard
-            key={card.label}
-            emoji={card.emoji}
-            label={card.label}
-            value={card.value}
-            color={card.color}
-            onClick={() => navigate(card.href)}
-          />
-        ))}
-      </div>
-
-      {/* Two column layout */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 16,
-        }}
-      >
-        {/* Recent records */}
-        <div
-          style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_CARD,
-            padding: '20px',
-            boxShadow: SHADOW,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}
-          >
-            <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
-              最近发布记录
-            </h2>
-            <a
-              href="/profiles"
-              style={{
-                color: C.accent,
-                fontSize: 12,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                fontWeight: 500,
-              }}
-            >
-              查看全部 <RiArrowRightSLine size={14} />
-            </a>
-          </div>
-
-          {loading ? (
-            <div style={{ color: C.textTertiary, textAlign: 'center', padding: '24px 0', fontSize: 13 }}>
-              加载中...
-            </div>
-          ) : recentRecords.length === 0 ? (
-            <div style={{ color: C.textTertiary, textAlign: 'center', padding: '24px 0', fontSize: 13 }}>
-              暂无发布记录
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {recentRecords.map((record) => (
-                <RecordRow
-                  key={record.id}
-                  platform={record.platform}
-                  name={record.name}
-                  content={record.group || '无内容预览'}
-                  status={record.runtime_status === 'running' ? 'success' : 'failed'}
-                  time={formatRelativeTime(record.updated_at)}
-                  onClick={() => navigate(`/profiles/${record.id}`)}
-                />
-              ))}
-            </div>
-          )}
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer"
+      style={{
+        background: hover ? 'rgba(255,255,255,0.06)' : 'transparent',
+        transition: 'background 0.15s',
+        borderLeft: hover ? `2px solid ${'var(--hive-gold)'}` : '2px solid transparent',
+      }}
+    >
+      <span className="text-lg flex-shrink-0">{getPlatformEmoji(platform)}</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[13px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+          {name}
         </div>
-
-        {/* Quick actions */}
-        <div
-          style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_CARD,
-            padding: '20px',
-            boxShadow: SHADOW,
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: C.textPrimary,
-              margin: '0 0 16px',
-            }}
-          >
-            快捷功能
-          </h2>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 10,
-            }}
-          >
-            {quickActions.slice(0, 2).map((action) => (
-              <QuickAction
-                key={action.label}
-                icon={action.icon}
-                label={action.label}
-                desc={action.desc}
-                accent
-                onClick={() => navigate(action.href)}
-              />
-            ))}
-            {quickActions.slice(2).map((action) => (
-              <QuickAction
-                key={action.label}
-                icon={action.icon}
-                label={action.label}
-                desc={action.desc}
-                onClick={() => navigate(action.href)}
-              />
-            ))}
-          </div>
-
-          {/* Bottom stats summary */}
-          <div
-            style={{
-              marginTop: 20,
-              paddingTop: 16,
-              borderTop: `1px solid ${C.border}`,
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
-              gap: 8,
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, fontFamily: "'Poppins', sans-serif" }}>
-                {loading ? '—' : stats.tenant_count}
-              </div>
-              <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 2 }}>租户数</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, fontFamily: "'Poppins', sans-serif" }}>
-                {loading ? '—' : stats.ip_count}
-              </div>
-              <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 2 }}>IP资产</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, fontFamily: "'Poppins', sans-serif" }}>
-                {loading ? '—' : stats.active_tasks}
-              </div>
-              <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 2 }}>活跃任务</div>
-            </div>
-          </div>
+        <div className="text-[11px] truncate mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+          {content || '无内容预览'}
         </div>
       </div>
-    </>
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <StatusBadge status={status} />
+        {time && (
+          <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
+            <RiTimeLine size={10} /> {time}
+          </span>
+        )}
+      </div>
+    </div>
   );
 };
 
-// =====================
-// Admin View
-// =====================
-const AdminDashboard: React.FC<{
-  stats: DashboardStats;
-  loading: boolean;
-}> = ({ stats, loading }) => {
+/** 小型趋势条 */
+const MiniBar: React.FC<{ value: number; max: number; color: string }> = ({ value, max, color }) => {
+  const pct = max > 0 ? (value / max) * 100 : 0;
+  return (
+    <div className="h-1.5 rounded-full overflow-hidden flex-1" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div
+        className="h-full rounded-full"
+        style={{ width: `${pct}%`, background: color, transition: 'width 0.8s ease-out' }}
+      />
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+//  租户仪表盘
+// ═══════════════════════════════════════════
+
+const TenantDashboard: React.FC<{ stats: DashboardStats; loading: boolean }> = ({ stats, loading }) => {
+  const navigate = useNavigate();
+
+  const statCards: StatCardProps[] = useMemo(() => [
+    {
+      icon: <RiGlobalLine size={20} />,
+      label: '环境总数',
+      value: loading ? '—' : stats.total_envs,
+      subLabel: `运行中 ${stats.running_envs} · 已停止 ${stats.stopped_envs}`,
+      color: 'var(--hive-gold)',
+      glowColor: 'rgba(255,193,7,0.20)',
+      onClick: () => navigate('/profiles'),
+    },
+    {
+      icon: <RiLinkM size={20} />,
+      label: '代理总数',
+      value: loading ? '—' : stats.total_proxies,
+      subLabel: `已绑定 ${stats.bound_proxies}`,
+      color: 'var(--hive-blue)',
+      glowColor: 'rgba(25,118,210,0.20)',
+      onClick: () => navigate('/proxies'),
+    },
+    {
+      icon: <RiSendPlaneLine size={20} />,
+      label: '今日发帖',
+      value: loading ? '—' : stats.today_posts,
+      color: '#9C27B0',
+      glowColor: 'rgba(156,39,176,0.15)',
+      onClick: () => navigate('/posts'),
+    },
+    {
+      icon: <RiShieldCheckLine size={20} />,
+      label: '成功率',
+      value: loading ? '—' : `${Math.round(stats.success_rate)}%`,
+      subValue: stats.success_rate >= 80 ? '优秀' : stats.success_rate >= 50 ? '良好' : '需优化',
+      color: stats.success_rate >= 80 ? 'var(--success)' : stats.success_rate >= 50 ? 'var(--hive-gold)' : 'var(--error)',
+      glowColor: stats.success_rate >= 80 ? 'rgba(76,175,80,0.20)' : stats.success_rate >= 50 ? 'rgba(255,193,7,0.20)' : 'rgba(244,67,54,0.20)',
+    },
+  ], [stats, loading, navigate]);
+
+  const quickActions = [
+    { icon: <RiAddLine size={22} />, label: '新建环境', desc: '创建浏览器环境', href: '/profiles/create', variant: 'primary' as const },
+    { icon: <RiEditLine size={22} />, label: '发帖', desc: '快速发布内容', href: '/posts/new', variant: 'secondary' as const },
+    { icon: <RiCheckLine size={22} />, label: '检查账号', desc: '验证账号状态', href: '/accounts', variant: 'ghost' as const },
+    { icon: <RiFileChartLine size={22} />, label: '数据报告', desc: '查看运营报表', href: '/reports', variant: 'ghost' as const },
+  ];
+
+  const recentRecords = stats.recent_profiles.slice(0, 5);
+
+  return (
+    <div className="space-y-5">
+      {/* ── 数据卡片行 ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card) => (
+          <StatCard key={card.label} {...card} />
+        ))}
+      </div>
+
+      {/* ── 中部双栏：成功率图表 + 快捷操作 ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* 成功率环形图 */}
+        <div
+          className="lg:col-span-1 flex flex-col items-center justify-center p-6"
+          style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
+        >
+          <h3 className="text-[14px] font-semibold mb-4 self-start" style={{ color: 'var(--text-primary)' }}>
+            发布成功率
+          </h3>
+          <SuccessRing rate={loading ? 0 : stats.success_rate} size={140} />
+          <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
+              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>成功</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--error)' }} />
+              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>失败</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 快捷操作 */}
+        <div
+          className="lg:col-span-2 p-5"
+          style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
+        >
+          <h3 className="text-[14px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+            快捷操作
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {quickActions.map((a) => (
+              <QuickAction key={a.label} {...a} onClick={() => navigate(a.href)} />
+            ))}
+          </div>
+
+          {/* 底部迷你统计 */}
+          <div className="grid grid-cols-3 gap-4 mt-5 pt-4" style={{ borderTop: `1px solid ${'var(--divider)'}` }}>
+            {[
+              { label: '租户数', value: stats.tenant_count },
+              { label: 'IP资产', value: stats.ip_count },
+              { label: '活跃任务', value: stats.active_tasks },
+            ].map((item) => (
+              <div key={item.label} className="text-center">
+                <div className="text-[20px] font-bold" style={{ color: 'var(--text-primary)', fontFamily: "'Poppins', sans-serif" }}>
+                  {loading ? '—' : item.value}
+                </div>
+                <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{item.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 最近环境记录 ── */}
+      <div
+        className="p-5"
+        style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+            最近环境记录
+          </h3>
+          <button
+            onClick={() => navigate('/profiles')}
+            className="flex items-center gap-1 text-[12px] font-medium cursor-pointer"
+            style={{ color: 'var(--hive-gold)' }}
+          >
+            查看全部 <RiArrowRightSLine size={14} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>加载中...</div>
+        ) : recentRecords.length === 0 ? (
+          <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>暂无环境记录</div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {recentRecords.map((r) => (
+              <RecordRow
+                key={r.id}
+                platform={r.platform}
+                name={r.name}
+                content={r.group || '无内容预览'}
+                status={r.runtime_status === 'running' ? 'success' : 'failed'}
+                time={formatRelativeTime(r.updated_at)}
+                onClick={() => navigate(`/profiles/${r.id}`)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════
+//  管理员仪表盘
+// ═══════════════════════════════════════════
+
+const AdminDashboard: React.FC<{ stats: DashboardStats; loading: boolean }> = ({ stats, loading }) => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<AdminClientResponse[]>([]);
   const [clientsTotal, setClientsTotal] = useState(0);
@@ -573,14 +508,32 @@ const AdminDashboard: React.FC<{
   const [clientsLoading, setClientsLoading] = useState(false);
   const LIMIT = 10;
 
-  const adminStatCards = [
-    { emoji: '👥', label: '客户总数', value: loading ? '—' : stats.tenant_count, color: '#FFC107' },
-    { emoji: '✅', label: '活跃客户', value: loading ? '—' : stats.active_tasks, color: '#4CAF50' },
-    { emoji: '📊', label: '环境总数', value: loading ? '—' : stats.total_envs, color: '#1976D2' },
-    { emoji: '🟢', label: '运行中环境', value: loading ? '—' : stats.running_envs, color: '#4CAF50' },
-    { emoji: '🌐', label: '代理总数', value: loading ? '—' : stats.total_proxies, color: '#9C27B0' },
-    { emoji: '🤖', label: '自动化任务', value: loading ? '—' : stats.active_tasks, color: '#FF9800' },
-  ];
+  const adminStatCards: StatCardProps[] = useMemo(() => [
+    {
+      icon: <RiUserLine size={20} />, label: '客户总数', value: loading ? '—' : stats.tenant_count,
+      color: 'var(--hive-gold)', glowColor: 'rgba(255,193,7,0.20)',
+    },
+    {
+      icon: <RiPulseLine size={20} />, label: '活跃客户', value: loading ? '—' : stats.active_tasks,
+      color: 'var(--success)', glowColor: 'rgba(76,175,80,0.20)',
+    },
+    {
+      icon: <RiServerLine size={20} />, label: '环境总数', value: loading ? '—' : stats.total_envs,
+      color: 'var(--hive-blue)', glowColor: 'rgba(25,118,210,0.20)',
+    },
+    {
+      icon: <RiRobot2Line size={20} />, label: '运行中环境', value: loading ? '—' : stats.running_envs,
+      color: 'var(--success)', glowColor: 'rgba(76,175,80,0.20)',
+    },
+    {
+      icon: <RiGlobalLine size={20} />, label: '代理总数', value: loading ? '—' : stats.total_proxies,
+      color: '#9C27B0', glowColor: 'rgba(156,39,176,0.15)',
+    },
+    {
+      icon: <RiSettings3Line size={20} />, label: '自动化任务', value: loading ? '—' : stats.active_tasks,
+      color: '#FF9800', glowColor: 'rgba(255,152,0,0.15)',
+    },
+  ], [stats, loading]);
 
   const fetchClients = async (page: number) => {
     setClientsLoading(true);
@@ -603,211 +556,130 @@ const AdminDashboard: React.FC<{
   const totalPages = Math.ceil(clientsTotal / LIMIT);
 
   return (
-    <>
-      {/* Admin stat cards — 6 in a grid (3 + 3) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 16,
-          marginBottom: 20,
-        }}
-      >
+    <div className="space-y-5">
+      {/* ── 6 张数据卡片 (3x2) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {adminStatCards.map((card) => (
-          <StatCard
-            key={card.label}
-            emoji={card.emoji}
-            label={card.label}
-            value={card.value}
-            color={card.color}
-          />
+          <StatCard key={card.label} {...card} />
         ))}
       </div>
 
-      {/* Client list */}
+      {/* ── 环境状态分布 ── */}
       <div
-        style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
-          borderRadius: RADIUS_CARD,
-          padding: '20px',
-          boxShadow: SHADOW,
-        }}
+        className="p-5"
+        style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-          }}
-        >
-          <h2 style={{ fontSize: 15, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
-            客户列表
-          </h2>
-          <span style={{ fontSize: 12, color: C.textTertiary }}>
-            共 {clientsTotal} 位客户
-          </span>
+        <h3 className="text-[14px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+          环境状态分布
+        </h3>
+        <div className="flex items-center gap-6">
+          <SuccessRing
+            rate={stats.total_envs > 0 ? (stats.running_envs / stats.total_envs) * 100 : 0}
+            size={100}
+          />
+          <div className="flex-1 space-y-3">
+            {[
+              { label: '运行中', value: stats.running_envs, max: stats.total_envs, color: 'var(--success)' },
+              { label: '已停止', value: stats.stopped_envs, max: stats.total_envs, color: 'var(--error)' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3">
+                <span className="text-[12px] w-12" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
+                <MiniBar value={item.value} max={item.max} color={item.color} />
+                <span className="text-[12px] font-semibold w-8 text-right" style={{ color: 'var(--text-primary)' }}>
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 客户列表 ── */}
+      <div
+        className="p-5"
+        style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>客户列表</h3>
+          <span className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>共 {clientsTotal} 位客户</span>
         </div>
 
-        {/* Table header */}
+        {/* 表头 */}
         <div
+          className="grid gap-3 px-3 py-2 rounded-lg mb-2"
           style={{
-            display: 'grid',
             gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1.5fr',
-            gap: 12,
-            padding: '8px 12px',
-            borderRadius: RADIUS_BTN,
             background: 'rgba(255,255,255,0.03)',
-            marginBottom: 8,
           }}
         >
           {['客户名称', '邮箱', '套餐', '状态', '环境数', '注册时间'].map((h) => (
-            <span key={h} style={{ fontSize: 11, fontWeight: 600, color: C.textTertiary, textTransform: 'uppercase' }}>
+            <span key={h} className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
               {h}
             </span>
           ))}
         </div>
 
-        {/* Table rows */}
+        {/* 表体 */}
         {clientsLoading ? (
-          <div style={{ color: C.textTertiary, textAlign: 'center', padding: '32px 0', fontSize: 13 }}>
-            加载中...
-          </div>
+          <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>加载中...</div>
         ) : clients.length === 0 ? (
-          <div style={{ color: C.textTertiary, textAlign: 'center', padding: '32px 0', fontSize: 13 }}>
-            暂无客户数据
-          </div>
+          <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>暂无客户数据</div>
         ) : (
           clients.map((client) => (
             <div
               key={client.id}
               onClick={() => navigate(`/admin/clients/${client.id}`)}
+              className="grid gap-3 px-3 py-2.5 rounded-lg cursor-pointer items-center"
               style={{
-                display: 'grid',
                 gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1.5fr',
-                gap: 12,
-                padding: '10px 12px',
-                borderRadius: RADIUS_BTN,
-                cursor: 'pointer',
                 transition: 'background 0.12s',
-                alignItems: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceHover)}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
             >
-              {/* Name */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <RiUserLine size={14} style={{ color: C.textTertiary, flexShrink: 0 }} />
-                <span
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: C.textPrimary,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {client.name}
-                </span>
+              <div className="flex items-center gap-2">
+                <RiUserLine size={14} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
+                <span className="text-[13px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>{client.name}</span>
               </div>
-              {/* Email */}
-              <span
-                style={{
-                  fontSize: 12,
-                  color: C.textSecondary,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {client.email}
-              </span>
-              {/* Plan */}
+              <span className="text-[12px] truncate" style={{ color: 'var(--text-secondary)' }}>{client.email}</span>
               <PlanBadge plan={client.plan_type || 'free'} />
-              {/* Status */}
-              <span
-                style={{
-                  fontSize: 12,
-                  color: client.status === 'active' ? C.success : C.textTertiary,
-                  fontWeight: 500,
-                }}
-              >
+              <span className="text-[12px] font-medium" style={{ color: client.status === 'active' ? 'var(--success)' : 'var(--text-tertiary)' }}>
                 {client.status === 'active' ? '活跃' : client.status}
               </span>
-              {/* Env count */}
-              <span style={{ fontSize: 13, color: C.textSecondary }}>
-                {client.environment_count}
-              </span>
-              {/* Created at */}
-              <span style={{ fontSize: 12, color: C.textTertiary }}>
-                {new Date(client.created_at).toLocaleDateString('zh-CN', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                })}
+              <span className="text-[13px]" style={{ color: 'var(--text-secondary)' }}>{client.environment_count}</span>
+              <span className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
+                {new Date(client.created_at).toLocaleDateString('zh-CN')}
               </span>
             </div>
           ))
         )}
 
-        {/* Pagination */}
+        {/* 分页 */}
         {totalPages > 1 && (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              marginTop: 20,
-            }}
-          >
+          <div className="flex items-center justify-center gap-3 mt-5">
             <button
-              onClick={() => {
-                const prev = clientsPage - 1;
-                setClientsPage(prev);
-                fetchClients(prev);
-              }}
+              onClick={() => { const p = clientsPage - 1; setClientsPage(p); fetchClients(p); }}
               disabled={clientsPage === 0}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] cursor-pointer"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 12px',
-                background: 'transparent',
-                border: `1px solid ${C.border}`,
-                borderRadius: RADIUS_BTN,
-                color: clientsPage === 0 ? C.textTertiary : C.textSecondary,
-                fontSize: 12,
+                background: 'transparent', border: `1px solid ${'var(--divider)'}`,
+                color: clientsPage === 0 ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                 cursor: clientsPage === 0 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s',
               }}
             >
               <RiArrowLeftSLine size={14} /> 上一页
             </button>
-            <span style={{ fontSize: 12, color: C.textTertiary }}>
+            <span className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
               第 {clientsPage + 1} / {totalPages} 页
             </span>
             <button
-              onClick={() => {
-                const next = clientsPage + 1;
-                setClientsPage(next);
-                fetchClients(next);
-              }}
+              onClick={() => { const p = clientsPage + 1; setClientsPage(p); fetchClients(p); }}
               disabled={clientsPage >= totalPages - 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] cursor-pointer"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '6px 12px',
-                background: 'transparent',
-                border: `1px solid ${C.border}`,
-                borderRadius: RADIUS_BTN,
-                color: clientsPage >= totalPages - 1 ? C.textTertiary : C.textSecondary,
-                fontSize: 12,
+                background: 'transparent', border: `1px solid ${'var(--divider)'}`,
+                color: clientsPage >= totalPages - 1 ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                 cursor: clientsPage >= totalPages - 1 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s',
               }}
             >
               下一页 <RiArrowRight size={14} />
@@ -815,28 +687,22 @@ const AdminDashboard: React.FC<{
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 
-// =====================
-// Main DashboardPage
-// =====================
+// ═══════════════════════════════════════════
+//  主页面
+// ═══════════════════════════════════════════
+
 const DashboardPage: React.FC = () => {
   const { isAdmin } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
-    total_envs: 0,
-    running_envs: 0,
-    stopped_envs: 0,
-    total_proxies: 0,
-    bound_proxies: 0,
-    today_posts: 0,
-    success_rate: 0,
+    total_envs: 0, running_envs: 0, stopped_envs: 0,
+    total_proxies: 0, bound_proxies: 0,
+    today_posts: 0, success_rate: 0,
     recent_profiles: [],
-    tenant_count: 0,
-    platform_count: 0,
-    ip_count: 0,
-    active_tasks: 0,
+    tenant_count: 0, platform_count: 0, ip_count: 0, active_tasks: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -857,58 +723,37 @@ const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div style={{ padding: '0 24px 32px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingTop: 24 }}>
+    <div className="px-6 pb-8" style={{ background: 'var(--page-bg)', minHeight: '100vh' }}>
+      {/* ── 页面头部 ── */}
+      <div className="flex items-center justify-between pt-6 pb-6">
         <div>
           <h1
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: C.textPrimary,
-              fontFamily: "'Poppins', sans-serif",
-              letterSpacing: '-0.3px',
-              margin: 0,
-            }}
+            className="text-[26px] font-bold tracking-tight m-0"
+            style={{ color: 'var(--text-primary)', fontFamily: "'Poppins', sans-serif" }}
           >
             {isAdmin ? '管理概览' : '运营概览'}
           </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
-            {isAdmin ? '全局运营数据' : '蜂巢智能体 · 实时运营数据'}
+          <p className="text-[13px] mt-1" style={{ color: 'var(--text-secondary)' }}>
+            {isAdmin ? '全局运营数据 · 实时监控' : '蜂巢智能体 · 实时运营数据'}
           </p>
         </div>
         <button
           onClick={fetchStats}
           disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-medium cursor-pointer"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
-            background: 'transparent',
-            border: `1px solid ${C.border}`,
-            borderRadius: RADIUS_BTN,
-            color: C.textSecondary,
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'all 0.15s',
+            background: 'transparent', border: `1px solid ${'var(--divider)'}`,
+            color: 'var(--text-secondary)', transition: 'all 0.15s',
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = C.surfaceHover;
-            e.currentTarget.style.color = C.textPrimary;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = C.textSecondary;
-          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
         >
-          <RiRefreshLine size={15} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
+          <RiRefreshLine size={15} className={loading ? 'animate-spin' : ''} />
           刷新
         </button>
       </div>
 
-      {/* Role-specific content */}
+      {/* ── 角色内容 ── */}
       {isAdmin ? (
         <AdminDashboard stats={stats} loading={loading} />
       ) : (

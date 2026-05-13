@@ -8,25 +8,11 @@ import {
   RiCheckLine,
 } from 'react-icons/ri';
 
-// ── Palette ──
 const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  card: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  accentSubtle: 'rgba(255,193,7,0.08)',
-  secondary: '#1976D2',
-  secondaryHover: '#1565C0',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#4caf50',
-  orange: '#ff9800',
-  red: '#ef5350',
-};
+  orange: '#FF9800',
+  danger: '#F44336',
+};// ── Palette ──
+
 
 // ── Types ──
 interface ReferralLink {
@@ -256,10 +242,10 @@ const ReferralPage: React.FC = () => {
   const statusBadge = (status: string) => {
     const map: Record<string, { bg: string; color: string; label: string }> = {
       pending: { bg: 'rgba(255,152,0,0.15)', color: C.orange, label: '待发放' },
-      paid: { bg: 'rgba(76,175,80,0.15)', color: C.green, label: '已发放' },
-      cancelled: { bg: 'rgba(239,83,80,0.15)', color: C.red, label: '已取消' },
+      paid: { bg: 'rgba(76,175,80,0.15)', color: 'var(--success)', label: '已发放' },
+      cancelled: { bg: 'rgba(239,83,80,0.15)', color: 'var(--error)', label: '已取消' },
     };
-    const s = map[status] || { bg: 'rgba(158,158,158,0.15)', color: C.textSecondary, label: status };
+    const s = map[status] || { bg: 'rgba(158,158,158,0.15)', color: 'var(--text-secondary)', label: status };
     return (
       <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: s.bg, color: s.color }}>
         {s.label}
@@ -268,17 +254,17 @@ const ReferralPage: React.FC = () => {
   };
 
   const tierBadge = (tier: number) => {
-    const colors = ['', C.green, C.secondary, C.orange];
+    const colors = ['', 'var(--success)', 'var(--hive-blue)', C.orange];
     const labels = ['', '一级', '二级', '三级'];
     return (
-      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: `${colors[tier]}22`, color: colors[tier] || C.textSecondary }}>
+      <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: `${colors[tier]}22`, color: colors[tier] || 'var(--text-secondary)' }}>
         {labels[tier] || `T${tier}`}
       </span>
     );
   };
 
   if (loading) {
-    return <div style={{ padding: 32, color: C.textSecondary }}>加载中...</div>;
+    return <div style={{ padding: 32, color: 'var(--text-secondary)' }}>加载中...</div>;
   }
 
   return (
@@ -289,7 +275,7 @@ const ReferralPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             推广返利
           </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             分享你的推广链接，成功邀请用户可获得返利奖励
           </p>
         </div>
@@ -299,7 +285,7 @@ const ReferralPage: React.FC = () => {
             padding: '8px 16px',
             borderRadius: 8,
             border: 'none',
-            backgroundColor: C.accent,
+            backgroundColor: 'var(--hive-gold)',
             color: '#121212',
             fontSize: 13,
             fontWeight: 600,
@@ -309,8 +295,8 @@ const ReferralPage: React.FC = () => {
             gap: 6,
             transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = C.accentHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = C.accent)}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--hive-gold)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--hive-gold)')}
         >
           <RiLinksLine size={16} />
           生成推广链接
@@ -319,16 +305,16 @@ const ReferralPage: React.FC = () => {
 
       {/* ── Stats Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
-        <StatCard icon={<RiMoneyDollarCircleLine size={20} />} label="累计返利" value={`¥${(stats?.total_rewards || 0).toFixed(2)}`} color={C.accent} />
+        <StatCard icon={<RiMoneyDollarCircleLine size={20} />} label="累计返利" value={`¥${(stats?.total_rewards || 0).toFixed(2)}`} color={'var(--hive-gold)'} />
         <StatCard icon={<RiUserLine size={20} />} label="待提现" value={`¥${(stats?.pending_rewards || 0).toFixed(2)}`} color={C.orange} />
-        <StatCard icon={<RiCheckLine size={20} />} label="已提现" value={`¥${(stats?.paid_rewards || 0).toFixed(2)}`} color={C.green} />
-        <StatCard icon={<RiUserLine size={20} />} label="推荐人数" value={stats?.total_referrals || 0} color={C.secondary} />
+        <StatCard icon={<RiCheckLine size={20} />} label="已提现" value={`¥${(stats?.paid_rewards || 0).toFixed(2)}`} color={'var(--success)'} />
+        <StatCard icon={<RiUserLine size={20} />} label="推荐人数" value={stats?.total_referrals || 0} color={'var(--hive-blue)'} />
       </div>
 
       {/* ── Withdraw Section ── */}
       <div style={{
-        backgroundColor: C.card,
-        border: `1px solid ${C.border}`,
+        backgroundColor: 'var(--card-bg)',
+        border: `1px solid ${'var(--divider)'}`,
         borderRadius: 12,
         padding: 20,
         marginBottom: 24,
@@ -337,8 +323,8 @@ const ReferralPage: React.FC = () => {
         gap: 16,
       }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>提现申请</div>
-          <div style={{ fontSize: 12, color: C.textSecondary }}>当前可提现余额：<span style={{ color: C.accent, fontWeight: 600 }}>¥{(stats?.pending_rewards || 0).toFixed(2)}</span></div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>提现申请</div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>当前可提现余额：<span style={{ color: 'var(--hive-gold)', fontWeight: 600 }}>¥{(stats?.pending_rewards || 0).toFixed(2)}</span></div>
         </div>
         <input
           type="number"
@@ -348,9 +334,9 @@ const ReferralPage: React.FC = () => {
           style={{
             padding: '8px 12px',
             borderRadius: 8,
-            border: `1px solid ${C.border}`,
-            backgroundColor: C.surface,
-            color: C.textPrimary,
+            border: `1px solid ${'var(--divider)'}`,
+            backgroundColor: 'var(--card-bg)',
+            color: 'var(--text-primary)',
             fontSize: 13,
             width: 140,
             outline: 'none',
@@ -363,22 +349,22 @@ const ReferralPage: React.FC = () => {
             padding: '8px 20px',
             borderRadius: 8,
             border: 'none',
-            backgroundColor: withdrawing ? C.textTertiary : C.secondary,
+            backgroundColor: withdrawing ? 'var(--text-tertiary)' : 'var(--hive-blue)',
             color: '#fff',
             fontSize: 13,
             fontWeight: 600,
             cursor: withdrawing ? 'not-allowed' : 'pointer',
             transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => { if (!withdrawing) e.currentTarget.style.backgroundColor = C.secondaryHover; }}
-          onMouseLeave={(e) => { if (!withdrawing) e.currentTarget.style.backgroundColor = C.secondary; }}
+          onMouseEnter={(e) => { if (!withdrawing) e.currentTarget.style.backgroundColor = 'var(--hive-blue)'; }}
+          onMouseLeave={(e) => { if (!withdrawing) e.currentTarget.style.backgroundColor = 'var(--hive-blue)'; }}
         >
           {withdrawing ? '提交中...' : '申请提现'}
         </button>
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${'var(--divider)'}`, marginBottom: 20 }}>
         {TABS.map((tab) => (
           <button
             key={tab.key}
@@ -387,11 +373,11 @@ const ReferralPage: React.FC = () => {
               padding: '8px 16px',
               border: 'none',
               backgroundColor: 'transparent',
-              color: activeTab === tab.key ? C.accent : C.textSecondary,
+              color: activeTab === tab.key ? 'var(--hive-gold)' : 'var(--text-secondary)',
               fontSize: 13,
               fontWeight: activeTab === tab.key ? 600 : 400,
               cursor: 'pointer',
-              borderBottom: activeTab === tab.key ? `2px solid ${C.accent}` : '2px solid transparent',
+              borderBottom: activeTab === tab.key ? `2px solid ${'var(--hive-gold)'}` : '2px solid transparent',
               transition: 'all 0.12s',
               marginBottom: -1,
             }}
@@ -408,10 +394,10 @@ const ReferralPage: React.FC = () => {
             <div style={{
               textAlign: 'center',
               padding: '48px 24px',
-              color: C.textSecondary,
-              backgroundColor: C.card,
+              color: 'var(--text-secondary)',
+              backgroundColor: 'var(--card-bg)',
               borderRadius: 12,
-              border: `1px solid ${C.border}`,
+              border: `1px solid ${'var(--divider)'}`,
             }}>
               <RiLinksLine size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
               <p style={{ fontSize: 14 }}>暂无推广链接</p>
@@ -423,8 +409,8 @@ const ReferralPage: React.FC = () => {
                 <div
                   key={link.id}
                   style={{
-                    backgroundColor: C.card,
-                    border: `1px solid ${C.border}`,
+                    backgroundColor: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: 12,
                     padding: 16,
                     display: 'flex',
@@ -434,16 +420,16 @@ const ReferralPage: React.FC = () => {
                 >
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <code style={{ fontSize: 14, fontWeight: 600, color: C.accent, backgroundColor: C.accentSubtle, padding: '2px 8px', borderRadius: 4 }}>
+                      <code style={{ fontSize: 14, fontWeight: 600, color: 'var(--hive-gold)', backgroundColor: 'var(--hive-gold)', padding: '2px 8px', borderRadius: 4 }}>
                         {link.code}
                       </code>
-                      <span style={{ fontSize: 12, color: C.textTertiary }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>
                         {formatDate(link.created_at)}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', gap: 16, fontSize: 12, color: C.textSecondary }}>
-                      <span>点击 <strong style={{ color: C.textPrimary }}>{link.click_count}</strong> 次</span>
-                      <span>注册 <strong style={{ color: C.textPrimary }}>{link.register_count}</strong> 人</span>
+                    <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+                      <span>点击 <strong style={{ color: 'var(--text-primary)' }}>{link.click_count}</strong> 次</span>
+                      <span>注册 <strong style={{ color: 'var(--text-primary)' }}>{link.register_count}</strong> 人</span>
                     </div>
                   </div>
                   <button
@@ -451,9 +437,9 @@ const ReferralPage: React.FC = () => {
                     style={{
                       padding: '6px 12px',
                       borderRadius: 6,
-                      border: `1px solid ${C.border}`,
+                      border: `1px solid ${'var(--divider)'}`,
                       backgroundColor: 'transparent',
-                      color: copiedCode === link.code ? C.green : C.textSecondary,
+                      color: copiedCode === link.code ? 'var(--success)' : 'var(--text-secondary)',
                       fontSize: 12,
                       cursor: 'pointer',
                       display: 'flex',
@@ -483,9 +469,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 20,
-                  border: `1px solid ${relationTier === tier ? C.accent : C.border}`,
-                  backgroundColor: relationTier === tier ? C.accentSubtle : 'transparent',
-                  color: relationTier === tier ? C.accent : C.textSecondary,
+                  border: `1px solid ${relationTier === tier ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                  backgroundColor: relationTier === tier ? 'var(--hive-gold)' : 'transparent',
+                  color: relationTier === tier ? 'var(--hive-gold)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: 'pointer',
                   transition: 'all 0.12s',
@@ -496,31 +482,31 @@ const ReferralPage: React.FC = () => {
             ))}
           </div>
 
-          <div style={{ backgroundColor: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ backgroundColor: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: 12, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>用户</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>层级</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>推荐时间</th>
+                <tr style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>用户</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>层级</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>推荐时间</th>
                 </tr>
               </thead>
               <tbody>
                 {relations.length === 0 ? (
                   <tr>
-                    <td colSpan={3} style={{ padding: '40px 16px', textAlign: 'center', color: C.textSecondary, fontSize: 13 }}>
+                    <td colSpan={3} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
                       暂无推荐关系
                     </td>
                   </tr>
                 ) : (
                   relations.map((r) => (
-                    <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <tr key={r.id} style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{r.referee_name || '—'}</div>
-                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_id}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{r.referee_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.referee_id}</div>
                       </td>
                       <td style={{ padding: '12px 16px' }}>{tierBadge(r.tier)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.textSecondary }}>{formatDate(r.created_at)}</td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>{formatDate(r.created_at)}</td>
                     </tr>
                   ))
                 )}
@@ -530,7 +516,7 @@ const ReferralPage: React.FC = () => {
 
           {/* Pagination */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>共 {totalRelations} 条</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>共 {totalRelations} 条</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => paginate('prev')}
@@ -538,9 +524,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   borderRadius: 6,
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${'var(--divider)'}`,
                   backgroundColor: 'transparent',
-                  color: skip === 0 ? C.textTertiary : C.textSecondary,
+                  color: skip === 0 ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: skip === 0 ? 'not-allowed' : 'pointer',
                 }}
@@ -553,9 +539,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   borderRadius: 6,
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${'var(--divider)'}`,
                   backgroundColor: 'transparent',
-                  color: relations.length < limit ? C.textTertiary : C.textSecondary,
+                  color: relations.length < limit ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: relations.length < limit ? 'not-allowed' : 'pointer',
                 }}
@@ -578,9 +564,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 14px',
                   borderRadius: 20,
-                  border: `1px solid ${recordStatus === s ? C.accent : C.border}`,
-                  backgroundColor: recordStatus === s ? C.accentSubtle : 'transparent',
-                  color: recordStatus === s ? C.accent : C.textSecondary,
+                  border: `1px solid ${recordStatus === s ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                  backgroundColor: recordStatus === s ? 'var(--hive-gold)' : 'transparent',
+                  color: recordStatus === s ? 'var(--hive-gold)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: 'pointer',
                   transition: 'all 0.12s',
@@ -591,37 +577,37 @@ const ReferralPage: React.FC = () => {
             ))}
           </div>
 
-          <div style={{ backgroundColor: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ backgroundColor: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: 12, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>用户</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>金额</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>层级</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>状态</th>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary }}>时间</th>
+                <tr style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>用户</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>金额</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>层级</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>状态</th>
+                  <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>时间</th>
                 </tr>
               </thead>
               <tbody>
                 {records.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '40px 16px', textAlign: 'center', color: C.textSecondary, fontSize: 13 }}>
+                    <td colSpan={5} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 13 }}>
                       暂无返利记录
                     </td>
                   </tr>
                 ) : (
                   records.map((r) => (
-                    <tr key={r.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <tr key={r.id} style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <div style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{r.referee_name || '—'}</div>
-                        <div style={{ fontSize: 12, color: C.textSecondary }}>{r.referee_id}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{r.referee_name || '—'}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{r.referee_id}</div>
                       </td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: C.accent }}>¥{r.amount.toFixed(2)}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: 'var(--hive-gold)' }}>¥{r.amount.toFixed(2)}</td>
                       <td style={{ padding: '12px 16px' }}>{tierBadge(r.tier)}</td>
                       <td style={{ padding: '12px 16px' }}>{statusBadge(r.status)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: C.textSecondary }}>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-secondary)' }}>
                         {formatDate(r.created_at)}
-                        {r.paid_at && <div style={{ fontSize: 11, color: C.textTertiary }}>发放: {formatDate(r.paid_at)}</div>}
+                        {r.paid_at && <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>发放: {formatDate(r.paid_at)}</div>}
                       </td>
                     </tr>
                   ))
@@ -632,7 +618,7 @@ const ReferralPage: React.FC = () => {
 
           {/* Pagination */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <span style={{ fontSize: 12, color: C.textSecondary }}>共 {totalRecords} 条</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>共 {totalRecords} 条</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={() => paginate('prev')}
@@ -640,9 +626,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   borderRadius: 6,
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${'var(--divider)'}`,
                   backgroundColor: 'transparent',
-                  color: skip === 0 ? C.textTertiary : C.textSecondary,
+                  color: skip === 0 ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: skip === 0 ? 'not-allowed' : 'pointer',
                 }}
@@ -655,9 +641,9 @@ const ReferralPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   borderRadius: 6,
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${'var(--divider)'}`,
                   backgroundColor: 'transparent',
-                  color: records.length < limit ? C.textTertiary : C.textSecondary,
+                  color: records.length < limit ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                   fontSize: 12,
                   cursor: records.length < limit ? 'not-allowed' : 'pointer',
                 }}
@@ -675,8 +661,8 @@ const ReferralPage: React.FC = () => {
 // ── Stat Card ──
 const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string | number; color: string }> = ({ icon, label, value, color }) => (
   <div style={{
-    backgroundColor: C.card,
-    border: `1px solid ${C.border}`,
+    backgroundColor: 'var(--card-bg)',
+    border: `1px solid ${'var(--divider)'}`,
     borderRadius: 12,
     padding: 16,
     display: 'flex',
@@ -697,8 +683,8 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string |
       {icon}
     </div>
     <div>
-      <div style={{ fontSize: 11, color: C.textSecondary, marginBottom: 2 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary }}>{value}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{value}</div>
     </div>
   </div>
 );

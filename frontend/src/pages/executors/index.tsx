@@ -21,28 +21,15 @@ interface Executor {
 
 // ── Palette ──
 const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  card: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  accentSubtle: 'rgba(255,193,7,0.08)',
-  secondary: '#1976D2',
-  secondaryHover: '#1565C0',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#4caf50',
-  red: '#ef5350',
+  gray: '#888',
   orange: '#FF9800',
-  gray: '#9e9e9e',
+  danger: '#F44336',
+  dangerBg: 'rgba(244,67,54,0.10)',
 };
 
 // ── Status config ──
 const STATUS_COLORS: Record<string, string> = {
-  online: C.green,
+  online: 'var(--success)',
   offline: C.gray,
   busy: C.orange,
 };
@@ -115,7 +102,7 @@ const ExecutorListPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: C.textSecondary }}>
+      <div style={{ padding: 32, color: 'var(--text-secondary)' }}>
         加载中...
       </div>
     );
@@ -136,7 +123,7 @@ const ExecutorListPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             执行器管理
           </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             管理所有已注册的执行器节点，查看运行状态和待办任务
           </p>
         </div>
@@ -145,9 +132,9 @@ const ExecutorListPage: React.FC = () => {
           style={{
             padding: '8px 16px',
             borderRadius: 8,
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${'var(--divider)'}`,
             backgroundColor: 'transparent',
-            color: C.textSecondary,
+            color: 'var(--text-secondary)',
             fontSize: 13,
             cursor: 'pointer',
             display: 'flex',
@@ -156,12 +143,12 @@ const ExecutorListPage: React.FC = () => {
             transition: 'all 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = C.surfaceHover;
-            e.currentTarget.style.color = C.textPrimary;
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = C.textSecondary;
+            e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
           <RiRefreshLine size={16} />
@@ -178,9 +165,9 @@ const ExecutorListPage: React.FC = () => {
             style={{
               padding: '6px 16px',
               borderRadius: 20,
-              border: `1px solid ${statusFilter === f.key ? C.accent : C.border}`,
-              backgroundColor: statusFilter === f.key ? C.accentSubtle : 'transparent',
-              color: statusFilter === f.key ? C.accent : C.textSecondary,
+              border: `1px solid ${statusFilter === f.key ? 'var(--hive-gold)' : 'var(--divider)'}`,
+              backgroundColor: statusFilter === f.key ? 'rgba(255,193,7,0.10)' : 'transparent',
+              color: statusFilter === f.key ? 'var(--hive-gold)' : 'var(--text-secondary)',
               fontSize: 13,
               cursor: 'pointer',
               transition: 'all 0.15s',
@@ -199,10 +186,10 @@ const ExecutorListPage: React.FC = () => {
               style={{
                 textAlign: 'center',
                 padding: '48px 24px',
-                color: C.textSecondary,
-                backgroundColor: C.card,
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--card-bg)',
                 borderRadius: 12,
-                border: `1px solid ${C.border}`,
+                border: `1px solid ${'var(--divider)'}`,
               }}
             >
               <p style={{ fontSize: 14 }}>暂无执行器</p>
@@ -221,8 +208,8 @@ const ExecutorListPage: React.FC = () => {
                     key={ex.id}
                     onClick={() => handleDetail(ex.id)}
                     style={{
-                      backgroundColor: isSelected ? C.surfaceHover : C.card,
-                      border: `1px solid ${isSelected ? C.accent : C.border}`,
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.06)' : 'var(--card-bg)',
+                      border: `1px solid ${isSelected ? 'var(--hive-gold)' : 'var(--divider)'}`,
                       borderRadius: 12,
                       padding: 16,
                       cursor: 'pointer',
@@ -236,12 +223,12 @@ const ExecutorListPage: React.FC = () => {
                           {TYPE_EMOJI[ex.executor_type] || '🖥️'}
                         </span>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: 14, color: C.textPrimary }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                             {ex.name}
                           </div>
-                          <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 2 }}>
+                          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                             {TYPE_LABELS[ex.executor_type] || ex.executor_type}
-                            {ex.version && ` · v${ex.version}`}
+                            {ex.version && ' · v' + ex.version}
                           </div>
                         </div>
                       </div>
@@ -267,9 +254,9 @@ const ExecutorListPage: React.FC = () => {
                           style={{
                             padding: '6px 12px',
                             borderRadius: 6,
-                            border: `1px solid ${C.border}`,
-                            backgroundColor: isSelected ? C.secondary : 'transparent',
-                            color: isSelected ? '#fff' : C.textSecondary,
+                            border: `1px solid ${'var(--divider)'}`,
+                            backgroundColor: isSelected ? 'var(--hive-blue)' : 'transparent',
+                            color: isSelected ? '#fff' : 'var(--text-secondary)',
                             fontSize: 12,
                             cursor: 'pointer',
                             transition: 'all 0.12s',
@@ -281,10 +268,10 @@ const ExecutorListPage: React.FC = () => {
                     </div>
 
                     {/* Quick info row */}
-                    <div style={{ display: 'flex', gap: 24, marginTop: 10, fontSize: 12, color: C.textTertiary }}>
+                    <div style={{ display: 'flex', gap: 24, marginTop: 10, fontSize: 12, color: 'var(--text-tertiary)' }}>
                       {ex.ip_address && (
                         <span>
-                          IP: <span style={{ color: C.textSecondary }}>{ex.ip_address}</span>
+                          IP: <span style={{ color: 'var(--text-secondary)' }}>{ex.ip_address}</span>
                           {ex.ip_location && ` (${ex.ip_location})`}
                         </span>
                       )}
@@ -305,58 +292,58 @@ const ExecutorListPage: React.FC = () => {
                         style={{
                           marginTop: 16,
                           padding: 16,
-                          backgroundColor: C.surface,
+                          backgroundColor: 'var(--card-bg)',
                           borderRadius: 8,
                         }}
                       >
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>执行器 ID</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary, wordBreak: 'break-all' }}>{ex.id}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>执行器 ID</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{ex.id}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>租户 ID</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary, wordBreak: 'break-all' }}>{ex.tenant_id}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>租户 ID</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{ex.tenant_id}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>类型</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>类型</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                               {TYPE_EMOJI[ex.executor_type]} {TYPE_LABELS[ex.executor_type]}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>运行状态</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>运行状态</div>
                             <div style={{ fontSize: 12, color: statusColor }}>
                               ● {STATUS_LABELS[ex.runtime_status] || ex.runtime_status}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>IP地址</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>IP地址</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                               {ex.ip_address || '未知'} {ex.ip_location && `(${ex.ip_location})`}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>版本</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>{ex.version || '未知'}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>版本</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{ex.version || '未知'}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>CPU 核心</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>{ex.cpu_cores ?? '未知'}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>CPU 核心</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{ex.cpu_cores ?? '未知'}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>内存 (GB)</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>{ex.memory_gb ?? '未知'}</div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>内存 (GB)</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{ex.memory_gb ?? '未知'}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>最后心跳</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>最后心跳</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                               {ex.last_heartbeat ? new Date(ex.last_heartbeat).toLocaleString('zh-CN') : '无'}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>注册时间</div>
-                            <div style={{ fontSize: 12, color: C.textSecondary }}>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>注册时间</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                               {new Date(ex.registered_at).toLocaleString('zh-CN')}
                             </div>
                           </div>

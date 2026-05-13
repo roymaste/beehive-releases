@@ -15,20 +15,8 @@ import DataTable, { Column } from '../../components/DataTable';
 
 // Dark theme palette
 const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  border: 'rgba(255,255,255,0.06)',
-  danger: '#e11d48',
-};
-
-interface GroupWithCount extends Group {
+  danger: '#F44336',
+};interface GroupWithCount extends Group {
   profileCount?: number;
 }
 
@@ -179,9 +167,9 @@ const GroupsPage: React.FC = () => {
       width: '200px',
       render: (row) => (
         <div>
-          <div style={{ fontWeight: 500, color: C.textPrimary }}>{row.name}</div>
+          <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.name}</div>
           {row.description && (
-            <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>
               {row.description.length > 40 ? row.description.slice(0, 40) + '…' : row.description}
             </div>
           )}
@@ -193,11 +181,11 @@ const GroupsPage: React.FC = () => {
       title: '环境数',
       width: '100px',
       render: (row) => (
-        <span style={{ color: C.textSecondary, fontSize: 13 }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
           {row.profileCount !== undefined ? (
             row.profileCount
           ) : (
-            <RiLoader4Line size={14} className="spin" style={{ color: C.textTertiary }} />
+            <RiLoader4Line size={14} className="spin" style={{ color: 'var(--text-tertiary)' }} />
           )}
         </span>
       ),
@@ -208,7 +196,7 @@ const GroupsPage: React.FC = () => {
       sortable: true,
       width: '160px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: C.textSecondary }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
           {new Date(row.created_at).toLocaleString('zh-CN', {
             year: 'numeric',
             month: '2-digit',
@@ -225,7 +213,7 @@ const GroupsPage: React.FC = () => {
       sortable: true,
       width: '160px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: C.textSecondary }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
           {new Date(row.updated_at).toLocaleString('zh-CN', {
             year: 'numeric',
             month: '2-digit',
@@ -249,7 +237,7 @@ const GroupsPage: React.FC = () => {
               border: 'none',
               cursor: 'pointer',
               padding: 4,
-              color: C.secondary,
+              color: 'var(--hive-blue)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -264,7 +252,7 @@ const GroupsPage: React.FC = () => {
               border: 'none',
               cursor: 'pointer',
               padding: 4,
-              color: C.textTertiary,
+              color: 'var(--text-tertiary)',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -285,7 +273,7 @@ const GroupsPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             环境分组
           </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, margin: '4px 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
             共 {total} 个分组
           </p>
         </div>
@@ -297,7 +285,7 @@ const GroupsPage: React.FC = () => {
               border: 'none',
               cursor: 'pointer',
               padding: '8px 12px',
-              color: C.textSecondary,
+              color: 'var(--text-secondary)',
               display: 'flex',
               alignItems: 'center',
               gap: 6,
@@ -312,7 +300,7 @@ const GroupsPage: React.FC = () => {
           <button
             onClick={openCreateModal}
             style={{
-              background: C.accent,
+              background: 'var(--hive-gold)',
               border: 'none',
               borderRadius: 8,
               padding: '9px 18px',
@@ -362,17 +350,17 @@ const GroupsPage: React.FC = () => {
         >
           <div
             style={{
-              background: C.surface,
+              background: 'var(--card-bg)',
               borderRadius: 12,
               padding: 24,
               width: 440,
               maxWidth: '90vw',
-              border: `1px solid ${C.border}`,
+              border: `1px solid ${'var(--divider)'}`,
             }}
           >
             {/* Modal Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-              <h2 style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+              <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
                 {modalMode === 'create' ? '新建分组' : '编辑分组'}
               </h2>
               <button
@@ -383,7 +371,7 @@ const GroupsPage: React.FC = () => {
                   border: 'none',
                   cursor: submitting ? 'not-allowed' : 'pointer',
                   padding: 4,
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   opacity: submitting ? 0.5 : 1,
@@ -395,7 +383,7 @@ const GroupsPage: React.FC = () => {
 
             {/* Form */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>
                 分组名称 <span style={{ color: C.danger }}>*</span>
               </label>
               <input
@@ -408,10 +396,10 @@ const GroupsPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: C.bg,
-                  border: `1px solid ${C.border}`,
+                  background: 'var(--page-bg)',
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: 8,
-                  color: C.textPrimary,
+                  color: 'var(--text-primary)',
                   fontSize: 13,
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -420,7 +408,7 @@ const GroupsPage: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>
                 分组描述
               </label>
               <textarea
@@ -432,10 +420,10 @@ const GroupsPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '9px 12px',
-                  background: C.bg,
-                  border: `1px solid ${C.border}`,
+                  background: 'var(--page-bg)',
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: 8,
-                  color: C.textPrimary,
+                  color: 'var(--text-primary)',
                   fontSize: 13,
                   outline: 'none',
                   resize: 'vertical',
@@ -453,9 +441,9 @@ const GroupsPage: React.FC = () => {
                 style={{
                   padding: '9px 20px',
                   background: 'none',
-                  border: `1px solid ${C.border}`,
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: 8,
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   fontSize: 13,
                   cursor: submitting ? 'not-allowed' : 'pointer',
                   opacity: submitting ? 0.6 : 1,
@@ -468,10 +456,10 @@ const GroupsPage: React.FC = () => {
                 disabled={submitting}
                 style={{
                   padding: '9px 20px',
-                  background: submitting ? C.textTertiary : C.accent,
+                  background: submitting ? 'var(--text-tertiary)' : 'var(--hive-gold)',
                   border: 'none',
                   borderRadius: 8,
-                  color: submitting ? C.textSecondary : '#121212',
+                  color: submitting ? 'var(--text-secondary)' : '#121212',
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: submitting ? 'not-allowed' : 'pointer',

@@ -7,7 +7,6 @@ without a live browser.
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -19,15 +18,15 @@ sys.path.insert(0, "/home/joyandjoe/beehive-agent/frontend")
 
 from saas.services.agent_executor import (
     CDPConnection,
-    InteractiveElement,
     ElementList,
+    InteractiveElement,
     get_interactive_elements,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def mock_snapshot_result():
@@ -43,37 +42,43 @@ def mock_snapshot_result():
             {
                 "frameId": "frame0",
                 "strings": [
-                    "",          # 0 – unused
-                    "INPUT",     # 1
-                    "type",      # 2
-                    "text",      # 3
-                    "placeholder", # 4
-                    "Search",    # 5
-                    "name",      # 6
-                    "q",         # 7
-                    "BUTTON",    # 8
-                    "Login",     # 9
-                    "A",         # 10
-                    "href",      # 11
-                    "/about",    # 12
-                    "About",     # 13
+                    "",  # 0 – unused
+                    "INPUT",  # 1
+                    "type",  # 2
+                    "text",  # 3
+                    "placeholder",  # 4
+                    "Search",  # 5
+                    "name",  # 6
+                    "q",  # 7
+                    "BUTTON",  # 8
+                    "Login",  # 9
+                    "A",  # 10
+                    "href",  # 11
+                    "/about",  # 12
+                    "About",  # 13
                     "disabled",  # 14
-                    "true",      # 15
+                    "true",  # 15
                     "password",  # 16
                 ],
                 "nodes": [
-                    {"nodeId": 0, "backendNodeId": 0,  "nodeType": 9,  "nodeName": "#document"},
-                    {"nodeId": 1, "backendNodeId": 10, "nodeType": 1,  "nodeName": "HTML"},
-                    {"nodeId": 2, "backendNodeId": 11, "nodeType": 1,  "nodeName": "BODY"},
+                    {"nodeId": 0, "backendNodeId": 0, "nodeType": 9, "nodeName": "#document"},
+                    {"nodeId": 1, "backendNodeId": 10, "nodeType": 1, "nodeName": "HTML"},
+                    {"nodeId": 2, "backendNodeId": 11, "nodeType": 1, "nodeName": "BODY"},
                     # input text — interactive
                     {
-                        "nodeId": 3, "backendNodeId": 20, "nodeType": 1, "nodeName": "INPUT",
-                        "attributes": [2, 3, 4, 5, 6, 7],   # type=text, placeholder=Search, name=q
+                        "nodeId": 3,
+                        "backendNodeId": 20,
+                        "nodeType": 1,
+                        "nodeName": "INPUT",
+                        "attributes": [2, 3, 4, 5, 6, 7],  # type=text, placeholder=Search, name=q
                         "bounds": {"value": [10.0, 20.0, 210.0, 60.0]},
                     },
                     # button — interactive
                     {
-                        "nodeId": 4, "backendNodeId": 21, "nodeType": 1, "nodeName": "BUTTON",
+                        "nodeId": 4,
+                        "backendNodeId": 21,
+                        "nodeType": 1,
+                        "nodeName": "BUTTON",
                         "attributes": [],
                         "bounds": {"value": [10.0, 80.0, 110.0, 44.0]},
                         "children": [
@@ -82,7 +87,10 @@ def mock_snapshot_result():
                     },
                     # anchor — interactive
                     {
-                        "nodeId": 6, "backendNodeId": 22, "nodeType": 1, "nodeName": "A",
+                        "nodeId": 6,
+                        "backendNodeId": 22,
+                        "nodeType": 1,
+                        "nodeName": "A",
                         "attributes": [11, 12],
                         "bounds": {"value": [10.0, 140.0, 80.0, 24.0]},
                         "children": [
@@ -91,7 +99,10 @@ def mock_snapshot_result():
                     },
                     # input password disabled — filtered out
                     {
-                        "nodeId": 8, "backendNodeId": 23, "nodeType": 1, "nodeName": "INPUT",
+                        "nodeId": 8,
+                        "backendNodeId": 23,
+                        "nodeType": 1,
+                        "nodeName": "INPUT",
                         "attributes": [2, 16, 14, 15],  # type=password, disabled=true
                         "bounds": {"value": [10.0, 200.0, 210.0, 240.0]},
                     },
@@ -115,8 +126,8 @@ def mock_ax_tree_result():
     return {
         "nodes": [
             {"backendDOMNodeId": 20, "role": {"value": "textbox"}, "name": {"value": "Search"}},
-            {"backendDOMNodeId": 21, "role": {"value": "button"},  "name": {"value": "Login"}},
-            {"backendDOMNodeId": 22, "role": {"value": "link"},    "name": {"value": "About"}},
+            {"backendDOMNodeId": 21, "role": {"value": "button"}, "name": {"value": "Login"}},
+            {"backendDOMNodeId": 22, "role": {"value": "link"}, "name": {"value": "About"}},
             {"backendDOMNodeId": 23, "role": {"value": "textbox"}, "name": {"value": ""}},
         ]
     }
@@ -138,6 +149,7 @@ def mock_page_frame_tree():
 # ---------------------------------------------------------------------------
 # CDPConnection.connect
 # ---------------------------------------------------------------------------
+
 
 class TestCDPConnectionConnect:
     @pytest.mark.asyncio
@@ -178,34 +190,65 @@ class TestCDPConnectionConnect:
 # InteractiveElement
 # ---------------------------------------------------------------------------
 
+
 class TestInteractiveElement:
     def test_center_x_y_from_bounds(self):
         el = InteractiveElement(
-            index=1, tag_name="INPUT", role=None, name="Search",
-            ax_role="textbox", backend_node_id=20, node_id=3, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
-            bounds_x=10.0, bounds_y=20.0, bounds_width=200.0, bounds_height=40.0,
+            index=1,
+            tag_name="INPUT",
+            role=None,
+            name="Search",
+            ax_role="textbox",
+            backend_node_id=20,
+            node_id=3,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
+            bounds_x=10.0,
+            bounds_y=20.0,
+            bounds_width=200.0,
+            bounds_height=40.0,
         )
         assert el.center_x == 110.0
         assert el.center_y == 40.0
 
     def test_center_x_y_none_when_bounds_missing(self):
         el = InteractiveElement(
-            index=1, tag_name="BUTTON", role=None, name="OK",
-            ax_role=None, backend_node_id=1, node_id=1, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="BUTTON",
+            role=None,
+            name="OK",
+            ax_role=None,
+            backend_node_id=1,
+            node_id=1,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         assert el.center_x is None
         assert el.center_y is None
 
     def test_display_label_basic(self):
         el = InteractiveElement(
-            index=3, tag_name="INPUT", role="combobox", name="Country selector",
-            ax_role="combobox", backend_node_id=5, node_id=10, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
+            index=3,
+            tag_name="INPUT",
+            role="combobox",
+            name="Country selector",
+            ax_role="combobox",
+            backend_node_id=5,
+            node_id=10,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         label = el.display_label()
         assert "INPUT" in label
@@ -214,19 +257,37 @@ class TestInteractiveElement:
 
     def test_display_label_truncates_long_name(self):
         el = InteractiveElement(
-            index=1, tag_name="DIV", role=None, name="x" * 100,
-            ax_role=None, backend_node_id=1, node_id=1, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="DIV",
+            role=None,
+            name="x" * 100,
+            ax_role=None,
+            backend_node_id=1,
+            node_id=1,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         assert len(el.display_label()) < 200
 
     def test_display_label_disabled(self):
         el = InteractiveElement(
-            index=1, tag_name="BUTTON", role=None, name="Submit",
-            ax_role=None, backend_node_id=1, node_id=1, frame_id=None,
-            is_disabled=True, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="BUTTON",
+            role=None,
+            name="Submit",
+            ax_role=None,
+            backend_node_id=1,
+            node_id=1,
+            frame_id=None,
+            is_disabled=True,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         assert "(disabled)" in el.display_label()
 
@@ -235,6 +296,7 @@ class TestInteractiveElement:
 # ElementList
 # ---------------------------------------------------------------------------
 
+
 class TestElementList:
     def test_numbered_list_empty(self):
         lst = ElementList()
@@ -242,16 +304,34 @@ class TestElementList:
 
     def test_numbered_list_formats_correctly(self):
         el1 = InteractiveElement(
-            index=1, tag_name="INPUT", role=None, name="q",
-            ax_role="textbox", backend_node_id=20, node_id=3, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="INPUT",
+            role=None,
+            name="q",
+            ax_role="textbox",
+            backend_node_id=20,
+            node_id=3,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         el2 = InteractiveElement(
-            index=2, tag_name="BUTTON", role=None, name="Login",
-            ax_role="button", backend_node_id=21, node_id=4, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=2,
+            tag_name="BUTTON",
+            role=None,
+            name="Login",
+            ax_role="button",
+            backend_node_id=21,
+            node_id=4,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         lst = ElementList(elements=[el1, el2])
         output = lst.numbered_list()
@@ -262,16 +342,34 @@ class TestElementList:
 
     def test_by_index(self):
         el1 = InteractiveElement(
-            index=1, tag_name="INPUT", role=None, name="q",
-            ax_role="textbox", backend_node_id=20, node_id=3, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="INPUT",
+            role=None,
+            name="q",
+            ax_role="textbox",
+            backend_node_id=20,
+            node_id=3,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         el2 = InteractiveElement(
-            index=2, tag_name="BUTTON", role=None, name="Login",
-            ax_role="button", backend_node_id=21, node_id=4, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=2,
+            tag_name="BUTTON",
+            role=None,
+            name="Login",
+            ax_role="button",
+            backend_node_id=21,
+            node_id=4,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         lst = ElementList(elements=[el1, el2])
         assert lst.by_index(1) is el1
@@ -282,6 +380,7 @@ class TestElementList:
 # ---------------------------------------------------------------------------
 # CDPConnection.get_interactive_elements
 # ---------------------------------------------------------------------------
+
 
 class TestGetInteractiveElements:
     @pytest.mark.asyncio
@@ -332,7 +431,9 @@ class TestGetInteractiveElements:
         assert indices == list(range(1, len(indices) + 1))
 
     @pytest.mark.asyncio
-    async def test_populates_accessible_name_from_ax_tree(self, mock_snapshot_result, mock_ax_tree_result, mock_page_frame_tree):
+    async def test_populates_accessible_name_from_ax_tree(
+        self, mock_snapshot_result, mock_ax_tree_result, mock_page_frame_tree
+    ):
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
         conn._client = MagicMock()
         conn._session_id = "sess123"
@@ -376,15 +477,28 @@ class TestGetInteractiveElements:
 # CDPConnection.click_element
 # ---------------------------------------------------------------------------
 
+
 class TestClickElement:
     @pytest.mark.asyncio
     async def test_click_dispatches_two_mouse_events(self):
         el = InteractiveElement(
-            index=1, tag_name="BUTTON", role=None, name="OK",
-            ax_role="button", backend_node_id=1, node_id=5, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
-            bounds_x=100.0, bounds_y=200.0, bounds_width=50.0, bounds_height=30.0,
+            index=1,
+            tag_name="BUTTON",
+            role=None,
+            name="OK",
+            ax_role="button",
+            backend_node_id=1,
+            node_id=5,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
+            bounds_x=100.0,
+            bounds_y=200.0,
+            bounds_width=50.0,
+            bounds_height=30.0,
         )
 
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
@@ -416,15 +530,28 @@ class TestClickElement:
 # CDPConnection.type_into_element
 # ---------------------------------------------------------------------------
 
+
 class TestTypeIntoElement:
     @pytest.mark.asyncio
     async def test_types_text_without_enter(self):
         el = InteractiveElement(
-            index=1, tag_name="INPUT", role=None, name="Search",
-            ax_role="textbox", backend_node_id=1, node_id=3, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
-            bounds_x=10.0, bounds_y=20.0, bounds_width=200.0, bounds_height=40.0,
+            index=1,
+            tag_name="INPUT",
+            role=None,
+            name="Search",
+            ax_role="textbox",
+            backend_node_id=1,
+            node_id=3,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
+            bounds_x=10.0,
+            bounds_y=20.0,
+            bounds_width=200.0,
+            bounds_height=40.0,
         )
 
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
@@ -444,19 +571,30 @@ class TestTypeIntoElement:
             assert insert_call.kwargs["params"]["text"] == "hello world"
 
             enter_calls = [
-                c for c in mock_send.Input.dispatchKeyEvent.call_args_list
-                if c.kwargs["params"]["key"] == "Enter"
+                c for c in mock_send.Input.dispatchKeyEvent.call_args_list if c.kwargs["params"]["key"] == "Enter"
             ]
             assert len(enter_calls) == 0
 
     @pytest.mark.asyncio
     async def test_type_presses_enter_when_flag_set(self):
         el = InteractiveElement(
-            index=1, tag_name="INPUT", role=None, name="Search",
-            ax_role="textbox", backend_node_id=1, node_id=3, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type="text",
-            has_js_click_listener=False, cursor_style=None,
-            bounds_x=10.0, bounds_y=20.0, bounds_width=200.0, bounds_height=40.0,
+            index=1,
+            tag_name="INPUT",
+            role=None,
+            name="Search",
+            ax_role="textbox",
+            backend_node_id=1,
+            node_id=3,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type="text",
+            has_js_click_listener=False,
+            cursor_style=None,
+            bounds_x=10.0,
+            bounds_y=20.0,
+            bounds_width=200.0,
+            bounds_height=40.0,
         )
 
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
@@ -472,11 +610,13 @@ class TestTypeIntoElement:
             await conn.type_into_element(el, "query", press_enter=True)
 
             enter_down = [
-                c for c in mock_send.Input.dispatchKeyEvent.call_args_list
+                c
+                for c in mock_send.Input.dispatchKeyEvent.call_args_list
                 if c.kwargs["params"]["key"] == "Enter" and c.kwargs["params"]["type"] == "keyDown"
             ]
             enter_up = [
-                c for c in mock_send.Input.dispatchKeyEvent.call_args_list
+                c
+                for c in mock_send.Input.dispatchKeyEvent.call_args_list
                 if c.kwargs["params"]["key"] == "Enter" and c.kwargs["params"]["type"] == "keyUp"
             ]
             assert len(enter_down) == 1
@@ -487,15 +627,28 @@ class TestTypeIntoElement:
 # CDPConnection.resolve_element_box
 # ---------------------------------------------------------------------------
 
+
 class TestResolveElementBox:
     @pytest.mark.asyncio
     async def test_uses_cached_bounds(self):
         el = InteractiveElement(
-            index=1, tag_name="BUTTON", role=None, name="OK",
-            ax_role="button", backend_node_id=1, node_id=1, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
-            bounds_x=10.0, bounds_y=20.0, bounds_width=100.0, bounds_height=40.0,
+            index=1,
+            tag_name="BUTTON",
+            role=None,
+            name="OK",
+            ax_role="button",
+            backend_node_id=1,
+            node_id=1,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
+            bounds_x=10.0,
+            bounds_y=20.0,
+            bounds_width=100.0,
+            bounds_height=40.0,
         )
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
         conn._client = MagicMock()
@@ -508,10 +661,19 @@ class TestResolveElementBox:
     @pytest.mark.asyncio
     async def test_falls_back_to_get_box_model(self):
         el = InteractiveElement(
-            index=1, tag_name="DIV", role=None, name="box",
-            ax_role=None, backend_node_id=5, node_id=10, frame_id=None,
-            is_disabled=False, is_readonly=False, input_type=None,
-            has_js_click_listener=False, cursor_style=None,
+            index=1,
+            tag_name="DIV",
+            role=None,
+            name="box",
+            ax_role=None,
+            backend_node_id=5,
+            node_id=10,
+            frame_id=None,
+            is_disabled=False,
+            is_readonly=False,
+            input_type=None,
+            has_js_click_listener=False,
+            cursor_style=None,
         )
         conn = CDPConnection("ws://127.0.0.1:9222/cdp/tab1")
         conn._client = MagicMock()
@@ -536,6 +698,7 @@ class TestResolveElementBox:
 # CDPConnection.get_page_text
 # ---------------------------------------------------------------------------
 
+
 class TestGetPageText:
     @pytest.mark.asyncio
     async def test_returns_javascript_result(self):
@@ -557,6 +720,7 @@ class TestGetPageText:
 # ---------------------------------------------------------------------------
 # Snapshot lookup builder
 # ---------------------------------------------------------------------------
+
 
 class TestSnapshotLookup:
     @pytest.mark.asyncio
@@ -593,6 +757,7 @@ class TestSnapshotLookup:
 # ---------------------------------------------------------------------------
 # Convenience functions
 # ---------------------------------------------------------------------------
+
 
 class TestConvenienceFunctions:
     @pytest.mark.asyncio

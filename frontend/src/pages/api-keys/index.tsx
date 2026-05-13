@@ -48,7 +48,8 @@ const APIKeysPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await apiKeysAPI.list();
-      setKeys(res.data.keys.map((k: TenantAPIKeyInfo) => ({
+      const data = res.data as { keys: TenantAPIKeyInfo[] };
+      setKeys(data.keys.map((k: TenantAPIKeyInfo) => ({
         id: k.id,
         name: k.name,
         key_prefix: k.key_prefix,
@@ -92,22 +93,23 @@ const APIKeysPage: React.FC = () => {
     try {
       const res = await apiKeysAPI.create({name: form.name.trim(), scopes: form.scopes, rate_limit: form.rate_limit, daily_quota: form.daily_quota});
 
+      const data = res.data as TenantAPIKeyInfo & { api_key: string };
       const newKey: TenantAPIKeyInfo = {
-        id: res.data.id,
-        name: res.data.name,
-        key_prefix: res.data.key_prefix,
-        scopes: res.data.scopes || [],
-        rate_limit: res.data.rate_limit || 60,
-        daily_quota: res.data.daily_quota || 1000,
-        is_active: res.data.is_active !== false,
-        created_at: res.data.created_at,
+        id: data.id,
+        name: data.name,
+        key_prefix: data.key_prefix,
+        scopes: data.scopes || [],
+        rate_limit: data.rate_limit || 60,
+        daily_quota: data.daily_quota || 1000,
+        is_active: data.is_active !== false,
+        created_at: data.created_at,
       };
 
       setKeys(prev => [newKey, ...prev]);
       setCreatedKey({
-        key: res.data.api_key,
-        name: res.data.name,
-        prefix: res.data.key_prefix,
+        key: data.api_key,
+        name: data.name,
+        prefix: data.key_prefix,
       });
       setShowCreateModal(false);
       toast.success('API Key 已生成！');

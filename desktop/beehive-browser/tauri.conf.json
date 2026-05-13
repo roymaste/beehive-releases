@@ -1,10 +1,10 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicoverbruggen/tauri-v2-schema/main/tauri.conf.schema.json",
   "productName": "Beehive Browser",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "identifier": "com.beehive.browser",
   "build": {
-    "devUrl": "http://107.173.70.124:8000",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../../frontend/dist"
   },
   "app": {
@@ -37,6 +37,9 @@
       "deb": {
         "depends": []
       }
+    },
+    "resources": {
+      "cloakbrowser-core": "cloakbrowser-core"
     }
   },
   "plugins": {

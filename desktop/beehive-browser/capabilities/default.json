@@ -1,10 +1,13 @@
 {
   "identifier": "default",
-  "description": "Default permissions — tightened for production",
+  "description": "Default permissions — tightened for production. Only APIs actually used by the frontend/Rust backend are enabled.",
+  "local": true,
   "windows": ["beehive-main"],
   "permissions": [
-    "core:default",
-    "shell:allow-open",
+    "core:app:default",
+    "core:event:default",
+    "core:window:default",
+    "core:webview:default",
     "dialog:default",
     "updater:default"
   ]

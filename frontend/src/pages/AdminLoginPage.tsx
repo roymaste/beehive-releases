@@ -5,15 +5,7 @@ import { authAPI } from '../api/client';
 import toast from 'react-hot-toast';
 
 // UX: Design System colors — centralized to avoid hard-coded hex drift
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  secondary: '#1976D2',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('admin');
@@ -82,7 +74,7 @@ const AdminLoginPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="border-t mb-6" style={{ borderColor: C.border }} />
+        <div className="border-t mb-6" style={{ borderColor: 'var(--divider)' }} />
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
@@ -136,12 +128,12 @@ const AdminLoginPage: React.FC = () => {
               className="apple-btn py-3 text-base"
               disabled={sendingPwd}
               onClick={handleGetPassword}
-              // UX: use C.secondary instead of hard-coded #1976D2 for color consistency
+              // UX: use 'var(--hive-blue)' instead of hard-coded #1976D2 for color consistency
               style={{
                 flex: '0 0 auto',
                 background: 'transparent',
-                color: C.secondary,
-                border: `1px solid ${C.secondary}`,
+                color: 'var(--hive-blue)',
+                border: `1px solid ${'var(--hive-blue)'}`,
                 padding: '12px 16px',
                 whiteSpace: 'nowrap',
                 cursor: sendingPwd ? 'not-allowed' : 'pointer',
@@ -154,7 +146,7 @@ const AdminLoginPage: React.FC = () => {
         </form>
 
         <div className="mt-6 text-center">
-          <p style={{ color: C.textTertiary, fontSize: '11px' }}>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '11px' }}>
             默认账号 admin · 忘记密码可点「获取密码」
           </p>
         </div>

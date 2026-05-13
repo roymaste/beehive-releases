@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 // 检测是否在 Tauri 桌面端运行
 // Tauri 下相对路径指向 tauri://localhost，API 请求会失败
@@ -28,24 +29,29 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401
+// Response interceptor: global error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Determine if this is a true auth failure vs. a permission/validation error.
-      // We do NOT clear localStorage here — that destroys the session for ALL tabs
-      // and causes "logged-in users redirected to /login" on ANY 401 from any API.
-      // The token is only cleared on explicit logout(), or when the backend signals
-      // token invalidation via a dedicated /auth/logout endpoint.
-      //
-      // Instead, dispatch a custom event so AuthContext / ProtectedRoute can
-      // react appropriately without a full-page reload.
-      console.warn('[API 401]', error.config?.url, error.response?.data);
-      if (window.location.pathname !== '/login') {
+    const status = error.response?.status as number | undefined;
+    const url = error.config?.url as string | undefined;
+    const isAuthEndpoint = url && /^\/auth\//.test(url);
+    const isLoginPage = window.location.pathname === '/login';
+
+    if (status === 401) {
+      console.warn('[API 401]', url, error.response?.data);
+      if (!isAuthEndpoint && !isLoginPage) {
         window.dispatchEvent(new CustomEvent('auth:401', { detail: error.response?.data }));
+        window.location.href = '/login';
       }
+    } else if (status === 403) {
+      toast.error('权限不足，无法访问该资源');
+    } else if (status === 500) {
+      toast.error('服务器错误，请稍后重试');
+    } else if (!error.response && error.request) {
+      toast.error('网络异常，请检查网络连接');
     }
+
     return Promise.reject(error);
   },
 );
@@ -428,9 +434,9 @@ export const agentsAPI = {
 // --- API Keys API ---
 export const apiKeysAPI = {
   list: () =>
-    apiClient.get<{ keys: any[] }>('/api-keys'),
+    apiClient.get<{ keys: unknown[] }>('/api-keys'),
   create: (data: { name: string; scopes?: string[]; rate_limit?: number; daily_quota?: number }) =>
-    apiClient.post<any>('/api-keys', data),
+    apiClient.post<unknown>('/api-keys', data),
   delete: (id: string) =>
     apiClient.delete(`/api-keys/${id}`),
 };
@@ -511,6 +517,38 @@ export const aiScriptAPI = {
     apiClient.post<GenerateScriptResponse>('/ai/generate-script', data),
 };
 
+// --- RPA Script Generation API (v2 with CDP + preview) ---
+export interface RpaGenerateScriptRequest {
+  instruction: string;
+  platform: string;
+  url?: string;
+}
+
+export interface RpaScriptStep {
+  action: string;
+  target: string;
+  value: string;
+  wait_ms: number;
+}
+
+export interface RpaGenerateScriptResponse {
+  script_id: string;
+  platform: string;
+  steps: RpaScriptStep[];
+  preview_html: string;
+  source: string;
+  variables: string[];
+}
+
+export const rpaScriptAPI = {
+  generate: (data: RpaGenerateScriptRequest) =>
+    apiClient.post<RpaGenerateScriptResponse>('/rpa/scripts/generate', data),
+  get: (scriptId: string) =>
+    apiClient.get<RpaGenerateScriptResponse>(`/rpa/scripts/${scriptId}`),
+  save: (data: { id?: string; name: string; platform: string; instruction?: string; steps: RpaScriptStep[]; url?: string }) =>
+    apiClient.post<{ script_id: string; status: string }>('/rpa/scripts', data),
+};
+
 // --- Dashboard (composite from multiple endpoints) ---
 export const dashboardAPI = {
   getStats: async (): Promise<DashboardStats> => {
@@ -540,4 +578,56 @@ export const dashboardAPI = {
     const res = await apiClient.get<DashboardStats>('/dashboard/stats');
     return res.data;
   },
+};
+
+// ─── RPA Element Selector API ─────────────────────────────────
+
+export interface DOMElement {
+  tag: string;
+  text: string;
+  selector: string;
+  attributes: Record<string, string>;
+  bounds: { x: number; y: number; width: number; height: number };
+  ref: string;
+}
+
+export interface DOMSnapshotResponse {
+  elements: DOMElement[];
+}
+
+export interface RpaElementSelectorRequest {
+  selector: string;
+  action: 'click' | 'type' | 'scroll';
+  value?: string;
+}
+
+export interface RpaGenerateScriptFromActionsRequest {
+  url: string;
+  actions: {
+    selector: string;
+    action: 'click' | 'type' | 'scroll';
+    value?: string;
+    tag?: string;
+    text?: string;
+  }[];
+  name?: string;
+}
+
+export interface RpaGenerateScriptFromActionsResponse {
+  script_id: string;
+  name: string;
+  platform: string;
+  steps: RpaScriptStep[];
+  status: string;
+}
+
+export const rpaSelectorAPI = {
+  getDOMSnapshot: (url: string) =>
+    apiClient.get<DOMSnapshotResponse>('/api/rpa/get-dom-snapshot', { params: { url }, timeout: 30000 }),
+
+  selectElement: (data: RpaElementSelectorRequest) =>
+    apiClient.post<{ success: boolean; message: string }>('/api/rpa/element-selector', data),
+
+  generateScript: (data: RpaGenerateScriptFromActionsRequest) =>
+    apiClient.post<RpaGenerateScriptFromActionsResponse>('/api/rpa/generate-script', data, { timeout: 60000 }),
 };

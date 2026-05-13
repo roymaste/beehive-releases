@@ -180,3 +180,45 @@ export async function downloadCore(
 export async function extractCore(zipPath: string): Promise<ExtractResult> {
   return tauriInvoke<ExtractResult>('extract_core', { zipPath });
 }
+
+/** 安装内核（下载 + 解压） */
+export async function installCore(
+  url: string,
+  onProgress?: (event: DownloadProgressEvent) => void
+): Promise<ExtractResult> {
+  const download = await downloadCore(url, onProgress);
+  return extractCore(download.path);
+}
+
+/** 更新内核（同 installCore） */
+export async function updateCore(
+  url: string,
+  onProgress?: (event: DownloadProgressEvent) => void
+): Promise<ExtractResult> {
+  return installCore(url, onProgress);
+}
+
+/** 监听内核下载进度 */
+/** 根据当前平台获取 CloakBrowser 内核下载 URL */
+export function getCoreDownloadUrl(): string {
+  const base = 'https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-';
+  const platform = navigator.platform.toLowerCase();
+  if (platform.includes('win')) return base + 'windows-x64.zip';
+  if (platform.includes('mac') || platform.includes('darwin')) return base + 'darwin-x64.tar.gz';
+  return base + 'linux-x64.tar.gz';
+}
+
+export async function onCoreProgress(
+  callback: (event: DownloadProgressEvent) => void
+): Promise<() => void> {
+  if (!isDesktopApp()) {
+    throw new Error('Not running in desktop app');
+  }
+  const { listen } = window.__TAURI__ as any;
+  if (typeof listen !== 'function') {
+    throw new Error('Tauri listen not available');
+  }
+  return listen('download-progress', (event: { payload: DownloadProgressEvent }) => {
+    callback(event.payload);
+  });
+}

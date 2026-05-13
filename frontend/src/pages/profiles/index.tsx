@@ -18,7 +18,7 @@ import {
 } from 'react-icons/ri';
 import { profilesAPI, Profile } from '../../api/profiles';
 import { groupsAPI, Group } from '../../api/groups';
-import { isDesktopApp, launchLocalBeehiveBrowser, stopLocalBeehiveBrowser, listLocalRunningCloaks, fingerprintToLauncherConfig } from '../../lib/desktop';
+import { isDesktopApp, launchLocalBeehiveBrowser, stopLocalBeehiveBrowser, listLocalRunningCloaks, fingerprintToLauncherConfig, checkCoreInstalled, installCore, getCoreDownloadUrl, type DownloadProgressEvent } from '../../lib/desktop';
 import DataTable, { Column } from '../../components/DataTable';
 import BatchActions, { defaultProfileBatchActions } from '../../components/BatchActions';
 import SearchFilter from '../../components/SearchFilter';
@@ -255,7 +255,19 @@ const ProfilesPage: React.FC = () => {
       if (isDesktop) {
         const fingerprint = (profile as any).fingerprint || {};
         const proxyUrl = (profile as any).proxy_url;
-        const config = fingerprintToLauncherConfig(
+        // 先检查内核是否已安装
+      try {
+        const coreCheck = await checkCoreInstalled();
+        if (!coreCheck.installed) {
+          const confirmed = window.confirm('尚未下载浏览器内核，需要先下载 CloakBrowser 内核（约 200MB）。下载完成后会自动安装。是否继续？');
+          if (!confirmed) return;
+          await installCore(getCoreDownloadUrl(), (_event: DownloadProgressEvent) => {});
+        }
+      } catch {
+        // 非桌面端环境跳过
+      }
+
+      const config = fingerprintToLauncherConfig(
           profile.id,
           fingerprint,
           proxyUrl,

@@ -17,7 +17,7 @@ import {
   RiErrorWarningLine,
 } from 'react-icons/ri';
 import { profilesAPI, Profile, ProfileFingerprint } from '../../api/profiles';
-import { isDesktopApp, launchLocalBeehiveBrowser, fingerprintToLauncherConfig } from '../../lib/desktop';
+import { isDesktopApp, launchLocalBeehiveBrowser, fingerprintToLauncherConfig, checkCoreInstalled, installCore, getCoreDownloadUrl, type DownloadProgressEvent } from '../../lib/desktop';
 
 const TABS = [
   { key: 'overview', label: '概览', Icon: RiComputerLine },
@@ -87,7 +87,19 @@ const ProfileDetailPage: React.FC = () => {
       if (isDesktopApp()) {
         const fingerprint = profile.fingerprint || {};
         const proxyUrl = (profile as any).proxy_url;
-        const config = fingerprintToLauncherConfig(
+        // 先检查内核是否已安装
+      try {
+        const coreCheck = await checkCoreInstalled();
+        if (!coreCheck.installed) {
+          const confirmed = window.confirm('尚未下载浏览器内核，需要先下载 CloakBrowser 内核（约 200MB）。下载完成后会自动安装。是否继续？');
+          if (!confirmed) return;
+          await installCore(getCoreDownloadUrl(), (_event: DownloadProgressEvent) => {});
+        }
+      } catch {
+        // 非桌面端环境跳过
+      }
+
+      const config = fingerprintToLauncherConfig(
           profile.id,
           fingerprint,
           proxyUrl,

@@ -3,20 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RiCheckLine, RiArrowRightSLine } from 'react-icons/ri';
 
 // Beehive Design System Colors
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const RADIUS_CARD = 16;
 const RADIUS_SM = 10;
@@ -91,7 +78,7 @@ const PricingPage: React.FC = () => {
     <div
       style={{
         minHeight: '100vh',
-        background: `linear-gradient(180deg, ${C.bg} 0%, #0a0a0a 100%)`,
+        background: `linear-gradient(180deg, ${'var(--page-bg)'} 0%, #0a0a0a 100%)`,
         padding: '80px 24px 120px',
       }}
     >
@@ -101,7 +88,7 @@ const PricingPage: React.FC = () => {
           style={{
             fontSize: 48,
             fontWeight: 800,
-            color: C.textPrimary,
+            color: 'var(--text-primary)',
             margin: 0,
             marginBottom: 16,
             letterSpacing: '-0.02em',
@@ -109,7 +96,7 @@ const PricingPage: React.FC = () => {
         >
           选择适合您的方案
         </h1>
-        <p style={{ fontSize: 18, color: C.textSecondary, margin: 0 }}>
+        <p style={{ fontSize: 18, color: 'var(--text-secondary)', margin: 0 }}>
           释放社交媒体运营的无限可能，从蜂巢智能体开始
         </p>
 
@@ -121,17 +108,17 @@ const PricingPage: React.FC = () => {
             gap: 12,
             marginTop: 32,
             padding: 4,
-            background: C.surface,
+            background: 'var(--card-bg)',
             borderRadius: RADIUS_SM,
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${'var(--divider)'}`,
           }}
         >
           <button
             onClick={() => setBillingCycle('monthly')}
             style={{
               padding: '8px 20px',
-              background: billingCycle === 'monthly' ? C.accent : 'transparent',
-              color: billingCycle === 'monthly' ? C.bg : C.textSecondary,
+              background: billingCycle === 'monthly' ? 'var(--hive-gold)' : 'transparent',
+              color: billingCycle === 'monthly' ? 'var(--page-bg)' : 'var(--text-secondary)',
               border: 'none',
               borderRadius: RADIUS_BTN,
               fontSize: 14,
@@ -146,8 +133,8 @@ const PricingPage: React.FC = () => {
             onClick={() => setBillingCycle('yearly')}
             style={{
               padding: '8px 20px',
-              background: billingCycle === 'yearly' ? C.accent : 'transparent',
-              color: billingCycle === 'yearly' ? C.bg : C.textSecondary,
+              background: billingCycle === 'yearly' ? 'var(--hive-gold)' : 'transparent',
+              color: billingCycle === 'yearly' ? 'var(--page-bg)' : 'var(--text-secondary)',
               border: 'none',
               borderRadius: RADIUS_BTN,
               fontSize: 14,
@@ -164,7 +151,7 @@ const PricingPage: React.FC = () => {
                 top: -8,
                 right: -8,
                 padding: '2px 6px',
-                background: C.success,
+                background: 'var(--success)',
                 color: '#fff',
                 fontSize: 10,
                 fontWeight: 600,
@@ -179,7 +166,7 @@ const PricingPage: React.FC = () => {
 
       {/* Plans */}
       {loading ? (
-        <div style={{ textAlign: 'center', color: C.textSecondary }}>
+        <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
           加载中...
         </div>
       ) : (
@@ -201,8 +188,8 @@ const PricingPage: React.FC = () => {
               <div
                 key={plan.id}
                 style={{
-                  background: C.surface,
-                  border: `1px solid ${isPremium ? C.accent : C.border}`,
+                  background: 'var(--card-bg)',
+                  border: `1px solid ${isPremium ? 'var(--hive-gold)' : 'var(--divider)'}`,
                   borderRadius: RADIUS_CARD,
                   padding: 32,
                   position: 'relative',
@@ -219,8 +206,8 @@ const PricingPage: React.FC = () => {
                       left: '50%',
                       transform: 'translateX(-50%)',
                       padding: '4px 16px',
-                      background: C.accent,
-                      color: C.bg,
+                      background: 'var(--hive-gold)',
+                      color: 'var(--page-bg)',
                       fontSize: 12,
                       fontWeight: 700,
                       borderRadius: 999,
@@ -238,14 +225,14 @@ const PricingPage: React.FC = () => {
                     style={{
                       fontSize: 24,
                       fontWeight: 700,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       margin: 0,
                       marginBottom: 8,
                     }}
                   >
                     {plan.name}
                   </h3>
-                  <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
+                  <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
                     {isFree ? '适合个人用户入门使用' : '适合团队和专业人士'}
                   </p>
                 </div>
@@ -257,13 +244,13 @@ const PricingPage: React.FC = () => {
                       style={{
                         fontSize: 48,
                         fontWeight: 800,
-                        color: isFree ? C.success : C.accent,
+                        color: isFree ? 'var(--success)' : 'var(--hive-gold)',
                       }}
                     >
                       {formatPrice(price)}
                     </span>
                     {!isFree && (
-                      <span style={{ fontSize: 16, color: C.textTertiary }}>
+                      <span style={{ fontSize: 16, color: 'var(--text-tertiary)' }}>
                         /{billingCycle === 'monthly' ? '月' : '年'}
                       </span>
                     )}
@@ -275,7 +262,7 @@ const PricingPage: React.FC = () => {
                           display: 'inline-block',
                           padding: '2px 8px',
                           background: 'rgba(76,175,80,0.12)',
-                          color: C.success,
+                          color: 'var(--success)',
                           fontSize: 12,
                           fontWeight: 600,
                           borderRadius: 999,
@@ -297,9 +284,9 @@ const PricingPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: 8,
                     padding: '14px 24px',
-                    background: isPremium ? C.accent : 'transparent',
-                    color: isPremium ? C.bg : C.accent,
-                    border: `1px solid ${C.accent}`,
+                    background: isPremium ? 'var(--hive-gold)' : 'transparent',
+                    color: isPremium ? 'var(--page-bg)' : 'var(--hive-gold)',
+                    border: `1px solid ${'var(--hive-gold)'}`,
                     borderRadius: RADIUS_BTN,
                     fontSize: 16,
                     fontWeight: 600,
@@ -308,10 +295,10 @@ const PricingPage: React.FC = () => {
                     transition: 'all 0.2s',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = isPremium ? C.accentHover : 'rgba(255,193,7,0.1)';
+                    e.currentTarget.style.background = isPremium ? 'var(--hive-gold-hover)' : 'rgba(255,193,7,0.1)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isPremium ? C.accent : 'transparent';
+                    e.currentTarget.style.background = isPremium ? 'var(--hive-gold)' : 'transparent';
                   }}
                 >
                   {isLoggedIn ? '立即订阅' : '免费开始'}
@@ -319,8 +306,8 @@ const PricingPage: React.FC = () => {
                 </button>
 
                 {/* Features */}
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 24 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: C.textSecondary, marginBottom: 16 }}>
+                <div style={{ borderTop: `1px solid ${'var(--divider)'}`, paddingTop: 24 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 16 }}>
                     功能权益
                   </div>
                   <ul
@@ -334,37 +321,37 @@ const PricingPage: React.FC = () => {
                     }}
                   >
                     <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ color: C.success }}>
+                      <span style={{ color: 'var(--success)' }}>
                         <RiCheckLine size={18} />
                       </span>
-                      <span style={{ color: C.textPrimary, fontSize: 14 }}>
+                      <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>
                         <strong>{plan.env_quota}</strong> 个浏览器环境
                       </span>
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ color: C.success }}>
+                      <span style={{ color: 'var(--success)' }}>
                         <RiCheckLine size={18} />
                       </span>
-                      <span style={{ color: C.textPrimary, fontSize: 14 }}>
+                      <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>
                         <strong>{plan.api_call_quota.toLocaleString()}</strong> 次 API 调用/{billingCycle === 'monthly' ? '月' : '年'}
                       </span>
                     </li>
                     {plan.can_invite && (
                       <li style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: C.success }}>
+                        <span style={{ color: 'var(--success)' }}>
                           <RiCheckLine size={18} />
                         </span>
-                        <span style={{ color: C.textPrimary, fontSize: 14 }}>
+                        <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>
                           团队协作 & 邀请成员
                         </span>
                       </li>
                     )}
                     {(plan.features || []).map((feature, idx) => (
                       <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ color: C.success }}>
+                        <span style={{ color: 'var(--success)' }}>
                           <RiCheckLine size={18} />
                         </span>
-                        <span style={{ color: C.textPrimary, fontSize: 14 }}>
+                        <span style={{ color: 'var(--text-primary)', fontSize: 14 }}>
                           {feature}
                         </span>
                       </li>
@@ -383,7 +370,7 @@ const PricingPage: React.FC = () => {
           style={{
             fontSize: 32,
             fontWeight: 700,
-            color: C.textPrimary,
+            color: 'var(--text-primary)',
             textAlign: 'center',
             marginBottom: 40,
           }}
@@ -392,8 +379,8 @@ const PricingPage: React.FC = () => {
         </h2>
         <div
           style={{
-            background: C.surface,
-            border: `1px solid ${C.border}`,
+            background: 'var(--card-bg)',
+            border: `1px solid ${'var(--divider)'}`,
             borderRadius: RADIUS_CARD,
             overflow: 'hidden',
           }}
@@ -401,7 +388,7 @@ const PricingPage: React.FC = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 14, color: C.textSecondary, fontWeight: 500 }}>
+                <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 14, color: 'var(--text-secondary)', fontWeight: 500 }}>
                   功能
                 </th>
                 {plans.map(plan => (
@@ -411,7 +398,7 @@ const PricingPage: React.FC = () => {
                       padding: '16px 24px',
                       textAlign: 'center',
                       fontSize: 16,
-                      color: plan.type === 'premium' ? C.accent : C.textPrimary,
+                      color: plan.type === 'premium' ? 'var(--hive-gold)' : 'var(--text-primary)',
                       fontWeight: 700,
                     }}
                   >
@@ -422,65 +409,65 @@ const PricingPage: React.FC = () => {
             </thead>
             <tbody>
               <tr>
-                <td style={{ padding: '14px 24px', fontSize: 14, color: C.textSecondary, borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: '14px 24px', fontSize: 14, color: 'var(--text-secondary)', borderTop: `1px solid ${'var(--divider)'}` }}>
                   环境配额
                 </td>
                 {plans.map(plan => (
                   <td
                     key={plan.id}
-                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: C.textPrimary, borderTop: `1px solid ${C.border}` }}
+                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: 'var(--text-primary)', borderTop: `1px solid ${'var(--divider)'}` }}
                   >
                     {plan.env_quota}
                   </td>
                 ))}
               </tr>
               <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
-                <td style={{ padding: '14px 24px', fontSize: 14, color: C.textSecondary, borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: '14px 24px', fontSize: 14, color: 'var(--text-secondary)', borderTop: `1px solid ${'var(--divider)'}` }}>
                   API调用配额/月
                 </td>
                 {plans.map(plan => (
                   <td
                     key={plan.id}
-                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: C.textPrimary, borderTop: `1px solid ${C.border}` }}
+                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: 'var(--text-primary)', borderTop: `1px solid ${'var(--divider)'}` }}
                   >
                     {plan.api_call_quota.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td style={{ padding: '14px 24px', fontSize: 14, color: C.textSecondary, borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: '14px 24px', fontSize: 14, color: 'var(--text-secondary)', borderTop: `1px solid ${'var(--divider)'}` }}>
                   团队邀请
                 </td>
                 {plans.map(plan => (
                   <td
                     key={plan.id}
-                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.can_invite ? C.success : C.textTertiary, borderTop: `1px solid ${C.border}` }}
+                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.can_invite ? 'var(--success)' : 'var(--text-tertiary)', borderTop: `1px solid ${'var(--divider)'}` }}
                   >
                     {plan.can_invite ? <RiCheckLine size={18} /> : '—'}
                   </td>
                 ))}
               </tr>
               <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
-                <td style={{ padding: '14px 24px', fontSize: 14, color: C.textSecondary, borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: '14px 24px', fontSize: 14, color: 'var(--text-secondary)', borderTop: `1px solid ${'var(--divider)'}` }}>
                   月付价格
                 </td>
                 {plans.map(plan => (
                   <td
                     key={plan.id}
-                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.price_monthly === 0 ? C.success : C.accent, fontWeight: 600, borderTop: `1px solid ${C.border}` }}
+                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.price_monthly === 0 ? 'var(--success)' : 'var(--hive-gold)', fontWeight: 600, borderTop: `1px solid ${'var(--divider)'}` }}
                   >
                     {formatPrice(plan.price_monthly)}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td style={{ padding: '14px 24px', fontSize: 14, color: C.textSecondary, borderTop: `1px solid ${C.border}` }}>
+                <td style={{ padding: '14px 24px', fontSize: 14, color: 'var(--text-secondary)', borderTop: `1px solid ${'var(--divider)'}` }}>
                   年付价格
                 </td>
                 {plans.map(plan => (
                   <td
                     key={plan.id}
-                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.price_yearly === 0 ? C.success : C.accent, fontWeight: 600, borderTop: `1px solid ${C.border}` }}
+                    style={{ padding: '14px 24px', textAlign: 'center', fontSize: 14, color: plan.price_yearly === 0 ? 'var(--success)' : 'var(--hive-gold)', fontWeight: 600, borderTop: `1px solid ${'var(--divider)'}` }}
                   >
                     {formatPrice(plan.price_yearly)}
                   </td>
@@ -493,7 +480,7 @@ const PricingPage: React.FC = () => {
 
       {/* FAQ placeholder */}
       <div style={{ maxWidth: 800, margin: '80px auto 0', textAlign: 'center' }}>
-        <h2 style={{ fontSize: 32, fontWeight: 700, color: C.textPrimary, marginBottom: 24 }}>
+        <h2 style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 24 }}>
           常见问题
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, textAlign: 'left' }}>
@@ -506,16 +493,16 @@ const PricingPage: React.FC = () => {
             <div
               key={idx}
               style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
+                background: 'var(--card-bg)',
+                border: `1px solid ${'var(--divider)'}`,
                 borderRadius: RADIUS_SM,
                 padding: 20,
               }}
             >
-              <h4 style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, margin: '0 0 8px' }}>
+              <h4 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
                 {item.q}
               </h4>
-              <p style={{ fontSize: 14, color: C.textSecondary, margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
                 {item.a}
               </p>
             </div>

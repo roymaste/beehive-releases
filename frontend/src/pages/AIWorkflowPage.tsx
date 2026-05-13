@@ -1,27 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { agentsAPI, ContentGenerateResponse, aiScriptAPI, GenerateScriptResponse, ScriptTemplateStep } from '../api/client';
+import { agentsAPI, ContentGenerateResponse, rpaScriptAPI, RpaGenerateScriptResponse, RpaScriptStep } from '../api/client';
 import apiClient from '../api/client';
 import toast from 'react-hot-toast';
 import { RiRobot2Line, RiFlashlightFill, RiFileCodeLine, RiEyeLine, RiEditLine } from 'react-icons/ri';
 
 // ── Beehive Dark Palette ──
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  cardBg: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  border: 'rgba(255,255,255,0.06)',
-  success: '#4caf50',
-  error: '#f44336',
-  warning: '#ff9800',
-};
+
 
 const PLATFORMS = [
   { value: 'twitter', label: 'Twitter / X', emoji: '🐦' },
@@ -40,10 +25,12 @@ const STYLES = [
 
 const SCRIPT_PLATFORMS = [
   { value: 'twitter', label: 'Twitter / X', emoji: '🐦' },
+  { value: 'facebook', label: 'Facebook', emoji: '📘' },
   { value: 'weibo', label: '微博', emoji: '📱' },
   { value: 'xiaohongshu', label: '小红书', emoji: '📕' },
   { value: 'douyin', label: '抖音', emoji: '🎵' },
   { value: 'shop', label: '网店', emoji: '🛒' },
+  { value: 'custom', label: '自定义', emoji: '🔧' },
 ];
 
 interface Account {
@@ -134,8 +121,8 @@ const ContentTab: React.FC = () => {
     <>
       {/* 输入区 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, marginBottom: 24 }}>
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
-          <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 8, fontWeight: 500 }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
             话题 / 产品描述
           </label>
           <textarea
@@ -145,16 +132,16 @@ const ContentTab: React.FC = () => {
             rows={5}
             disabled={step === 'generating' || step === 'publishing'}
             style={{
-              width: '100%', background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 8, padding: 12, fontSize: 14, color: C.textPrimary,
+              width: '100%', background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`,
+              borderRadius: 8, padding: 12, fontSize: 14, color: 'var(--text-primary)',
               resize: 'vertical', outline: 'none', fontFamily: 'inherit',
             }}
           />
         </div>
 
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 8, fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
               目标平台
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -164,9 +151,9 @@ const ContentTab: React.FC = () => {
                   onClick={() => setPlatform(p.value)}
                   disabled={step === 'generating' || step === 'publishing'}
                   style={{
-                    padding: '8px 12px', borderRadius: 8, border: `1px solid ${platform === p.value ? C.accent : C.border}`,
-                    background: platform === p.value ? 'rgba(255,193,7,0.08)' : C.surface,
-                    color: platform === p.value ? C.accent : C.textSecondary, cursor: 'pointer',
+                    padding: '8px 12px', borderRadius: 8, border: `1px solid ${platform === p.value ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                    background: platform === p.value ? 'rgba(255,193,7,0.08)' : 'var(--card-bg)',
+                    color: platform === p.value ? 'var(--hive-gold)' : 'var(--text-secondary)', cursor: 'pointer',
                     fontSize: 13, textAlign: 'left',
                   }}
                 >
@@ -177,7 +164,7 @@ const ContentTab: React.FC = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 8, fontWeight: 500 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
               文案风格
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -187,14 +174,14 @@ const ContentTab: React.FC = () => {
                   onClick={() => setStyle(s.value)}
                   disabled={step === 'generating' || step === 'publishing'}
                   style={{
-                    padding: '8px 12px', borderRadius: 8, border: `1px solid ${style === s.value ? C.accent : C.border}`,
-                    background: style === s.value ? 'rgba(255,193,7,0.08)' : C.surface,
-                    color: style === s.value ? C.accent : C.textSecondary, cursor: 'pointer',
+                    padding: '8px 12px', borderRadius: 8, border: `1px solid ${style === s.value ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                    background: style === s.value ? 'rgba(255,193,7,0.08)' : 'var(--card-bg)',
+                    color: style === s.value ? 'var(--hive-gold)' : 'var(--text-secondary)', cursor: 'pointer',
                     fontSize: 13, textAlign: 'center',
                   }}
                 >
                   {s.label}
-                  <span style={{ display: 'block', fontSize: 11, color: C.textTertiary, marginTop: 2 }}>{s.desc}</span>
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{s.desc}</span>
                 </button>
               ))}
             </div>
@@ -203,9 +190,9 @@ const ContentTab: React.FC = () => {
       </div>
 
       {/* 账号选择 + 操作按钮 */}
-      <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20, marginBottom: 24 }}>
+      <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20, marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <label style={{ fontSize: 13, color: C.textSecondary, fontWeight: 500 }}>
+          <label style={{ fontSize: 13, color: 'var(--text-secondary)', fontWeight: 500 }}>
             选择发布账号（{platform === 'twitter' ? '🐦' : platform === 'weibo' ? '📱' : platform === 'xiaohongshu' ? '📕' : '🎵'}
             {' '}{PLATFORMS.find(p => p.value === platform)?.label}，共 {filteredAccounts.length} 个可用）
           </label>
@@ -215,7 +202,7 @@ const ContentTab: React.FC = () => {
               disabled={!canGenerate}
               style={{
                 padding: '10px 24px', borderRadius: 8, border: 'none',
-                background: canGenerate ? C.accent : C.textTertiary, color: canGenerate ? '#000' : C.textTertiary,
+                background: canGenerate ? 'var(--hive-gold)' : 'var(--text-tertiary)', color: canGenerate ? '#000' : 'var(--text-tertiary)',
                 fontWeight: 600, fontSize: 14, cursor: canGenerate ? 'pointer' : 'not-allowed',
                 display: 'flex', alignItems: 'center', gap: 8,
               }}
@@ -225,7 +212,7 @@ const ContentTab: React.FC = () => {
             </button>
           )}
           {step === 'generating' && (
-            <span style={{ color: C.accent, fontSize: 14 }}>⏳ AI 正在生成文案...</span>
+            <span style={{ color: 'var(--hive-gold)', fontSize: 14 }}>⏳ AI 正在生成文案...</span>
           )}
           {step === 'preview' && (
             <button
@@ -233,8 +220,8 @@ const ContentTab: React.FC = () => {
               disabled={!canPublish}
               style={{
                 padding: '10px 24px', borderRadius: 8, border: 'none',
-                background: canPublish ? C.secondary : C.textTertiary,
-                color: canPublish ? '#fff' : C.textTertiary,
+                background: canPublish ? 'var(--hive-blue)' : 'var(--text-tertiary)',
+                color: canPublish ? '#fff' : 'var(--text-tertiary)',
                 fontWeight: 600, fontSize: 14, cursor: canPublish ? 'pointer' : 'not-allowed',
               }}
             >
@@ -242,14 +229,14 @@ const ContentTab: React.FC = () => {
             </button>
           )}
           {step === 'publishing' && (
-            <span style={{ color: C.secondary, fontSize: 14 }}>⏳ RPA 拟人执行中...</span>
+            <span style={{ color: 'var(--hive-blue)', fontSize: 14 }}>⏳ RPA 拟人执行中...</span>
           )}
           {(step === 'done' || step === 'error') && (
             <button
               onClick={resetAll}
               style={{
-                padding: '10px 24px', borderRadius: 8, border: `1px solid ${C.border}`,
-                background: C.surface, color: C.textPrimary, cursor: 'pointer', fontSize: 14,
+                padding: '10px 24px', borderRadius: 8, border: `1px solid ${'var(--divider)'}`,
+                background: 'var(--card-bg)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: 14,
               }}
             >
               重新开始
@@ -258,7 +245,7 @@ const ContentTab: React.FC = () => {
         </div>
 
         {filteredAccounts.length === 0 ? (
-          <p style={{ color: C.textTertiary, fontSize: 13, padding: 16, textAlign: 'center', background: C.surface, borderRadius: 8 }}>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: 13, padding: 16, textAlign: 'center', background: 'var(--card-bg)', borderRadius: 8 }}>
             当前平台没有可用账号，请先在「账号管理」绑定账号
           </p>
         ) : (
@@ -269,9 +256,9 @@ const ContentTab: React.FC = () => {
                 onClick={() => toggleAccount(acc.id)}
                 disabled={step !== 'idle' && step !== 'preview'}
                 style={{
-                  padding: '6px 14px', borderRadius: 20, border: `1px solid ${selectedAccounts.includes(acc.id) ? C.accent : C.border}`,
-                  background: selectedAccounts.includes(acc.id) ? 'rgba(255,193,7,0.12)' : C.surface,
-                  color: selectedAccounts.includes(acc.id) ? C.accent : C.textSecondary,
+                  padding: '6px 14px', borderRadius: 20, border: `1px solid ${selectedAccounts.includes(acc.id) ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                  background: selectedAccounts.includes(acc.id) ? 'rgba(255,193,7,0.12)' : 'var(--card-bg)',
+                  color: selectedAccounts.includes(acc.id) ? 'var(--hive-gold)' : 'var(--text-secondary)',
                   cursor: (step !== 'idle' && step !== 'preview') ? 'not-allowed' : 'pointer',
                   fontSize: 13,
                 }}
@@ -285,8 +272,8 @@ const ContentTab: React.FC = () => {
 
       {/* 结果展示区 */}
       {result && (
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
-          <h3 style={{ fontSize: 14, color: C.accent, margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
+          <h3 style={{ fontSize: 14, color: 'var(--hive-gold)', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
             <RiRobot2Line size={18} />
             AI 生成结果 — {PLATFORMS.find(p => p.value === result.platform)?.emoji} {result.platform}
             {' · '}{STYLES.find(s => s.value === result.style)?.label}
@@ -294,23 +281,23 @@ const ContentTab: React.FC = () => {
           </h3>
 
           <div style={{
-            background: C.surface, borderRadius: 8, padding: 16,
-            border: `1px solid ${C.border}`, marginBottom: 16, fontSize: 14, lineHeight: 1.7,
-            whiteSpace: 'pre-wrap', color: C.textPrimary,
+            background: 'var(--card-bg)', borderRadius: 8, padding: 16,
+            border: `1px solid ${'var(--divider)'}`, marginBottom: 16, fontSize: 14, lineHeight: 1.7,
+            whiteSpace: 'pre-wrap', color: 'var(--text-primary)',
           }}>
             {result.content}
           </div>
 
           {publishResults.length > 0 && (
             <div>
-              <h4 style={{ fontSize: 13, color: C.textSecondary, margin: '0 0 8px 0' }}>发布结果</h4>
+              <h4 style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 8px 0' }}>发布结果</h4>
               {publishResults.map((pr, i) => (
                 <div
                   key={i}
                   style={{
                     padding: '8px 12px', borderRadius: 8, marginBottom: 6,
                     background: pr.status === 'error' ? 'rgba(244,67,54,0.08)' : 'rgba(76,175,80,0.08)',
-                    border: `1px solid ${pr.status === 'error' ? C.error : C.success}`,
+                    border: `1px solid ${pr.status === 'error' ? 'var(--error)' : 'var(--success)'}`,
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}
                 >
@@ -318,14 +305,14 @@ const ContentTab: React.FC = () => {
                     @{pr.account_id?.slice(0, 8)}...
                     {pr.post_url && (
                       <a href={pr.post_url} target="_blank" rel="noopener noreferrer"
-                         style={{ color: C.secondary, marginLeft: 8, fontSize: 12 }}>
+                         style={{ color: 'var(--hive-blue)', marginLeft: 8, fontSize: 12 }}>
                         查看发布 →
                       </a>
                     )}
                   </span>
                   <span style={{
                     fontSize: 12, padding: '2px 8px', borderRadius: 4,
-                    background: pr.status === 'error' ? C.error : C.success,
+                    background: pr.status === 'error' ? 'var(--error)' : 'var(--success)',
                     color: '#fff',
                   }}>
                     {pr.status === 'error' ? '❌ ' + (pr.error || '失败') : '✅ 已发布'}
@@ -340,167 +327,185 @@ const ContentTab: React.FC = () => {
   );
 };
 
-// ── Tab: 脚本生成（新增）───────────────────────────────────────
+// ── Tab: 智能脚本生成（v2 — CDP + 模板 + LLM 混合）────────────────
 
-type ScriptStep = 'idle' | 'generating' | 'preview';
+type GenPhase = 'idle' | 'generating' | 'preview';
 
 const ScriptTab: React.FC = () => {
   const [scriptGoal, setScriptGoal] = useState('');
   const [scriptPlatform, setScriptPlatform] = useState('twitter');
-  const [scriptStep, setScriptStep] = useState<ScriptStep>('idle');
-  const [generatedScript, setGeneratedScript] = useState<GenerateScriptResponse | null>(null);
+  const [scriptUrl, setScriptUrl] = useState('');
+  const [scriptPhase, setScriptPhase] = useState<GenPhase>('idle');
+  const [generated, setGenerated] = useState<RpaGenerateScriptResponse | null>(null);
+  const [showHtmlPreview, setShowHtmlPreview] = useState(true);
   const navigate = useNavigate();
 
   const canGenerate = scriptGoal.trim().length >= 3;
 
-  const handleGenerateScript = async () => {
-    setScriptStep('generating');
-    setGeneratedScript(null);
-    try {
-      const res = await aiScriptAPI.generateScript({
-        platform: scriptPlatform,
-        goal: scriptGoal.trim(),
-      });
-      setGeneratedScript(res.data);
-      setScriptStep('preview');
-    } catch (e: any) {
-      toast.error(e?.response?.data?.detail || '脚本生成失败');
-      setScriptStep('idle');
+  const getPlaceholder = (platform: string) => {
+    switch (platform) {
+      case 'twitter': return '例如：登录 Twitter，搜索关键词"AI"，给前三条推文点赞并转发';
+      case 'facebook': return '例如：登录 Facebook，发布一条动态并@好友';
+      case 'weibo': return '例如：登录微博，发布一条带图片的微博，添加话题 #科技';
+      case 'xiaohongshu': return '例如：在小红书发布一篇笔记，包含标题、正文和标签';
+      case 'douyin': return '例如：登录抖音创作平台，上传视频并填写描述和标签';
+      case 'shop': return '例如：登录淘宝商家后台，上架一个新商品';
+      default: return '例如：打开页面，点击搜索框，输入关键词并搜索';
     }
   };
 
-  const handleOpenEditor = () => {
-    // 先保存到后端，然后跳转到编辑器
-    const token = localStorage.getItem('access_token');
-    const scriptName = `AI生成_${scriptPlatform}_${new Date().toLocaleDateString('zh-CN')}`;
-    const payload = {
-      name: scriptName,
-      action: 'custom',
-      params: { steps: generatedScript?.steps },
-    };
+  const handleGenerateScript = async () => {
+    setScriptPhase('generating');
+    setGenerated(null);
+    try {
+      const res = await rpaScriptAPI.generate({
+        platform: scriptPlatform,
+        instruction: scriptGoal.trim(),
+        ...(scriptUrl.trim() ? { url: scriptUrl.trim() } : {}),
+      });
+      setGenerated(res.data);
+      setScriptPhase('preview');
+    } catch (e: any) {
+      toast.error(e?.response?.data?.detail || '脚本生成失败');
+      setScriptPhase('idle');
+    }
+  };
 
-    fetch('/api/v1/automations/tasks', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        toast.success('脚本已保存，正在打开编辑器...');
-        navigate(`/automations/editor/${data.id}`);
-      })
-      .catch(() => toast.error('保存失败，请稍后重试'));
+  const handleOpenEditor = async () => {
+    if (!generated) return;
+    try {
+      const scriptName = `AI生成_${generated.platform}_${new Date().toLocaleDateString('zh-CN')}`;
+      const saveRes = await rpaScriptAPI.save({
+        name: scriptName,
+        platform: generated.platform,
+        instruction: scriptGoal.trim(),
+        steps: generated.steps,
+        url: scriptUrl.trim() || undefined,
+      });
+      toast.success('脚本已保存，正在打开编辑器...');
+      navigate(`/automations/editor/${saveRes.data.script_id}`);
+    } catch {
+      toast.error('保存失败，请稍后重试');
+    }
   };
 
   const resetScript = () => {
-    setScriptStep('idle');
-    setGeneratedScript(null);
+    setScriptPhase('idle');
+    setGenerated(null);
     setScriptGoal('');
+    setScriptUrl('');
   };
 
-  const renderStep = (step: ScriptTemplateStep, index: number) => {
-    const paramStr = Object.entries(step.params || {})
-      .filter(([, v]) => v !== '' && v !== undefined && v !== null)
-      .map(([k, v]) => `${k}: ${typeof v === 'string' ? v.slice(0, 40) : JSON.stringify(v)}`)
-      .join(' · ');
+  const renderFlatStep = (step: RpaScriptStep, index: number) => {
+    const actionColors: Record<string, string> = {
+      click: '#4caf50',
+      type: '#2196f3',
+      wait: '#ff9800',
+      scroll: '#9c27b0',
+      navigate: '#00bcd4',
+    };
+    const color = actionColors[step.action] || 'var(--hive-gold)';
 
     return (
-      <div key={index} style={{ marginBottom: 8 }}>
-        <div style={{
-          background: C.surface,
+      <div
+        key={index}
+        style={{
+          background: 'var(--card-bg)',
           borderRadius: 8,
-          border: `1px solid ${C.border}`,
+          border: `1px solid ${'var(--divider)'}`,
           padding: '10px 14px',
           display: 'flex',
           alignItems: 'flex-start',
           gap: 10,
+          marginBottom: 8,
+        }}
+      >
+        <span style={{
+          background: color,
+          color: '#000',
+          borderRadius: '50%',
+          width: 22,
+          height: 22,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 11,
+          fontWeight: 700,
+          flexShrink: 0,
         }}>
-          <span style={{
-            background: C.accent,
-            color: '#000',
-            borderRadius: '50%',
-            width: 22,
-            height: 22,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 11,
-            fontWeight: 700,
-            flexShrink: 0,
-          }}>
-            {index + 1}
-          </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: C.textPrimary }}>
+          {index + 1}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', textTransform: 'uppercase' }}>
               {step.action}
+            </span>
+            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-tertiary)', background: 'var(--page-bg)', padding: '2px 8px', borderRadius: 4 }}>
+              {step.wait_ms}ms
+            </span>
+          </div>
+          {step.target && (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 3, fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              {step.target}
             </div>
-            {paramStr && (
-              <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 3, wordBreak: 'break-all' }}>
-                {paramStr}
-              </div>
-            )}
-          </div>
+          )}
+          {step.value && (
+            <div style={{ fontSize: 12, color: '#e0e0e0', marginTop: 4, background: '#2a2a2a', padding: '6px 10px', borderRadius: 4, wordBreak: 'break-all' }}>
+              {step.value.length > 80 ? step.value.slice(0, 80) + '...' : step.value}
+            </div>
+          )}
         </div>
-        {/* then_steps */}
-        {step.then_steps && step.then_steps.length > 0 && (
-          <div style={{ marginLeft: 24, marginTop: 6, borderLeft: `2px solid ${C.accent}`, paddingLeft: 12 }}>
-            <div style={{ fontSize: 11, color: C.accent, marginBottom: 4, fontWeight: 600 }}>✓ 条件成立</div>
-            {step.then_steps.map((s, i) => renderStep(s, i))}
-          </div>
-        )}
-        {step.else_steps && step.else_steps.length > 0 && (
-          <div style={{ marginLeft: 24, marginTop: 6, borderLeft: `2px solid ${C.error}`, paddingLeft: 12 }}>
-            <div style={{ fontSize: 11, color: C.error, marginBottom: 4, fontWeight: 600 }}>✗ 条件不成立</div>
-            {step.else_steps.map((s, i) => renderStep(s, i))}
-          </div>
-        )}
-        {step.for_each_steps && step.for_each_steps.length > 0 && (
-          <div style={{ marginLeft: 24, marginTop: 6, borderLeft: `2px solid ${C.secondary}`, paddingLeft: 12 }}>
-            <div style={{ fontSize: 11, color: C.secondary, marginBottom: 4, fontWeight: 600 }}>↻ 循环体</div>
-            {step.for_each_steps.map((s, i) => renderStep(s, i))}
-          </div>
-        )}
       </div>
     );
   };
 
   return (
     <>
-      {/* 脚本生成输入区 */}
+      {/* 输入区 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, marginBottom: 24 }}>
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
-          <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 8, fontWeight: 500 }}>
-            🤖 描述你想要实现的自动化流程
-          </label>
-          <textarea
-            value={scriptGoal}
-            onChange={(e) => setScriptGoal(e.target.value)}
-            placeholder={
-              scriptPlatform === 'twitter'
-                ? '例如：登录 Twitter，搜索关键词"AI"，给前三条推文点赞并转发'
-                : scriptPlatform === 'weibo'
-                ? '例如：登录微博，发布一条带图片的微博，添加话题 #科技'
-                : scriptPlatform === 'xiaohongshu'
-                ? '例如：在小红书发布一篇笔记，包含标题、正文和标签'
-                : scriptPlatform === 'douyin'
-                ? '例如：登录抖音创作平台，上传视频并填写描述和标签'
-                : '例如：登录淘宝商家后台，上架一个新商品'
-            }
-            rows={5}
-            disabled={scriptStep === 'generating'}
-            style={{
-              width: '100%', background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 8, padding: 12, fontSize: 14, color: C.textPrimary,
-              resize: 'vertical', outline: 'none', fontFamily: 'inherit',
-            }}
-          />
+        <div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20, marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+              🤖 描述你想要实现的自动化流程
+            </label>
+            <textarea
+              value={scriptGoal}
+              onChange={(e) => setScriptGoal(e.target.value)}
+              placeholder={getPlaceholder(scriptPlatform)}
+              rows={4}
+              disabled={scriptPhase === 'generating'}
+              style={{
+                width: '100%', background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`,
+                borderRadius: 8, padding: 12, fontSize: 14, color: 'var(--text-primary)',
+                resize: 'vertical', outline: 'none', fontFamily: 'inherit',
+              }}
+            />
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
+            <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
+              🌐 目标页面 URL（可选，提供后将使用 CDP 检测真实元素）
+            </label>
+            <input
+              type="text"
+              value={scriptUrl}
+              onChange={(e) => setScriptUrl(e.target.value)}
+              placeholder="https://twitter.com/login"
+              disabled={scriptPhase === 'generating'}
+              style={{
+                width: '100%', background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`,
+                borderRadius: 8, padding: '10px 12px', fontSize: 14, color: 'var(--text-primary)',
+                outline: 'none', fontFamily: 'inherit',
+              }}
+            />
+            <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--text-tertiary)' }}>
+              填写 URL 后，系统会通过 CDP DOMSnapshot 分析页面真实结构，生成更精确的选择器
+            </p>
+          </div>
         </div>
 
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
-          <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 8, fontWeight: 500 }}>
+        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
+          <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, fontWeight: 500 }}>
             目标平台
           </label>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -508,12 +513,12 @@ const ScriptTab: React.FC = () => {
               <button
                 key={p.value}
                 onClick={() => setScriptPlatform(p.value)}
-                disabled={scriptStep === 'generating'}
+                disabled={scriptPhase === 'generating'}
                 style={{
                   padding: '9px 12px', borderRadius: 8,
-                  border: `1px solid ${scriptPlatform === p.value ? C.accent : C.border}`,
-                  background: scriptPlatform === p.value ? 'rgba(255,193,7,0.08)' : C.surface,
-                  color: scriptPlatform === p.value ? C.accent : C.textSecondary,
+                  border: `1px solid ${scriptPlatform === p.value ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                  background: scriptPlatform === p.value ? 'rgba(255,193,7,0.08)' : 'var(--card-bg)',
+                  color: scriptPlatform === p.value ? 'var(--hive-gold)' : 'var(--text-secondary)',
                   cursor: 'pointer', fontSize: 13, textAlign: 'left',
                 }}
               >
@@ -525,16 +530,16 @@ const ScriptTab: React.FC = () => {
           <div style={{ marginTop: 16 }}>
             <button
               onClick={handleGenerateScript}
-              disabled={!canGenerate || scriptStep === 'generating'}
+              disabled={!canGenerate || scriptPhase === 'generating'}
               style={{
                 width: '100%', padding: '11px 16px', borderRadius: 8, border: 'none',
-                background: canGenerate && scriptStep !== 'generating' ? C.accent : C.textTertiary,
-                color: canGenerate && scriptStep !== 'generating' ? '#000' : '#666',
-                fontWeight: 700, fontSize: 14, cursor: canGenerate && scriptStep !== 'generating' ? 'pointer' : 'not-allowed',
+                background: canGenerate && scriptPhase !== 'generating' ? 'var(--hive-gold)' : 'var(--text-tertiary)',
+                color: canGenerate && scriptPhase !== 'generating' ? '#000' : '#666',
+                fontWeight: 700, fontSize: 14, cursor: canGenerate && scriptPhase !== 'generating' ? 'pointer' : 'not-allowed',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
-              {scriptStep === 'generating' ? (
+              {scriptPhase === 'generating' ? (
                 <>⏳ AI 生成中...</>
               ) : (
                 <>
@@ -543,13 +548,13 @@ const ScriptTab: React.FC = () => {
                 </>
               )}
             </button>
-            {scriptStep === 'preview' && (
+            {scriptPhase === 'preview' && (
               <button
                 onClick={resetScript}
                 style={{
                   width: '100%', marginTop: 8, padding: '9px 16px', borderRadius: 8,
-                  border: `1px solid ${C.border}`, background: C.surface,
-                  color: C.textSecondary, fontSize: 13, cursor: 'pointer',
+                  border: `1px solid ${'var(--divider)'}`, background: 'var(--card-bg)',
+                  color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
                 }}
               >
                 重新生成
@@ -559,28 +564,37 @@ const ScriptTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 脚本预览区 */}
-      {generatedScript && (
-        <div style={{ background: C.cardBg, borderRadius: 12, border: `1px solid ${C.border}`, padding: 20 }}>
+      {/* 预览区 */}
+      {generated && (
+        <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 12, border: `1px solid ${'var(--divider)'}`, padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 14, color: C.accent, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 14, color: 'var(--hive-gold)', margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
               <RiFileCodeLine size={18} />
-              生成结果 — {generatedScript.steps.length} 个步骤
-              <span style={{ fontSize: 12, color: C.textTertiary, fontWeight: 400 }}>
-                · {SCRIPT_PLATFORMS.find(p => p.value === generatedScript.platform)?.emoji} {generatedScript.platform}
-                · {generatedScript.model}
+              生成结果
+              <span style={{ fontSize: 12, color: 'var(--text-tertiary)', fontWeight: 400 }}>
+                · {SCRIPT_PLATFORMS.find(p => p.value === generated.platform)?.emoji} {generated.platform}
+                · {generated.steps.length} 步
+                · 来源: {generated.source}
               </span>
             </h3>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
+                onClick={() => setShowHtmlPreview((v) => !v)}
+                style={{
+                  padding: '8px 16px', borderRadius: 8, border: `1px solid ${'var(--divider)'}`,
+                  background: 'var(--card-bg)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                {showHtmlPreview ? '查看 JSON' : '查看卡片'}
+              </button>
+              <button
                 onClick={() => {
-                  // 复制 JSON 到剪贴板
-                  navigator.clipboard.writeText(JSON.stringify(generatedScript.steps, null, 2));
+                  navigator.clipboard.writeText(JSON.stringify(generated.steps, null, 2));
                   toast.success('JSON 已复制到剪贴板');
                 }}
                 style={{
-                  padding: '8px 16px', borderRadius: 8, border: `1px solid ${C.border}`,
-                  background: C.surface, color: C.textSecondary, fontSize: 13, cursor: 'pointer',
+                  padding: '8px 16px', borderRadius: 8, border: `1px solid ${'var(--divider)'}`,
+                  background: 'var(--card-bg)', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
@@ -591,7 +605,7 @@ const ScriptTab: React.FC = () => {
                 onClick={handleOpenEditor}
                 style={{
                   padding: '8px 20px', borderRadius: 8, border: 'none',
-                  background: C.accent, color: '#000', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  background: 'var(--hive-gold)', color: '#000', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
@@ -601,14 +615,30 @@ const ScriptTab: React.FC = () => {
             </div>
           </div>
 
-          {/* 步骤列表 */}
-          <div>
-            {generatedScript.steps.map((step, index) => renderStep(step, index))}
-          </div>
+          {/* 变量提示 */}
+          {generated.variables.length > 0 && (
+            <div style={{ marginBottom: 14, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {generated.variables.map((v) => (
+                <span key={v} style={{ fontSize: 11, color: 'var(--hive-gold)', background: 'rgba(255,193,7,0.08)', padding: '3px 10px', borderRadius: 4, border: `1px solid ${'var(--hive-gold)'}` }}>
+                  {'{{'} {v} {'}}'}
+                </span>
+              ))}
+            </div>
+          )}
 
-          {generatedScript.steps.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '32px 0', color: C.textTertiary }}>
-              未生成任何步骤，请调整描述后重试
+          {showHtmlPreview ? (
+            <div
+              style={{ borderRadius: 10, overflow: 'hidden', border: `1px solid ${'var(--divider)'}` }}
+              dangerouslySetInnerHTML={{ __html: generated.preview_html }}
+            />
+          ) : (
+            <div>
+              {generated.steps.map((step, index) => renderFlatStep(step, index))}
+              {generated.steps.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-tertiary)' }}>
+                  未生成任何步骤，请调整描述后重试
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -625,13 +655,13 @@ const AIWorkflowPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('content');
 
   return (
-    <div style={{ background: C.bg, minHeight: '100vh', padding: 32, color: C.textPrimary }}>
+    <div style={{ background: 'var(--page-bg)', minHeight: '100vh', padding: 32, color: 'var(--text-primary)' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
-          <RiFlashlightFill color={C.accent} size={24} />
+          <RiFlashlightFill color={'var(--hive-gold)'} size={24} />
           AI 工作流
-          <span style={{ fontSize: 13, color: C.textTertiary, fontWeight: 400, marginLeft: 8 }}>
+          <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 400, marginLeft: 8 }}>
             内容生成 · RPA 脚本生成
           </span>
         </h1>
@@ -640,16 +670,16 @@ const AIWorkflowPage: React.FC = () => {
       {/* Tab Bar */}
       <div style={{
         display: 'flex', gap: 4, marginBottom: 24,
-        borderBottom: `1px solid ${C.border}`,
+        borderBottom: `1px solid ${'var(--divider)'}`,
         paddingBottom: 0,
       }}>
         <button
           onClick={() => setActiveTab('content')}
           style={{
             padding: '10px 20px', borderRadius: '8px 8px 0 0',
-            border: 'none', borderBottom: `2px solid ${activeTab === 'content' ? C.accent : 'transparent'}`,
+            border: 'none', borderBottom: `2px solid ${activeTab === 'content' ? 'var(--hive-gold)' : 'transparent'}`,
             background: activeTab === 'content' ? 'rgba(255,193,7,0.06)' : 'transparent',
-            color: activeTab === 'content' ? C.accent : C.textSecondary,
+            color: activeTab === 'content' ? 'var(--hive-gold)' : 'var(--text-secondary)',
             fontWeight: activeTab === 'content' ? 600 : 400,
             fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
           }}
@@ -661,9 +691,9 @@ const AIWorkflowPage: React.FC = () => {
           onClick={() => setActiveTab('script')}
           style={{
             padding: '10px 20px', borderRadius: '8px 8px 0 0',
-            border: 'none', borderBottom: `2px solid ${activeTab === 'script' ? C.accent : 'transparent'}`,
+            border: 'none', borderBottom: `2px solid ${activeTab === 'script' ? 'var(--hive-gold)' : 'transparent'}`,
             background: activeTab === 'script' ? 'rgba(255,193,7,0.06)' : 'transparent',
-            color: activeTab === 'script' ? C.accent : C.textSecondary,
+            color: activeTab === 'script' ? 'var(--hive-gold)' : 'var(--text-secondary)',
             fontWeight: activeTab === 'script' ? 600 : 400,
             fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
           }}

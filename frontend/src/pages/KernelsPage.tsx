@@ -7,6 +7,7 @@ import {
   getCoreVersions,
   downloadCore,
   extractCore,
+  getCoreDownloadUrl,
   isDesktopApp,
   type CoreVersions,
   type CoreCheckResult,
@@ -14,23 +15,7 @@ import {
 } from '@/lib/desktop';
 
 // ── Palette ──
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  card: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  accentSubtle: 'rgba(255,193,7,0.08)',
-  secondary: '#1976D2',
-  secondaryHover: '#1565C0',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#4caf50',
-  gray: '#9e9e9e',
-};
+
 
 interface KernelVersion {
   name: string;
@@ -112,11 +97,8 @@ const KernelsPage: React.FC = () => {
     );
 
     try {
-      // Use a default download URL based on kernel name
-      const url =
-        kernelName === 'Chromium'
-          ? 'https://playwright.azureedge.net/builds/chromium/1091/chromium-win64.zip'
-          : 'https://playwright.azureedge.net/builds/playwright/1.40.0/playwright-win64.zip';
+      // 获取当前平台对应的下载 URL
+      const url = getCoreDownloadUrl();
 
       const result = await downloadCore(url, (event: DownloadProgressEvent) => {
         setKernels((prev) =>
@@ -163,7 +145,7 @@ const KernelsPage: React.FC = () => {
     return (
       <div style={{ padding: 32, maxWidth: 800, margin: '0 auto' }}>
         <h1 className="text-2xl font-semibold text-foreground mb-6">浏览器内核</h1>
-        <div style={{ color: C.textSecondary }}>加载中...</div>
+        <div style={{ color: 'var(--text-secondary)' }}>加载中...</div>
       </div>
     );
   }
@@ -181,7 +163,7 @@ const KernelsPage: React.FC = () => {
       >
         <div>
           <h1 className="text-2xl font-semibold text-foreground mb-6">浏览器内核</h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             管理本地浏览器内核版本，下载和更新 Chromium / Playwright 内核
           </p>
         </div>
@@ -190,9 +172,9 @@ const KernelsPage: React.FC = () => {
           style={{
             padding: '8px 16px',
             borderRadius: 8,
-            border: `1px solid ${C.border}`,
+            border: `1px solid ${'var(--divider)'}`,
             backgroundColor: 'transparent',
-            color: C.textSecondary,
+            color: 'var(--text-secondary)',
             fontSize: 13,
             cursor: 'pointer',
             display: 'flex',
@@ -201,12 +183,12 @@ const KernelsPage: React.FC = () => {
             transition: 'all 0.15s',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = C.surfaceHover;
-            e.currentTarget.style.color = C.textPrimary;
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+            e.currentTarget.style.color = 'var(--text-primary)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = C.textSecondary;
+            e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
           <RiRefreshLine size={16} />
@@ -231,8 +213,8 @@ const KernelsPage: React.FC = () => {
             <div
               key={kernel.name}
               style={{
-                backgroundColor: C.card,
-                border: `1px solid ${C.border}`,
+                backgroundColor: 'var(--card-bg)',
+                border: `1px solid ${'var(--divider)'}`,
                 borderRadius: 12,
                 padding: 20,
                 display: 'flex',
@@ -247,20 +229,20 @@ const KernelsPage: React.FC = () => {
                     width: 44,
                     height: 44,
                     borderRadius: 10,
-                    backgroundColor: C.surface,
+                    backgroundColor: 'var(--card-bg)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <RiChromeLine size={22} style={{ color: C.accent }} />
+                  <RiChromeLine size={22} style={{ color: 'var(--hive-gold)' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: 8,
@@ -271,7 +253,7 @@ const KernelsPage: React.FC = () => {
                       <span
                         style={{
                           fontSize: 11,
-                          color: C.green,
+                          color: 'var(--success)',
                           backgroundColor: 'rgba(76,175,80,0.12)',
                           padding: '2px 8px',
                           borderRadius: 4,
@@ -286,7 +268,7 @@ const KernelsPage: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+                  <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     版本: {kernel.version}
                   </div>
 
@@ -297,7 +279,7 @@ const KernelsPage: React.FC = () => {
                         style={{
                           height: 6,
                           borderRadius: 3,
-                          backgroundColor: C.surface,
+                          backgroundColor: 'var(--card-bg)',
                           overflow: 'hidden',
                         }}
                       >
@@ -305,7 +287,7 @@ const KernelsPage: React.FC = () => {
                           style={{
                             height: '100%',
                             width: `${kernel.progress ?? 0}%`,
-                            backgroundColor: C.accent,
+                            backgroundColor: 'var(--hive-gold)',
                             borderRadius: 3,
                             transition: 'width 0.3s ease',
                           }}
@@ -314,7 +296,7 @@ const KernelsPage: React.FC = () => {
                       <div
                         style={{
                           fontSize: 11,
-                          color: C.textTertiary,
+                          color: 'var(--text-tertiary)',
                           marginTop: 4,
                         }}
                       >
@@ -332,8 +314,8 @@ const KernelsPage: React.FC = () => {
                   padding: '8px 18px',
                   borderRadius: 8,
                   border: 'none',
-                  backgroundColor: kernel.downloading ? C.surfaceHover : C.secondary,
-                  color: kernel.downloading ? C.textTertiary : '#fff',
+                  backgroundColor: kernel.downloading ? 'rgba(255,255,255,0.06)' : 'var(--hive-blue)',
+                  color: kernel.downloading ? 'var(--text-tertiary)' : '#fff',
                   fontSize: 13,
                   fontWeight: 500,
                   cursor: kernel.downloading ? 'not-allowed' : 'pointer',
@@ -345,12 +327,12 @@ const KernelsPage: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (!kernel.downloading) {
-                    e.currentTarget.style.backgroundColor = C.secondaryHover;
+                    e.currentTarget.style.backgroundColor = 'var(--hive-blue-hover)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!kernel.downloading) {
-                    e.currentTarget.style.backgroundColor = C.secondary;
+                    e.currentTarget.style.backgroundColor = 'var(--hive-blue)';
                   }
                 }}
               >

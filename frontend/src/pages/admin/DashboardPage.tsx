@@ -42,8 +42,8 @@ const StatCard: React.FC<{
       {icon}
     </div>
     <div>
-      <div style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: 'hsl(var(--foreground))', letterSpacing: '-0.5px' }}>
+      <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>
         {value}
       </div>
     </div>
@@ -130,14 +130,14 @@ const DashboardPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             管理仪表盘
           </h1>
-          <p style={{ fontSize: 13, color: 'hsl(var(--muted-foreground))', margin: '4px 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>
             蜂巢智能体平台总览
           </p>
         </div>
         <button
           className="btn"
           onClick={fetchStats}
-          style={{ padding: '10px 22px', background: loading ? 'hsl(var(--muted))' : undefined, color: loading ? 'hsl(var(--muted-foreground))' : undefined }}
+          style={{ padding: '10px 22px', background: loading ? 'var(--muted)' : undefined, color: loading ? 'var(--muted-foreground)' : undefined }}
           disabled={loading}
         >
           <RiRefreshLine size={18} />
@@ -146,7 +146,7 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {loading && !stats ? (
-        <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: 'hsl(var(--muted-foreground))' }}>
+        <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted-foreground)' }}>
           加载中...
         </div>
       ) : (

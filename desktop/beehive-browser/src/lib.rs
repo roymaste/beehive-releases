@@ -6,6 +6,7 @@
 // 3. 用户在前端点击「启动」→ 本地弹出伪装浏览器窗口
 
 use std::collections::HashMap;
+use std::net::TcpListener;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 #[cfg(windows)]
@@ -82,12 +83,15 @@ impl CloakState {
 #[derive(Debug, Deserialize)]
 pub struct LaunchConfig {
     pub profile_id: String,
+    pub tenant_id: Option<String>,
     pub fingerprint_seed: Option<i32>,
     pub platform: Option<String>,
     pub timezone: Option<String>,
     pub locale: Option<String>,
     pub screen_width: Option<i32>,
     pub screen_height: Option<i32>,
+    pub window_x: Option<i32>,
+    pub window_y: Option<i32>,
     pub gpu_vendor: Option<String>,
     pub gpu_renderer: Option<String>,
     pub hardware_concurrency: Option<i32>,
@@ -120,11 +124,40 @@ fn get_home_dir() -> Result<PathBuf, String> {
 fn find_cloak_binary(version: Option<&str>) -> Result<PathBuf, String> {
     let home = get_home_dir()?;
 
+    // [0] 安装包内资源路径（最高优先级）
+    if let Ok(exe_path) = std::env::current_exe() {
+        #[cfg(target_os = "macos")]
+        {
+            let bundle_path = exe_path.parent()
+                .and_then(|p| p.parent())
+                .map(|p| p.join("Resources"))
+                .map(|p| p.join("cloakbrowser-core"))
+                .map(|p| p.join("CloakBrowser"));
+            if let Some(ref path) = bundle_path {
+                if path.exists() {
+                    return Ok(path.clone());
+                }
+            }
+        }
+        #[cfg(target_os = "windows")]
+        {
+            let bundle_path = exe_path.parent()
+                .map(|p| p.join("resources"))
+                .map(|p| p.join("cloakbrowser-core"))
+                .map(|p| p.join("chrome.exe"));
+            if let Some(ref path) = bundle_path {
+                if path.exists() {
+                    return Ok(path.clone());
+                }
+            }
+        }
+    }
+
     // 搜索路径优先级：
     // 1. ~/.cloakbrowser/chromium-*/chrome (标准安装)
     // 2. ~/.beehivebrowser/chromium-*/chrome (旧版兼容)
     // 3. macOS: /Applications/CloakBrowser.app/... (macOS 应用包)
-    // 4. Windows: %LOCALAPPDATA%\.cloakbrowser\...
+    // 4. Windows: %LOCALAPPDATA%\\.cloakbrowser\\...
 
     let search_dirs: Vec<PathBuf> = vec![
         home.join(".cloakbrowser"),
@@ -238,11 +271,27 @@ fn find_cloak_binary(version: Option<&str>) -> Result<PathBuf, String> {
     Err(msg)
 }
 
-fn generate_data_dir(profile_id: &str) -> PathBuf {
+fn copy_dir_all(src: impl AsRef<std::path::Path>, dst: impl AsRef<std::path::Path>) -> std::io::Result<()> {
+    std::fs::create_dir_all(&dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            std::fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
+}
+
+fn generate_data_dir(profile_id: &str, tenant_id: Option<&str>) -> PathBuf {
     let home = get_home_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
-    home.join(".beehive")
-        .join("profiles")
-        .join(sanitize_id(profile_id))
+    let base = home.join(".beehive").join("profiles");
+    match tenant_id {
+        Some(tid) => base.join(sanitize_id(tid)).join(sanitize_id(profile_id)),
+        None => base.join(sanitize_id(profile_id)),
+    }
 }
 
 fn sanitize_id(id: &str) -> String {
@@ -251,7 +300,16 @@ fn sanitize_id(id: &str) -> String {
         .collect()
 }
 
-// ── 运行中的进程检查 ───────────────────────────────────────
+/// 从 start_port 开始检测并返回第一个可用端口
+fn assign_cdp_port(start_port: i32) -> i32 {
+    let mut port = start_port;
+    loop {
+        match TcpListener::bind(format!("127.0.0.1:{}", port)) {
+            Ok(_) => return port,
+            Err(_) => port += 1,
+        }
+    }
+}
 
 fn is_process_alive(pid: u32) -> bool {
     // 向进程发送信号 0 检查是否活着（不实际发信号）
@@ -286,7 +344,7 @@ fn launch_cloak(config: LaunchConfig, state: tauri::State<CloakState>) -> Result
     let data_dir = config
         .user_data_dir
         .map(PathBuf::from)
-        .unwrap_or_else(|| generate_data_dir(&config.profile_id));
+        .unwrap_or_else(|| generate_data_dir(&config.profile_id, config.tenant_id.as_deref()));
 
     std::fs::create_dir_all(&data_dir)
         .map_err(|e| format!("创建数据目录失败: {}", e))?;
@@ -299,6 +357,11 @@ fn launch_cloak(config: LaunchConfig, state: tauri::State<CloakState>) -> Result
     cmd.arg("--disable-translate");
     cmd.arg("--disable-default-apps");
     cmd.arg("--mute-audio");
+
+    // Window position
+    if let (Some(x), Some(y)) = (config.window_x, config.window_y) {
+        cmd.arg(format!("--window-position={}, {}", x, y));
+    }
 
     // Fingerprint flags
     if let Some(seed) = config.fingerprint_seed {
@@ -347,7 +410,7 @@ fn launch_cloak(config: LaunchConfig, state: tauri::State<CloakState>) -> Result
     }
 
     // CDP debug port
-    let cdp_port = config.cdp_port.unwrap_or(9222);
+    let cdp_port = config.cdp_port.unwrap_or_else(|| assign_cdp_port(9222));
     cmd.arg(format!("--remote-debugging-port={}", cdp_port));
 
     // GPU
@@ -436,6 +499,147 @@ fn check_cloakbrowser_installed() -> String {
             "download_url": "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip",
         }).to_string(),
     }
+}
+
+// ── 内部辅助函数（供后台自动更新调用）────────────────────────
+
+/// 内部下载函数（不暴露为 Tauri 命令）
+async fn download_core_internal(
+    app: tauri::AppHandle,
+    url: String,
+) -> Result<String, String> {
+    use futures_util::StreamExt;
+    use std::io::Write;
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("下载请求失败: {}", e))?;
+
+    let total_size = response.content_length().unwrap_or(0);
+    let file_name = url
+        .split('/')
+        .last()
+        .unwrap_or("cloakbrowser.zip")
+        .to_string();
+
+    let temp_dir = std::env::temp_dir();
+    let temp_path = temp_dir.join(&file_name);
+
+    let mut file = std::fs::File::create(&temp_path)
+        .map_err(|e| format!("创建临时文件失败: {}", e))?;
+    let mut downloaded: u64 = 0;
+    let mut chunk_idx = 0;
+
+    let mut stream = response.bytes_stream();
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = chunk_result.map_err(|e| format!("下载流读取失败: {}", e))?;
+        file.write_all(&chunk)
+            .map_err(|e| format!("写入文件失败: {}", e))?;
+        downloaded += chunk.len() as u64;
+        chunk_idx += 1;
+
+        // 每 1MB 或最后一块发送一次进度事件
+        if chunk_idx % 100 == 0 || downloaded >= total_size {
+            let percent = if total_size > 0 {
+                (downloaded as f64 / total_size as f64 * 100.0).round()
+            } else {
+                0.0
+            };
+            let speed = chunk.len() as u64;
+            let _ = app.emit(
+                "download-progress",
+                serde_json::json!({
+                    "downloaded": downloaded,
+                    "total": total_size,
+                    "percent": percent,
+                    "speed": speed,
+                }),
+            );
+        }
+    }
+
+    Ok(temp_path.to_string_lossy().to_string())
+}
+
+/// 内部解压函数（不暴露为 Tauri 命令）
+fn extract_core_internal(zip_path: &str) -> Result<serde_json::Value, String> {
+    let file = std::fs::File::open(zip_path)
+        .map_err(|e| format!("打开 zip 文件失败: {}", e))?;
+    let mut archive = zip::ZipArchive::new(file)
+        .map_err(|e| format!("解析 zip 失败: {}", e))?;
+
+    let (dest_dir, version) = {
+        #[cfg(target_os = "windows")]
+        {
+            let localappdata = std::env::var("LOCALAPPDATA")
+                .map_err(|_| "LOCALAPPDATA 未设置".to_string())?;
+            let version = archive.file_names()
+                .filter(|n| n.ends_with('/'))
+                .filter_map(|n| n.strip_prefix("cloakbrowser-chromium-"))
+                .filter_map(|n| n.strip_suffix('/'))
+                .next()
+                .unwrap_or("146.0.7680.177.4")
+                .to_string();
+            let dest = PathBuf::from(localappdata)
+                .join(".cloakbrowser")
+                .join(format!("chromium-{}", version));
+            (dest, version)
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let home = get_home_dir()?;
+            let version = archive.file_names()
+                .filter(|n| n.ends_with('/'))
+                .filter_map(|n| n.strip_prefix("cloakbrowser-chromium-"))
+                .filter_map(|n| n.strip_suffix('/'))
+                .next()
+                .unwrap_or("146.0.7680.177.4")
+                .to_string();
+            let dest = home
+                .join(".cloakbrowser")
+                .join(format!("chromium-{}", version));
+            (dest, version)
+        }
+    };
+
+    std::fs::create_dir_all(&dest_dir)
+        .map_err(|e| format!("创建目标目录失败: {}", e))?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)
+            .map_err(|e| format!("读取 zip 条目失败: {}", e))?;
+        let outpath = match file.enclosed_name() {
+            Some(path) => dest_dir.join(path),
+            None => continue,
+        };
+
+        if file.name().ends_with('/') {
+            std::fs::create_dir_all(&outpath)
+                .map_err(|e| format!("创建目录失败: {}", e))?;
+        } else {
+            if let Some(parent) = outpath.parent() {
+                if !parent.exists() {
+                    std::fs::create_dir_all(parent)
+                        .map_err(|e| format!("创建父目录失败: {}", e))?;
+                }
+            }
+            let mut outfile = std::fs::File::create(&outpath)
+                .map_err(|e| format!("创建文件失败: {}", e))?;
+            std::io::copy(&mut file, &mut outfile)
+                .map_err(|e| format!("复制文件失败: {}", e))?;
+        }
+    }
+
+    // 删除临时 zip 文件
+    let _ = std::fs::remove_file(zip_path);
+
+    Ok(serde_json::json!({
+        "path": dest_dir.to_string_lossy(),
+        "version": version,
+    }))
 }
 
 // ── CloakBrowser 内核自动下载 ─────────────────────────────────
@@ -642,10 +846,48 @@ fn extract_core(zip_path: String) -> Result<String, String> {
 // ── 启动检查 ───────────────────────────────────────────────
 
 /// 首次启动时检查 BeehiveBrowser 二进制是否存在
-/// 不存在则弹窗提示用户安装
+/// 不存在则尝试从安装包 resource 目录复制内置内核
 fn check_cloak_binary_setup(app: &tauri::AppHandle) {
     if let Err(msg) = find_cloak_binary(None) {
-        // 用 dialog 弹窗提示
+        // 尝试从安装包 resource 目录复制内置内核
+        if let Ok(resource_dir) = app.path().resource_dir() {
+            let bundled_kernel = resource_dir.join("kernel/chromium");
+            if bundled_kernel.exists() && bundled_kernel.is_dir() {
+                #[cfg(target_os = "windows")]
+                let chrome_binary = bundled_kernel.join("chrome.exe");
+                #[cfg(target_os = "macos")]
+                let chrome_binary = bundled_kernel.join("CloakBrowser");
+                #[cfg(target_os = "linux")]
+                let chrome_binary = bundled_kernel.join("chrome");
+
+                if chrome_binary.exists() {
+                    let home = get_home_dir().unwrap_or_else(|_| PathBuf::from("/tmp"));
+                    let target_dir = home.join(".cloakbrowser").join("chromium-146.0.7680.177.3");
+
+                    log::info!("从安装包复制内核: {} -> {}", bundled_kernel.display(), target_dir.display());
+
+                    match copy_dir_all(&bundled_kernel, &target_dir) {
+                        Ok(_) => {
+                            // 复制后再次验证
+                            match find_cloak_binary(None) {
+                                Ok(path) => {
+                                    log::info!("内置内核复制并验证成功: {}", path.display());
+                                    return;
+                                }
+                                Err(e) => {
+                                    log::error!("复制内核后验证失败: {}", e);
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            log::error!("复制内核失败: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        // 无内置内核或复制失败，弹窗提示用户
         #[cfg(target_os = "windows")]
         let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
         #[cfg(target_os = "macos")]
@@ -805,6 +1047,125 @@ pub fn run() {
             #[cfg(desktop)]
             let _ = app.handle().plugin(tauri_plugin_updater::Builder::new().build());
 
+            // ── 后台自动检测内核更新 ─────────────────────────────
+            let update_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                // 等待3秒给主窗口先加载
+                tokio::time::sleep(Duration::from_secs(3)).await;
+
+                const LATEST_VERSION: &str = "146.0.7680.177.4";
+                const DOWNLOAD_URL: &str = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
+
+                // 检查当前安装的内核版本
+                match find_cloak_binary(None) {
+                    Ok(path) => {
+                        let current_version = path
+                            .parent()
+                            .and_then(|p| p.file_name())
+                            .and_then(|n| {
+                                let s = n.to_string_lossy().to_string();
+                                s.strip_prefix("chromium-").map(|v| v.to_string())
+                            })
+                            .unwrap_or_else(|| "unknown".to_string());
+
+                        log::info!("当前内核版本: {}", current_version);
+
+                        if current_version != LATEST_VERSION {
+                            log::info!(
+                                "内核版本 {} 不是最新版 {}，开始后台静默下载更新...",
+                                current_version, LATEST_VERSION
+                            );
+
+                            // 发送更新开始事件
+                            let _ = update_handle.emit(
+                                "download-progress",
+                                serde_json::json!({
+                                    "status": "updating",
+                                    "current_version": current_version,
+                                    "latest_version": LATEST_VERSION,
+                                    "message": "正在下载最新内核...",
+                                }),
+                            );
+
+                            // 后台静默下载
+                            let download_result = download_core_internal(
+                                update_handle.clone(),
+                                DOWNLOAD_URL.to_string(),
+                            )
+                            .await;
+
+                            match download_result {
+                                Ok(zip_path) => {
+                                    log::info!("内核下载完成: {}", zip_path);
+
+                                    // 发送下载完成事件
+                                    let _ = update_handle.emit(
+                                        "download-progress",
+                                        serde_json::json!({
+                                            "status": "extracting",
+                                            "message": "正在解压内核...",
+                                        }),
+                                    );
+
+                                    // 解压前将旧版本目录重命名为 .bak
+                                    if let Some(old_dir) = path.parent() {
+                                        let bak_dir = old_dir.with_extension("bak");
+                                        log::info!(
+                                            "备份旧版本目录: {} -> {}",
+                                            old_dir.display(),
+                                            bak_dir.display()
+                                        );
+                                        if let Err(e) = std::fs::rename(old_dir, &bak_dir) {
+                                            log::warn!("备份旧版本目录失败: {}", e);
+                                        }
+                                    }
+
+                                    // 解压新版本
+                                    match extract_core_internal(&zip_path) {
+                                        Ok(result) => {
+                                            log::info!("内核更新成功: {}", result);
+                                            let _ = update_handle.emit(
+                                                "download-progress",
+                                                serde_json::json!({
+                                                    "status": "completed",
+                                                    "message": "内核更新成功",
+                                                    "result": result,
+                                                }),
+                                            );
+                                        }
+                                        Err(e) => {
+                                            log::error!("内核解压失败: {}", e);
+                                            let _ = update_handle.emit(
+                                                "download-progress",
+                                                serde_json::json!({
+                                                    "status": "error",
+                                                    "message": format!("解压失败: {}", e),
+                                                }),
+                                            );
+                                        }
+                                    }
+                                }
+                                Err(e) => {
+                                    log::error!("内核下载失败: {}", e);
+                                    let _ = update_handle.emit(
+                                        "download-progress",
+                                        serde_json::json!({
+                                            "status": "error",
+                                            "message": format!("下载失败: {}", e),
+                                        }),
+                                    );
+                                }
+                            }
+                        } else {
+                            log::info!("内核已是最新版 {}", LATEST_VERSION);
+                        }
+                    }
+                    Err(_) => {
+                        log::info!("内核未安装，等待用户手动下载");
+                    }
+                }
+            });
+
             // 后台任务：注册+心跳+轮询（基于 tauri async runtime）
             let api_base = std::env::var("BEEHIVE_API_URL")
                 .unwrap_or_else(|_| "http://107.173.70.124:8000".to_string());
@@ -873,12 +1234,15 @@ pub fn run() {
                                                     // a) 调用 launch_cloak 启动 CloakBrowser
                                                     let launch_config = LaunchConfig {
                                                         profile_id: profile_id.to_string(),
+                                                        tenant_id: None,
                                                         fingerprint_seed: None,
                                                         platform: None,
                                                         timezone: None,
                                                         locale: None,
                                                         screen_width: None,
                                                         screen_height: None,
+                                                        window_x: None,
+                                                        window_y: None,
                                                         gpu_vendor: None,
                                                         gpu_renderer: None,
                                                         hardware_concurrency: None,

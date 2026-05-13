@@ -19,17 +19,7 @@ import {
 import { agentProfileAPI, AgentProfileUpdate } from '../api/client';
 
 // ── Beehive Dark Palette ──
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  cardBg: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -179,24 +169,24 @@ const AgentConsolePage: React.FC = () => {
   const isEmpty = messages.length === 0 && !loading;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)]" style={{ background: C.bg }}>
+    <div className="flex flex-col h-[calc(100vh-64px)]" style={{ background: 'var(--page-bg)' }}>
       {/* Header */}
       <div
         className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: C.border, background: C.cardBg }}
+        style={{ borderColor: 'var(--divider)', background: 'rgba(255,255,255,0.04)' }}
       >
         <div className="flex items-center gap-3">
           <div
             className="flex items-center justify-center w-9 h-9 rounded-lg"
             style={{ background: 'rgba(255,193,7,0.12)' }}
           >
-            <RiRobot2Line size={20} style={{ color: C.accent }} />
+            <RiRobot2Line size={20} style={{ color: 'var(--hive-gold)' }} />
           </div>
           <div>
-            <h1 className="text-base font-semibold m-0" style={{ color: C.textPrimary }}>
+            <h1 className="text-base font-semibold m-0" style={{ color: 'var(--text-primary)' }}>
               AI 智能助手
             </h1>
-            <p className="text-xs m-0" style={{ color: C.textSecondary }}>
+            <p className="text-xs m-0" style={{ color: 'var(--text-secondary)' }}>
               社交媒体运营专家
             </p>
           </div>
@@ -207,8 +197,8 @@ const AgentConsolePage: React.FC = () => {
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full"
               style={{
                 background: 'rgba(255,255,255,0.04)',
-                color: remaining <= 5 ? '#F44336' : C.textSecondary,
-                border: `1px solid ${C.border}`,
+                color: remaining <= 5 ? '#F44336' : 'var(--text-secondary)',
+                border: `1px solid ${'var(--divider)'}`,
               }}
             >
               <RiSparklingLine size={14} />
@@ -220,8 +210,8 @@ const AgentConsolePage: React.FC = () => {
             className="flex items-center justify-center w-9 h-9 rounded-lg transition-colors"
             style={{
               background: 'rgba(255,255,255,0.04)',
-              color: C.textSecondary,
-              border: `1px solid ${C.border}`,
+              color: 'var(--text-secondary)',
+              border: `1px solid ${'var(--divider)'}`,
             }}
             title="设置"
           >
@@ -262,7 +252,7 @@ const AgentConsolePage: React.FC = () => {
                   {msg.role === 'user' ? (
                     <RiUserLine size={16} style={{ color: '#1976D2' }} />
                   ) : (
-                    <RiRobot2Line size={16} style={{ color: C.accent }} />
+                    <RiRobot2Line size={16} style={{ color: 'var(--hive-gold)' }} />
                   )}
                 </div>
 
@@ -271,12 +261,12 @@ const AgentConsolePage: React.FC = () => {
                   className="relative max-w-[80%] sm:max-w-[70%] px-4 py-3 text-sm leading-relaxed rounded-2xl"
                   style={{
                     background:
-                      msg.role === 'user' ? '#1976D2' : C.surface,
-                    color: msg.role === 'user' ? '#FFFFFF' : C.textPrimary,
+                      msg.role === 'user' ? '#1976D2' : 'var(--card-bg)',
+                    color: msg.role === 'user' ? '#FFFFFF' : 'var(--text-primary)',
                     border:
                       msg.role === 'user'
                         ? 'none'
-                        : `1px solid ${C.border}`,
+                        : `1px solid ${'var(--divider)'}`,
                     borderRadius:
                       msg.role === 'user'
                         ? '18px 18px 4px 18px'
@@ -295,13 +285,13 @@ const AgentConsolePage: React.FC = () => {
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
                   style={{ background: 'rgba(255,193,7,0.12)' }}
                 >
-                  <RiRobot2Line size={16} style={{ color: C.accent }} />
+                  <RiRobot2Line size={16} style={{ color: 'var(--hive-gold)' }} />
                 </div>
                 <div
                   className="px-4 py-3 rounded-2xl flex items-center gap-2"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: '18px 18px 18px 4px',
                   }}
                 >
@@ -327,7 +317,7 @@ const AgentConsolePage: React.FC = () => {
       {/* Input area */}
       <div
         className="px-4 py-4 sm:px-6 border-t"
-        style={{ borderColor: C.border, background: C.cardBg }}
+        style={{ borderColor: 'var(--divider)', background: 'rgba(255,255,255,0.04)' }}
       >
         <div className="max-w-3xl mx-auto flex items-end gap-3">
           <div className="flex-1 relative">
@@ -341,9 +331,9 @@ const AgentConsolePage: React.FC = () => {
               disabled={loading}
               className="input w-full resize-none pr-12"
               style={{
-                background: C.surface,
+                background: 'var(--card-bg)',
                 borderColor: 'rgba(255,255,255,0.10)',
-                color: C.textPrimary,
+                color: 'var(--text-primary)',
                 borderRadius: '12px',
                 padding: '12px 48px 12px 16px',
                 minHeight: '48px',
@@ -364,8 +354,8 @@ const AgentConsolePage: React.FC = () => {
             className="btn flex items-center justify-center w-12 h-12 p-0 rounded-xl flex-shrink-0"
             style={{
               background:
-                input.trim() && !loading ? C.accent : 'rgba(255,255,255,0.06)',
-              color: input.trim() && !loading ? C.bg : '#616161',
+                input.trim() && !loading ? 'var(--hive-gold)' : 'rgba(255,255,255,0.06)',
+              color: input.trim() && !loading ? 'var(--page-bg)' : '#616161',
               borderRadius: '12px',
             }}
           >
@@ -382,17 +372,17 @@ const AgentConsolePage: React.FC = () => {
         <DialogContent
           className="sm:max-w-md"
           style={{
-            background: C.cardBg,
-            border: `1px solid ${C.border}`,
-            color: C.textPrimary,
+            background: 'rgba(255,255,255,0.04)',
+            border: `1px solid ${'var(--divider)'}`,
+            color: 'var(--text-primary)',
           }}
         >
           <DialogHeader>
-            <DialogTitle style={{ color: C.textPrimary }}>智能体设置</DialogTitle>
+            <DialogTitle style={{ color: 'var(--text-primary)' }}>智能体设置</DialogTitle>
           </DialogHeader>
 
           {profileLoading ? (
-            <div className="py-8 text-center text-sm" style={{ color: C.textSecondary }}>
+            <div className="py-8 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
               加载中…
             </div>
           ) : (
@@ -401,7 +391,7 @@ const AgentConsolePage: React.FC = () => {
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5"
-                  style={{ color: C.textSecondary }}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   写作风格
                 </label>
@@ -410,9 +400,9 @@ const AgentConsolePage: React.FC = () => {
                   onChange={(e) => setWritingStyle(e.target.value)}
                   className="w-full rounded-lg text-sm outline-none"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
+                    color: 'var(--text-primary)',
                     padding: '9px 14px',
                     appearance: 'auto',
                   }}
@@ -436,7 +426,7 @@ const AgentConsolePage: React.FC = () => {
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5"
-                  style={{ color: C.textSecondary }}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   语气
                 </label>
@@ -445,9 +435,9 @@ const AgentConsolePage: React.FC = () => {
                   onChange={(e) => setTone(e.target.value)}
                   className="w-full rounded-lg text-sm outline-none"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
+                    color: 'var(--text-primary)',
                     padding: '9px 14px',
                     appearance: 'auto',
                   }}
@@ -471,7 +461,7 @@ const AgentConsolePage: React.FC = () => {
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5"
-                  style={{ color: C.textSecondary }}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   自定义指令
                 </label>
@@ -482,9 +472,9 @@ const AgentConsolePage: React.FC = () => {
                   rows={4}
                   className="w-full rounded-lg text-sm outline-none resize-none"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
+                    color: 'var(--text-primary)',
                     padding: '10px 14px',
                     fontFamily: 'inherit',
                   }}
@@ -495,7 +485,7 @@ const AgentConsolePage: React.FC = () => {
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5"
-                  style={{ color: C.textSecondary }}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   知识领域（逗号分隔）
                 </label>
@@ -506,9 +496,9 @@ const AgentConsolePage: React.FC = () => {
                   placeholder="例如：科技, 金融, 教育"
                   className="w-full rounded-lg text-sm outline-none"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
+                    color: 'var(--text-primary)',
                     padding: '9px 14px',
                     fontFamily: 'inherit',
                   }}
@@ -519,7 +509,7 @@ const AgentConsolePage: React.FC = () => {
               <div>
                 <label
                   className="block text-xs font-medium mb-1.5"
-                  style={{ color: C.textSecondary }}
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   关键词（逗号分隔）
                 </label>
@@ -530,9 +520,9 @@ const AgentConsolePage: React.FC = () => {
                   placeholder="例如：AI, 区块链, 自媒体"
                   className="w-full rounded-lg text-sm outline-none"
                   style={{
-                    background: C.surface,
-                    border: `1px solid ${C.border}`,
-                    color: C.textPrimary,
+                    background: 'var(--card-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
+                    color: 'var(--text-primary)',
                     padding: '9px 14px',
                     fontFamily: 'inherit',
                   }}
@@ -541,14 +531,14 @@ const AgentConsolePage: React.FC = () => {
             </div>
           )}
 
-          <DialogFooter className="gap-2" style={{ borderColor: C.border }}>
+          <DialogFooter className="gap-2" style={{ borderColor: 'var(--divider)' }}>
             <button
               onClick={() => setSettingsOpen(false)}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{
                 background: 'rgba(255,255,255,0.04)',
-                color: C.textSecondary,
-                border: `1px solid ${C.border}`,
+                color: 'var(--text-secondary)',
+                border: `1px solid ${'var(--divider)'}`,
               }}
             >
               取消
@@ -558,8 +548,8 @@ const AgentConsolePage: React.FC = () => {
               disabled={saving || profileLoading}
               className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               style={{
-                background: C.accent,
-                color: C.bg,
+                background: 'var(--hive-gold)',
+                color: 'var(--page-bg)',
                 opacity: saving || profileLoading ? 0.6 : 1,
               }}
             >

@@ -142,7 +142,7 @@ const ClientsPage: React.FC = () => {
           >
             {row.name}
           </div>
-          <div style={{ fontSize: 12, color: 'hsl(var(--muted-foreground))', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
             ID: {row.id.slice(0, 8)}...
           </div>
         </div>
@@ -206,7 +206,7 @@ const ClientsPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => navigate(`/admin/clients/${row.id}`)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'hsl(var(--primary))' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--primary)' }}
             title="编辑"
           >
             <RiEditLine size={16} />
@@ -218,7 +218,7 @@ const ClientsPage: React.FC = () => {
               border: 'none',
               cursor: 'pointer',
               padding: 4,
-              color: row.is_active ? 'hsl(var(--warning))' : 'hsl(var(--success))',
+              color: row.is_active ? 'var(--warning)' : 'var(--success)',
             }}
             title={row.is_active ? '禁用' : '启用'}
           >
@@ -226,7 +226,7 @@ const ClientsPage: React.FC = () => {
           </button>
           <button
             onClick={() => handleDelete(row)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'hsl(var(--muted-foreground))' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--muted-foreground)' }}
             title="删除"
           >
             <RiDeleteBinLine size={16} />
@@ -252,7 +252,7 @@ const ClientsPage: React.FC = () => {
           <button
             className="btn"
             onClick={fetchClients}
-            style={{ padding: '10px 16px', background: 'hsl(var(--secondary))', color: 'hsl(var(--secondary-foreground))' }}
+            style={{ padding: '10px 16px', background: 'var(--secondary)', color: 'var(--secondary-foreground)' }}
           >
             <RiRefreshLine size={18} />
             刷新
@@ -289,7 +289,7 @@ const ClientsPage: React.FC = () => {
             className="btn"
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? 'hsl(var(--muted))' : 'hsl(var(--primary))', color: page === 0 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary-foreground))' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page === 0 ? 'var(--muted)' : 'var(--primary)', color: page === 0 ? 'var(--muted-foreground)' : 'var(--primary-foreground)' }}
           >
             上一页
           </button>
@@ -300,7 +300,7 @@ const ClientsPage: React.FC = () => {
             className="btn"
             disabled={page >= totalPages - 1}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? 'hsl(var(--muted))' : 'hsl(var(--primary))', color: page >= totalPages - 1 ? 'hsl(var(--muted-foreground))' : 'hsl(var(--primary-foreground))' }}
+            style={{ padding: '6px 16px', fontSize: 13, background: page >= totalPages - 1 ? 'var(--muted)' : 'var(--primary)', color: page >= totalPages - 1 ? 'var(--muted-foreground)' : 'var(--primary-foreground)' }}
           >
             下一页
           </button>

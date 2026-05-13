@@ -3,20 +3,7 @@ import { RiFilterOffLine } from 'react-icons/ri';
 import toast from 'react-hot-toast';
 
 // Beehive Design System Colors
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const RADIUS_CARD = 12;
 const RADIUS_SM = 8;
@@ -149,7 +136,7 @@ const AdminLogsPage: React.FC = () => {
         <h1 className="text-2xl font-semibold text-foreground mb-6">
           操作日志
         </h1>
-        <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
           查看所有管理员操作记录
         </p>
       </div>
@@ -157,8 +144,8 @@ const AdminLogsPage: React.FC = () => {
       {/* Filter Bar */}
       <div
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
+          background: 'var(--card-bg)',
+          border: `1px solid ${'var(--divider)'}`,
           borderRadius: RADIUS_CARD,
           padding: '16px 20px',
           marginBottom: 16,
@@ -170,16 +157,16 @@ const AdminLogsPage: React.FC = () => {
       >
         {/* Action type */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: C.textTertiary }}>操作类型</label>
+          <label style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>操作类型</label>
           <select
             value={action}
             onChange={e => { setAction(e.target.value); setPage(1); }}
             style={{
               padding: '8px 12px',
-              background: C.bg,
-              border: `1px solid ${C.border}`,
+              background: 'var(--page-bg)',
+              border: `1px solid ${'var(--divider)'}`,
               borderRadius: RADIUS_SM,
-              color: C.textPrimary,
+              color: 'var(--text-primary)',
               fontSize: 13,
               cursor: 'pointer',
               minWidth: 130,
@@ -193,16 +180,16 @@ const AdminLogsPage: React.FC = () => {
 
         {/* Target type */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: C.textTertiary }}>目标类型</label>
+          <label style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>目标类型</label>
           <select
             value={targetType}
             onChange={e => { setTargetType(e.target.value); setPage(1); }}
             style={{
               padding: '8px 12px',
-              background: C.bg,
-              border: `1px solid ${C.border}`,
+              background: 'var(--page-bg)',
+              border: `1px solid ${'var(--divider)'}`,
               borderRadius: RADIUS_SM,
-              color: C.textPrimary,
+              color: 'var(--text-primary)',
               fontSize: 13,
               cursor: 'pointer',
               minWidth: 130,
@@ -216,7 +203,7 @@ const AdminLogsPage: React.FC = () => {
 
         {/* User ID */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <label style={{ fontSize: 12, color: C.textTertiary }}>用户ID</label>
+          <label style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>用户ID</label>
           <input
             type="text"
             value={userId}
@@ -225,10 +212,10 @@ const AdminLogsPage: React.FC = () => {
             placeholder="输入用户ID"
             style={{
               padding: '8px 12px',
-              background: C.bg,
-              border: `1px solid ${C.border}`,
+              background: 'var(--page-bg)',
+              border: `1px solid ${'var(--divider)'}`,
               borderRadius: RADIUS_SM,
-              color: C.textPrimary,
+              color: 'var(--text-primary)',
               fontSize: 13,
               minWidth: 150,
             }}
@@ -241,8 +228,8 @@ const AdminLogsPage: React.FC = () => {
             onClick={handleSearch}
             style={{
               padding: '8px 16px',
-              background: C.accent,
-              color: C.bg,
+              background: 'var(--hive-gold)',
+              color: 'var(--page-bg)',
               border: 'none',
               borderRadius: RADIUS_SM,
               fontSize: 13,
@@ -260,8 +247,8 @@ const AdminLogsPage: React.FC = () => {
               gap: 4,
               padding: '8px 12px',
               background: 'transparent',
-              color: C.textSecondary,
-              border: `1px solid ${C.border}`,
+              color: 'var(--text-secondary)',
+              border: `1px solid ${'var(--divider)'}`,
               borderRadius: RADIUS_SM,
               fontSize: 13,
               cursor: 'pointer',
@@ -276,8 +263,8 @@ const AdminLogsPage: React.FC = () => {
       {/* Table */}
       <div
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
+          background: 'var(--card-bg)',
+          border: `1px solid ${'var(--divider)'}`,
           borderRadius: RADIUS_CARD,
           overflow: 'hidden',
         }}
@@ -285,7 +272,7 @@ const AdminLogsPage: React.FC = () => {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+              <tr style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
                 {['时间', '用户', '操作', '目标类型', '目标ID', 'IP', '详情'].map((col, i) => (
                   <th
                     key={col}
@@ -294,7 +281,7 @@ const AdminLogsPage: React.FC = () => {
                       textAlign: i >= 5 ? 'center' : 'left',
                       fontSize: 12,
                       fontWeight: 600,
-                      color: C.textTertiary,
+                      color: 'var(--text-tertiary)',
                       letterSpacing: '0.5px',
                       whiteSpace: 'nowrap',
                     }}
@@ -307,13 +294,13 @@ const AdminLogsPage: React.FC = () => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: C.textSecondary }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-secondary)' }}>
                     加载中...
                   </td>
                 </tr>
               ) : logs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: C.textSecondary }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-secondary)' }}>
                     暂无日志数据
                   </td>
                 </tr>
@@ -322,16 +309,16 @@ const AdminLogsPage: React.FC = () => {
                   <React.Fragment key={log.id}>
                     <tr
                       style={{
-                        borderBottom: idx < logs.length - 1 ? `1px solid ${C.border}` : 'none',
+                        borderBottom: idx < logs.length - 1 ? `1px solid ${'var(--divider)'}` : 'none',
                         transition: 'background 0.1s',
                       }}
-                      onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHover)}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {formatTime(log.created_at)}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textPrimary }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-primary)' }}>
                         {log.username || log.user_id || '-'}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13 }}>
@@ -350,22 +337,22 @@ const AdminLogsPage: React.FC = () => {
                                 : 'rgba(76,175,80,0.12)',
                             color:
                               log.action === 'login' || log.action === 'register'
-                                ? C.secondary
+                                ? 'var(--hive-blue)'
                                 : log.action === 'delete'
-                                ? C.error
-                                : C.success,
+                                ? 'var(--error)'
+                                : 'var(--success)',
                           }}
                         >
                           {ACTION_MAP[log.action] || log.action}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>
                         {log.target_type || '-'}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, textAlign: 'center' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
                         {log.target_id || '-'}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, textAlign: 'center', fontFamily: 'monospace' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', fontFamily: 'monospace' }}>
                         {log.ip || '-'}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'center' }}>
@@ -374,7 +361,7 @@ const AdminLogsPage: React.FC = () => {
                           style={{
                             background: 'none',
                             border: 'none',
-                            color: C.accent,
+                            color: 'var(--hive-gold)',
                             cursor: 'pointer',
                             fontSize: 12,
                             padding: '2px 6px',
@@ -386,17 +373,17 @@ const AdminLogsPage: React.FC = () => {
                     </tr>
                     {expandedId === log.id && (
                       <tr style={{ background: 'rgba(0,0,0,0.2)' }}>
-                        <td colSpan={7} style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary }}>
-                          <div style={{ marginBottom: 4, color: C.textTertiary, fontSize: 11 }}>详情</div>
+                        <td colSpan={7} style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                          <div style={{ marginBottom: 4, color: 'var(--text-tertiary)', fontSize: 11 }}>详情</div>
                           <pre
                             style={{
                               margin: 0,
                               whiteSpace: 'pre-wrap',
                               wordBreak: 'break-all',
-                              color: C.textPrimary,
+                              color: 'var(--text-primary)',
                               fontFamily: 'monospace',
                               fontSize: 12,
-                              background: C.bg,
+                              background: 'var(--page-bg)',
                               padding: '8px 12px',
                               borderRadius: RADIUS_SM,
                             }}
@@ -421,10 +408,10 @@ const AdminLogsPage: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 16px',
-              borderTop: `1px solid ${C.border}`,
+              borderTop: `1px solid ${'var(--divider)'}`,
             }}
           >
-            <span style={{ fontSize: 13, color: C.textSecondary }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               共 {total} 条记录，第 {page}/{totalPages} 页
             </span>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -434,8 +421,8 @@ const AdminLogsPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   background: 'transparent',
-                  color: page <= 1 ? C.textTertiary : C.textPrimary,
-                  border: `1px solid ${C.border}`,
+                  color: page <= 1 ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: RADIUS_SM,
                   fontSize: 13,
                   cursor: page <= 1 ? 'not-allowed' : 'pointer',
@@ -449,8 +436,8 @@ const AdminLogsPage: React.FC = () => {
                 style={{
                   padding: '6px 12px',
                   background: 'transparent',
-                  color: page >= totalPages ? C.textTertiary : C.textPrimary,
-                  border: `1px solid ${C.border}`,
+                  color: page >= totalPages ? 'var(--text-tertiary)' : 'var(--text-primary)',
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: RADIUS_SM,
                   fontSize: 13,
                   cursor: page >= totalPages ? 'not-allowed' : 'pointer',

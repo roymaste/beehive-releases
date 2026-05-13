@@ -10,25 +10,8 @@ import {
 
 // ── Palette ──
 const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  card: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  accentSubtle: 'rgba(255,193,7,0.08)',
-  secondary: '#1976D2',
-  secondaryHover: '#1565C0',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#4caf50',
-  orange: '#ff9800',
-  red: '#ef5350',
-};
-
-// ── Types ──
+  orange: '#FF9800',
+};// ── Types ──
 interface Plan {
   id: string;
   name: string;
@@ -216,11 +199,11 @@ const BillingPage: React.FC = () => {
   const statusBadge = (status: string) => {
     const map: Record<string, { bg: string; color: string; label: string }> = {
       pending: { bg: 'rgba(255,152,0,0.15)', color: C.orange, label: '待支付' },
-      paid: { bg: 'rgba(76,175,80,0.15)', color: C.green, label: '已支付' },
-      failed: { bg: 'rgba(239,83,80,0.15)', color: C.red, label: '失败' },
-      canceled: { bg: 'rgba(158,158,158,0.15)', color: C.textSecondary, label: '已取消' },
+      paid: { bg: 'rgba(76,175,80,0.15)', color: 'var(--success)', label: '已支付' },
+      failed: { bg: 'rgba(239,83,80,0.15)', color: 'var(--error)', label: '失败' },
+      canceled: { bg: 'rgba(158,158,158,0.15)', color: 'var(--text-secondary)', label: '已取消' },
     };
-    const s = map[status] || { bg: 'rgba(158,158,158,0.15)', color: C.textSecondary, label: status };
+    const s = map[status] || { bg: 'rgba(158,158,158,0.15)', color: 'var(--text-secondary)', label: status };
     return (
       <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, backgroundColor: s.bg, color: s.color }}>
         {s.label}
@@ -229,7 +212,7 @@ const BillingPage: React.FC = () => {
   };
 
   if (loading) {
-    return <div style={{ padding: 32, color: C.textSecondary }}>加载中...</div>;
+    return <div style={{ padding: 32, color: 'var(--text-secondary)' }}>加载中...</div>;
   }
 
   return (
@@ -239,7 +222,7 @@ const BillingPage: React.FC = () => {
         <h1 className="text-2xl font-semibold text-foreground mb-6">
           计费管理
         </h1>
-        <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
           管理和升级您的订阅套餐
         </p>
       </div>
@@ -247,8 +230,8 @@ const BillingPage: React.FC = () => {
       {/* ── Current Plan Card ── */}
       {subscription && (
         <div style={{
-          backgroundColor: C.card,
-          border: `1px solid ${C.border}`,
+          backgroundColor: 'var(--card-bg)',
+          border: `1px solid ${'var(--divider)'}`,
           borderRadius: 12,
           padding: 24,
           marginBottom: 24,
@@ -257,12 +240,12 @@ const BillingPage: React.FC = () => {
           justifyContent: 'space-between',
         }}>
           <div>
-            <div style={{ fontSize: 13, color: C.textSecondary, marginBottom: 4 }}>当前套餐</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}>当前套餐</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 24, fontWeight: 700, color: C.accent }}>
+              <span style={{ fontSize: 24, fontWeight: 700, color: 'var(--hive-gold)' }}>
                 {subscription.plan?.name || 'Free'}
               </span>
-              <span style={{ fontSize: 13, color: C.textSecondary }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                 {subscription.billing_cycle === 'monthly' ? '月付' : '年付'}
               </span>
               <span style={{
@@ -270,12 +253,12 @@ const BillingPage: React.FC = () => {
                 padding: '2px 8px',
                 borderRadius: 4,
                 backgroundColor: subscription.status === 'active' ? 'rgba(76,175,80,0.15)' : 'rgba(255,152,0,0.15)',
-                color: subscription.status === 'active' ? C.green : C.orange,
+                color: subscription.status === 'active' ? 'var(--success)' : C.orange,
               }}>
                 {subscription.status === 'active' ? '有效' : subscription.status}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: C.textTertiary, marginTop: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 8 }}>
               到期时间：{formatDate(subscription.end_date)}
               {subscription.auto_renew && <span style={{ marginLeft: 12 }}>• 自动续费</span>}
             </div>
@@ -286,9 +269,9 @@ const BillingPage: React.FC = () => {
               style={{
                 padding: '8px 16px',
                 borderRadius: 8,
-                border: `1px solid ${C.border}`,
+                border: `1px solid ${'var(--divider)'}`,
                 backgroundColor: 'transparent',
-                color: C.textSecondary,
+                color: 'var(--text-secondary)',
                 fontSize: 13,
                 cursor: 'pointer',
               }}
@@ -300,18 +283,18 @@ const BillingPage: React.FC = () => {
       )}
 
       {/* ── Tabs ── */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${C.border}`, marginBottom: 24 }}>
+      <div style={{ display: 'flex', gap: 4, borderBottom: `1px solid ${'var(--divider)'}`, marginBottom: 24 }}>
         <button
           onClick={() => setActiveTab('plans')}
           style={{
             padding: '8px 16px',
             border: 'none',
             backgroundColor: 'transparent',
-            color: activeTab === 'plans' ? C.accent : C.textSecondary,
+            color: activeTab === 'plans' ? 'var(--hive-gold)' : 'var(--text-secondary)',
             fontSize: 13,
             fontWeight: activeTab === 'plans' ? 600 : 400,
             cursor: 'pointer',
-            borderBottom: activeTab === 'plans' ? `2px solid ${C.accent}` : '2px solid transparent',
+            borderBottom: activeTab === 'plans' ? `2px solid ${'var(--hive-gold)'}` : '2px solid transparent',
             marginBottom: -1,
           }}
         >
@@ -323,11 +306,11 @@ const BillingPage: React.FC = () => {
             padding: '8px 16px',
             border: 'none',
             backgroundColor: 'transparent',
-            color: activeTab === 'invoices' ? C.accent : C.textSecondary,
+            color: activeTab === 'invoices' ? 'var(--hive-gold)' : 'var(--text-secondary)',
             fontSize: 13,
             fontWeight: activeTab === 'invoices' ? 600 : 400,
             cursor: 'pointer',
-            borderBottom: activeTab === 'invoices' ? `2px solid ${C.accent}` : '2px solid transparent',
+            borderBottom: activeTab === 'invoices' ? `2px solid ${'var(--hive-gold)'}` : '2px solid transparent',
             marginBottom: -1,
           }}
         >
@@ -348,12 +331,12 @@ const BillingPage: React.FC = () => {
                 <div
                   key={plan.id}
                   style={{
-                    backgroundColor: C.card,
-                    border: `1px solid ${isCurrent ? C.accent : C.border}`,
+                    backgroundColor: 'var(--card-bg)',
+                    border: `1px solid ${isCurrent ? 'var(--hive-gold)' : 'var(--divider)'}`,
                     borderRadius: 12,
                     padding: 20,
                     position: 'relative',
-                    ...(plan.code === 'pro' ? { borderColor: C.secondary } : {}),
+                    ...(plan.code === 'pro' ? { borderColor: 'var(--hive-blue)' } : {}),
                   }}
                 >
                   {plan.code === 'pro' && (
@@ -362,7 +345,7 @@ const BillingPage: React.FC = () => {
                       top: -10,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      backgroundColor: C.secondary,
+                      backgroundColor: 'var(--hive-blue)',
                       color: '#fff',
                       fontSize: 11,
                       padding: '2px 12px',
@@ -374,20 +357,20 @@ const BillingPage: React.FC = () => {
                   )}
 
                   <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, marginBottom: 4 }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>
                       {plan.name}
                     </div>
-                    <div style={{ fontSize: 12, color: C.textSecondary }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                       {plan.description}
                     </div>
                   </div>
 
                   <div style={{ marginBottom: 20 }}>
-                    <span style={{ fontSize: 28, fontWeight: 700, color: C.accent }}>
+                    <span style={{ fontSize: 28, fontWeight: 700, color: 'var(--hive-gold)' }}>
                       {formatPrice(plan.price_monthly)}
                     </span>
                     {plan.price_monthly > 0 && (
-                      <span style={{ fontSize: 12, color: C.textSecondary }}>/月</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>/月</span>
                     )}
                   </div>
 
@@ -402,12 +385,12 @@ const BillingPage: React.FC = () => {
                           gap: 6,
                           marginBottom: 6,
                           fontSize: 12,
-                          color: hasFeature ? C.textPrimary : C.textTertiary,
+                          color: hasFeature ? 'var(--text-primary)' : 'var(--text-tertiary)',
                         }}>
                           {hasFeature ? (
-                            <RiCheckLine size={14} style={{ color: C.green }} />
+                            <RiCheckLine size={14} style={{ color: 'var(--success)' }} />
                           ) : (
-                            <RiCloseLine size={14} style={{ color: C.textTertiary }} />
+                            <RiCloseLine size={14} style={{ color: 'var(--text-tertiary)' }} />
                           )}
                           <span>{label}</span>
                         </div>
@@ -418,11 +401,11 @@ const BillingPage: React.FC = () => {
                   {/* Limits */}
                   <div style={{
                     padding: '12px',
-                    backgroundColor: C.surface,
+                    backgroundColor: 'var(--card-bg)',
                     borderRadius: 8,
                     marginBottom: 20,
                     fontSize: 11,
-                    color: C.textSecondary,
+                    color: 'var(--text-secondary)',
                   }}>
                     <div style={{ marginBottom: 4 }}>额度限制</div>
                     <div>环境：{plan.limits.environments === 99999 ? '无限制' : plan.limits.environments}</div>
@@ -440,8 +423,8 @@ const BillingPage: React.FC = () => {
                         padding: '9px 0',
                         borderRadius: 8,
                         border: 'none',
-                        backgroundColor: C.accentSubtle,
-                        color: C.accent,
+                        backgroundColor: 'rgba(255,193,7,0.10)',
+                        color: 'var(--hive-gold)',
                         fontSize: 13,
                         fontWeight: 600,
                         cursor: 'not-allowed',
@@ -458,7 +441,7 @@ const BillingPage: React.FC = () => {
                         padding: '9px 0',
                         borderRadius: 8,
                         border: 'none',
-                        backgroundColor: upgrading === plan.code ? C.textTertiary : C.accent,
+                        backgroundColor: upgrading === plan.code ? 'var(--text-tertiary)' : 'var(--hive-gold)',
                         color: '#121212',
                         fontSize: 13,
                         fontWeight: 600,
@@ -468,8 +451,8 @@ const BillingPage: React.FC = () => {
                         justifyContent: 'center',
                         gap: 4,
                       }}
-                      onMouseEnter={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = C.accentHover; }}
-                      onMouseLeave={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = C.accent; }}
+                      onMouseEnter={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = 'var(--hive-gold-hover)'; }}
+                      onMouseLeave={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = 'var(--hive-gold)'; }}
                     >
                       {upgrading === plan.code ? '处理中...' : (
                         <>
@@ -484,9 +467,9 @@ const BillingPage: React.FC = () => {
                         width: '100%',
                         padding: '9px 0',
                         borderRadius: 8,
-                        border: `1px solid ${C.border}`,
+                        border: `1px solid ${'var(--divider)'}`,
                         backgroundColor: 'transparent',
-                        color: C.textTertiary,
+                        color: 'var(--text-tertiary)',
                         fontSize: 13,
                         cursor: 'not-allowed',
                       }}
@@ -508,56 +491,56 @@ const BillingPage: React.FC = () => {
             <div style={{
               textAlign: 'center',
               padding: '48px 24px',
-              color: C.textSecondary,
-              backgroundColor: C.card,
+              color: 'var(--text-secondary)',
+              backgroundColor: 'var(--card-bg)',
               borderRadius: 12,
-              border: `1px solid ${C.border}`,
+              border: `1px solid ${'var(--divider)'}`,
             }}>
               <RiRefundLine size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
               <p style={{ fontSize: 14 }}>暂无账单记录</p>
             </div>
           ) : (
-            <div style={{ backgroundColor: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ backgroundColor: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: 12, overflow: 'hidden' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ backgroundColor: C.surface }}>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                  <tr style={{ backgroundColor: 'var(--card-bg)' }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                       账单金额
                     </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                       状态
                     </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                       计费周期
                     </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                       创建时间
                     </th>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                       支付时间
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoices.map((invoice, idx) => (
-                    <tr key={invoice.id} style={{ backgroundColor: idx % 2 === 0 ? 'transparent' : C.surface }}>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textPrimary, borderBottom: `1px solid ${C.border}` }}>
-                        <span style={{ fontWeight: 600, color: invoice.amount > 0 ? C.accent : C.textSecondary }}>
+                    <tr key={invoice.id} style={{ backgroundColor: idx % 2 === 0 ? 'transparent' : 'var(--card-bg)' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-primary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
+                        <span style={{ fontWeight: 600, color: invoice.amount > 0 ? 'var(--hive-gold)' : 'var(--text-secondary)' }}>
                           {invoice.amount > 0 ? `¥${invoice.amount.toFixed(2)}` : '免费'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '12px 16px', borderBottom: `1px solid ${'var(--divider)'}` }}>
                         {statusBadge(invoice.status)}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                         {invoice.billing_period_start && invoice.billing_period_end
                           ? `${formatDate(invoice.billing_period_start)} ~ ${formatDate(invoice.billing_period_end)}`
                           : '-'}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                         {formatDate(invoice.created_at)}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: C.textSecondary, borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--text-secondary)', borderBottom: `1px solid ${'var(--divider)'}` }}>
                         {formatDate(invoice.paid_at)}
                       </td>
                     </tr>

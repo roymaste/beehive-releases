@@ -13,20 +13,7 @@ import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 import { contentPolicyAPI, ContentRule } from '../../api/admin';
 
 // Beehive Design System Colors
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const RADIUS_CARD = 16;
 const RADIUS_SM = 10;
@@ -215,7 +202,7 @@ const ContentPolicyPage: React.FC = () => {
         <h1 className="text-2xl font-semibold text-foreground mb-6">
           内容安全管理
         </h1>
-        <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
           配置内容审核规则与系统 Prompt 安全策略
         </p>
       </div>
@@ -223,8 +210,8 @@ const ContentPolicyPage: React.FC = () => {
       {/* ── Section 1: Rules Table ── */}
       <div
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
+          background: 'var(--card-bg)',
+          border: `1px solid ${'var(--divider)'}`,
           borderRadius: RADIUS_CARD,
           padding: 24,
           marginBottom: 24,
@@ -239,14 +226,14 @@ const ContentPolicyPage: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <RiShieldLine size={20} color={C.accent} />
-            <h2 style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+            <RiShieldLine size={20} color={'var(--hive-gold)'} />
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
               内容规则
             </h2>
             <span
               style={{
                 fontSize: 12,
-                color: C.textTertiary,
+                color: 'var(--text-tertiary)',
                 background: 'rgba(255,255,255,0.04)',
                 padding: '2px 8px',
                 borderRadius: 999,
@@ -264,8 +251,8 @@ const ContentPolicyPage: React.FC = () => {
                 gap: 4,
                 padding: '8px 14px',
                 background: 'transparent',
-                color: C.textSecondary,
-                border: `1px solid ${C.border}`,
+                color: 'var(--text-secondary)',
+                border: `1px solid ${'var(--divider)'}`,
                 borderRadius: RADIUS_BTN,
                 fontSize: 13,
                 cursor: 'pointer',
@@ -281,8 +268,8 @@ const ContentPolicyPage: React.FC = () => {
                 alignItems: 'center',
                 gap: 4,
                 padding: '8px 14px',
-                background: C.accent,
-                color: C.bg,
+                background: 'var(--hive-gold)',
+                color: 'var(--page-bg)',
                 border: 'none',
                 borderRadius: RADIUS_BTN,
                 fontSize: 13,
@@ -300,7 +287,7 @@ const ContentPolicyPage: React.FC = () => {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+              <tr style={{ borderBottom: `1px solid ${'var(--divider)'}` }}>
                 {['类型', '模式', '正则', '状态', '描述', '操作'].map((col) => (
                   <th
                     key={col}
@@ -309,7 +296,7 @@ const ContentPolicyPage: React.FC = () => {
                       textAlign: 'left',
                       fontSize: 12,
                       fontWeight: 600,
-                      color: C.textTertiary,
+                      color: 'var(--text-tertiary)',
                       letterSpacing: '0.5px',
                       whiteSpace: 'nowrap',
                     }}
@@ -322,13 +309,13 @@ const ContentPolicyPage: React.FC = () => {
             <tbody>
               {rulesLoading ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: C.textSecondary }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
                     加载中...
                   </td>
                 </tr>
               ) : rules.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: C.textSecondary }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
                     暂无规则
                   </td>
                 </tr>
@@ -339,10 +326,10 @@ const ContentPolicyPage: React.FC = () => {
                     <tr
                       key={rule.id}
                       style={{
-                        borderBottom: idx < rules.length - 1 ? `1px solid ${C.border}` : 'none',
+                        borderBottom: idx < rules.length - 1 ? `1px solid ${'var(--divider)'}` : 'none',
                         transition: 'background 0.1s',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = C.surfaceHover)}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <td style={{ padding: '12px 16px' }}>
@@ -364,7 +351,7 @@ const ContentPolicyPage: React.FC = () => {
                         style={{
                           padding: '12px 16px',
                           fontSize: 13,
-                          color: C.textPrimary,
+                          color: 'var(--text-primary)',
                           fontFamily: rule.is_regex ? 'monospace' : 'inherit',
                           maxWidth: 200,
                           overflow: 'hidden',
@@ -379,7 +366,7 @@ const ContentPolicyPage: React.FC = () => {
                         <span
                           style={{
                             fontSize: 12,
-                            color: rule.is_regex ? C.accent : C.textTertiary,
+                            color: rule.is_regex ? 'var(--hive-gold)' : 'var(--text-tertiary)',
                           }}
                         >
                           {rule.is_regex ? '是' : '否'}
@@ -401,7 +388,7 @@ const ContentPolicyPage: React.FC = () => {
                             background: rule.enabled
                               ? 'rgba(76,175,80,0.12)'
                               : 'rgba(255,255,255,0.04)',
-                            color: rule.enabled ? C.success : C.textTertiary,
+                            color: rule.enabled ? 'var(--success)' : 'var(--text-tertiary)',
                           }}
                         >
                           {rule.enabled ? (
@@ -418,7 +405,7 @@ const ContentPolicyPage: React.FC = () => {
                         style={{
                           padding: '12px 16px',
                           fontSize: 13,
-                          color: C.textSecondary,
+                          color: 'var(--text-secondary)',
                           maxWidth: 240,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -437,7 +424,7 @@ const ContentPolicyPage: React.FC = () => {
                               border: 'none',
                               cursor: 'pointer',
                               padding: 4,
-                              color: C.textSecondary,
+                              color: 'var(--text-secondary)',
                             }}
                             title="编辑"
                           >
@@ -450,7 +437,7 @@ const ContentPolicyPage: React.FC = () => {
                               border: 'none',
                               cursor: 'pointer',
                               padding: 4,
-                              color: C.error,
+                              color: 'var(--error)',
                             }}
                             title="删除"
                           >
@@ -470,23 +457,23 @@ const ContentPolicyPage: React.FC = () => {
       {/* ── Section 2: System Prompt Config ── */}
       <div
         style={{
-          background: C.surface,
-          border: `1px solid ${C.border}`,
+          background: 'var(--card-bg)',
+          border: `1px solid ${'var(--divider)'}`,
           borderRadius: RADIUS_CARD,
           padding: 24,
         }}
       >
         <div style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary, margin: 0 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
             系统 Prompt 配置
           </h2>
-          <p style={{ fontSize: 13, color: C.textSecondary, margin: '6px 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '6px 0 0' }}>
             定义 AI 系统级行为约束与禁止行为清单
           </p>
         </div>
 
         {promptLoading ? (
-          <div style={{ textAlign: 'center', padding: '32px 0', color: C.textSecondary }}>
+          <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-secondary)' }}>
             加载中...
           </div>
         ) : (
@@ -497,7 +484,7 @@ const ContentPolicyPage: React.FC = () => {
                 style={{
                   display: 'block',
                   fontSize: 13,
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   marginBottom: 8,
                   fontWeight: 500,
                 }}
@@ -512,10 +499,10 @@ const ContentPolicyPage: React.FC = () => {
                 style={{
                   width: '100%',
                   padding: '12px 14px',
-                  background: C.bg,
-                  border: `1px solid ${C.border}`,
+                  background: 'var(--page-bg)',
+                  border: `1px solid ${'var(--divider)'}`,
                   borderRadius: RADIUS_SM,
-                  color: C.textPrimary,
+                  color: 'var(--text-primary)',
                   fontSize: 14,
                   boxSizing: 'border-box',
                   resize: 'vertical',
@@ -531,7 +518,7 @@ const ContentPolicyPage: React.FC = () => {
                 style={{
                   display: 'block',
                   fontSize: 13,
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   marginBottom: 8,
                   fontWeight: 500,
                 }}
@@ -548,10 +535,10 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     flex: 1,
                     padding: '10px 12px',
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--page-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                   }}
                 />
@@ -559,7 +546,7 @@ const ContentPolicyPage: React.FC = () => {
                   onClick={handleAddBehavior}
                   style={{
                     padding: '10px 16px',
-                    background: C.secondary,
+                    background: 'var(--hive-blue)',
                     color: '#fff',
                     border: 'none',
                     borderRadius: RADIUS_BTN,
@@ -575,7 +562,7 @@ const ContentPolicyPage: React.FC = () => {
 
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {forbiddenBehaviors.length === 0 && (
-                  <span style={{ fontSize: 13, color: C.textTertiary }}>
+                  <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>
                     暂无禁止行为
                   </span>
                 )}
@@ -591,7 +578,7 @@ const ContentPolicyPage: React.FC = () => {
                       border: '1px solid rgba(244,67,54,0.2)',
                       borderRadius: RADIUS_BTN,
                       fontSize: 13,
-                      color: C.error,
+                      color: 'var(--error)',
                     }}
                   >
                     {behavior}
@@ -602,7 +589,7 @@ const ContentPolicyPage: React.FC = () => {
                         border: 'none',
                         cursor: 'pointer',
                         padding: 0,
-                        color: C.error,
+                        color: 'var(--error)',
                         display: 'flex',
                         alignItems: 'center',
                       }}
@@ -625,8 +612,8 @@ const ContentPolicyPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 6,
                   padding: '10px 24px',
-                  background: C.accent,
-                  color: C.bg,
+                  background: 'var(--hive-gold)',
+                  color: 'var(--page-bg)',
                   border: 'none',
                   borderRadius: RADIUS_BTN,
                   fontSize: 14,
@@ -661,7 +648,7 @@ const ContentPolicyPage: React.FC = () => {
         >
           <div
             style={{
-              background: C.surface,
+              background: 'var(--card-bg)',
               borderRadius: RADIUS_CARD,
               padding: 24,
               width: '100%',
@@ -679,7 +666,7 @@ const ContentPolicyPage: React.FC = () => {
                 marginBottom: 24,
               }}
             >
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, margin: 0 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 {editingRule ? '编辑规则' : '新增规则'}
               </h2>
               <button
@@ -687,7 +674,7 @@ const ContentPolicyPage: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                 }}
               >
@@ -702,7 +689,7 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     display: 'block',
                     fontSize: 13,
-                    color: C.textSecondary,
+                    color: 'var(--text-secondary)',
                     marginBottom: 6,
                   }}
                 >
@@ -717,9 +704,9 @@ const ContentPolicyPage: React.FC = () => {
                       style={{
                         flex: 1,
                         padding: '10px 12px',
-                        background: ruleForm.rule_type === type ? C.accent : 'transparent',
-                        color: ruleForm.rule_type === type ? C.bg : C.textSecondary,
-                        border: `1px solid ${ruleForm.rule_type === type ? C.accent : C.border}`,
+                        background: ruleForm.rule_type === type ? 'var(--hive-gold)' : 'transparent',
+                        color: ruleForm.rule_type === type ? 'var(--page-bg)' : 'var(--text-secondary)',
+                        border: `1px solid ${ruleForm.rule_type === type ? 'var(--hive-gold)' : 'var(--divider)'}`,
                         borderRadius: RADIUS_BTN,
                         fontSize: 13,
                         cursor: 'pointer',
@@ -738,7 +725,7 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     display: 'block',
                     fontSize: 13,
-                    color: C.textSecondary,
+                    color: 'var(--text-secondary)',
                     marginBottom: 6,
                   }}
                 >
@@ -759,10 +746,10 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--page-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     boxSizing: 'border-box',
                   }}
@@ -778,7 +765,7 @@ const ContentPolicyPage: React.FC = () => {
                     gap: 8,
                     cursor: 'pointer',
                     fontSize: 14,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                   }}
                 >
                   <input
@@ -787,7 +774,7 @@ const ContentPolicyPage: React.FC = () => {
                     onChange={(e) =>
                       setRuleForm({ ...ruleForm, is_regex: e.target.checked })
                     }
-                    style={{ width: 18, height: 18, accentColor: C.accent }}
+                    style={{ width: 18, height: 18, accentColor: 'var(--hive-gold)' }}
                   />
                   使用正则表达式匹配
                 </label>
@@ -799,7 +786,7 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     display: 'block',
                     fontSize: 13,
-                    color: C.textSecondary,
+                    color: 'var(--text-secondary)',
                     marginBottom: 6,
                   }}
                 >
@@ -815,10 +802,10 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--page-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     boxSizing: 'border-box',
                   }}
@@ -834,7 +821,7 @@ const ContentPolicyPage: React.FC = () => {
                     gap: 8,
                     cursor: 'pointer',
                     fontSize: 14,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                   }}
                 >
                   <input
@@ -843,7 +830,7 @@ const ContentPolicyPage: React.FC = () => {
                     onChange={(e) =>
                       setRuleForm({ ...ruleForm, enabled: e.target.checked })
                     }
-                    style={{ width: 18, height: 18, accentColor: C.accent }}
+                    style={{ width: 18, height: 18, accentColor: 'var(--hive-gold)' }}
                   />
                   启用此规则
                 </label>
@@ -858,8 +845,8 @@ const ContentPolicyPage: React.FC = () => {
                     flex: 1,
                     padding: '12px',
                     background: 'transparent',
-                    color: C.textSecondary,
-                    border: `1px solid ${C.border}`,
+                    color: 'var(--text-secondary)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -873,8 +860,8 @@ const ContentPolicyPage: React.FC = () => {
                   style={{
                     flex: 1,
                     padding: '12px',
-                    background: C.accent,
-                    color: C.bg,
+                    background: 'var(--hive-gold)',
+                    color: 'var(--page-bg)',
                     border: 'none',
                     borderRadius: RADIUS_BTN,
                     fontSize: 14,

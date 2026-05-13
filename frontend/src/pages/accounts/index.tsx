@@ -115,7 +115,7 @@ const AccountListPage: React.FC = () => {
   const columns: Column<AccountWithTenant>[] = [
     { key: 'tenant_name', title: '住户', width: '120px',
       render: (row) => (
-        <span style={{ fontSize: 12, color: '#9e9e9e' }}>{row.tenant_name || '—'}</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{row.tenant_name || '—'}</span>
       ),
     },
     { key: 'account_username', title: '账号名称', width: '160px',
@@ -124,30 +124,30 @@ const AccountListPage: React.FC = () => {
           {!row.has_proxy && (
             <span
               title="未绑定代理IP，有封号风险"
-              style={{ color: '#F44336', cursor: 'help', display: 'flex', alignItems: 'center' }}
+              style={{ color: 'var(--error)', cursor: 'help', display: 'flex', alignItems: 'center' }}
             >
               ⚠️
             </span>
           )}
-          <span style={{ fontWeight: 500, color: '#fafafa' }}>{row.account_username}</span>
+          <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{row.account_username}</span>
         </div>
       ),
     },
     { key: 'platform', title: '平台', width: '90px',
       render: (row) => (
-        <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: '#333', color: '#fafafa' }}>
+        <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, background: 'var(--gray-800)', color: 'var(--text-primary)' }}>
           {row.platform}
         </span>
       ),
     },
     { key: 'account_email', title: '邮箱', width: '160px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#9e9e9e' }}>{row.account_email || '—'}</span>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{row.account_email || '—'}</span>
       ),
     },
     { key: 'updated_at', title: '更新时间', width: '130px',
       render: (row) => (
-        <span style={{ fontSize: 13, color: '#9e9e9e' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
           {new Date(row.updated_at).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </span>
       ),
@@ -159,7 +159,7 @@ const AccountListPage: React.FC = () => {
           padding: '4px 10px',
           borderRadius: 20,
           background: row.status === 'active' ? 'rgba(76,175,80,0.2)' : 'rgba(100,100,100,0.2)',
-          color: row.status === 'active' ? '#4CAF50' : '#9e9e9e',
+          color: row.status === 'active' ? 'var(--success)' : 'var(--text-secondary)',
         }}>
           {row.status === 'active' ? '正常' : row.status || '未知'}
         </span>
@@ -170,21 +170,21 @@ const AccountListPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => handleLogin(row.id)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#F44336' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--error)' }}
             title="登录"
           >
             <RiLoginBoxLine size={17} />
           </button>
           <button
             onClick={() => handlePost(row.id)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#4CAF50' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--success)' }}
             title="发帖"
           >
             <RiSendPlaneLine size={16} />
           </button>
           <button
             onClick={() => handleDelete(row.id, row.tenant_id, row.account_username)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#F44336' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--error)' }}
             title="删除"
           >
             <RiDeleteBinLine size={16} />
@@ -195,22 +195,22 @@ const AccountListPage: React.FC = () => {
   ];
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#121212', minHeight: '100vh', padding: 24 }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--page-bg)', minHeight: '100vh', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             账号管理
           </h1>
-          <p style={{ fontSize: 13, color: '#9e9e9e', margin: '4px 0 0' }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
             共 {accounts.length} 个账号
             {accountsWithoutProxy.length > 0 && (
-              <span style={{ color: '#F44336' }}>，{accountsWithoutProxy.length} 个未绑定代理</span>
+              <span style={{ color: 'var(--error)' }}>，{accountsWithoutProxy.length} 个未绑定代理</span>
             )}
           </p>
         </div>
         <button
           onClick={fetchAccounts}
-          style={{ background: '#333', color: '#fafafa', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ background: 'var(--gray-800)', color: 'var(--text-primary)', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}
         >
           <RiRefreshLine size={16} />
           刷新
@@ -220,7 +220,7 @@ const AccountListPage: React.FC = () => {
       {/* 未绑定代理提示条 */}
       {accountsWithoutProxy.length > 0 && (
         <div style={{
-          background: '#F44336',
+          background: 'var(--error)',
           borderRadius: 14,
           padding: '14px 20px',
           marginBottom: 16,
@@ -228,8 +228,8 @@ const AccountListPage: React.FC = () => {
           alignItems: 'center',
           gap: 12,
         }}>
-          <RiErrorWarningLine size={20} color="#ffffff" />
-          <p style={{ margin: 0, fontSize: 14, color: '#ffffff' }}>
+          <RiErrorWarningLine size={20} color="'var(--text-primary)'" />
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--text-primary)' }}>
             部分账号未绑定代理IP，请尽快配置以降低封号风险
           </p>
         </div>

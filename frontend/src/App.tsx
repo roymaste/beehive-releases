@@ -1,11 +1,12 @@
+import './i18n';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PageTransition } from './components/ui/page-transition';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Layout from './components/Layout';
-import LoginPage from './pages/LoginPage';
+import { AuthenticatedLayout } from './components/layout/authenticated-layout';
+import LoginPage from './pages/sign-in';
 import AdminLoginPage from './pages/AdminLoginPage';
-import RegisterPage from './pages/RegisterPage';
+import RegisterPage from './pages/sign-up';
 import DashboardPage from './pages/DashboardPage';
 import TenantsPage from './pages/TenantsPage';
 import TenantDetailPage from './pages/TenantDetailPage';
@@ -22,6 +23,7 @@ import AccountListPage from './pages/accounts/index';
 import TaskListPage from './pages/automations/tasks';
 import LogListPage from './pages/automations/logs';
 import RpaEditorPage from './pages/automations/editor';
+import RPASelectorPage from './pages/RPASelectorPage';
 import TeamPage from './pages/team/index';
 import SystemPage from './pages/system/index';
 import PlaceholderPage from './components/PlaceholderPage';
@@ -82,9 +84,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const withLayout = (Page: React.FC) => (
   <ProtectedRoute>
-    <Layout>
+    <AuthenticatedLayout>
       <Page />
-    </Layout>
+    </AuthenticatedLayout>
   </ProtectedRoute>
 );
 
@@ -126,6 +128,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/automations/logs" element={withLayout(LogListPage)} />
       <Route path="/automations/editor" element={withLayout(RpaEditorPage)} />
       <Route path="/automations/editor/:id" element={withLayout(RpaEditorPage)} />
+      <Route path="/rpa/selector" element={withLayout(RPASelectorPage)} />
 
       {/* 数据分析 & 监控 */}
       <Route path="/analytics" element={withLayout(AnalyticsPage)} />
@@ -158,7 +161,7 @@ const AppRoutes: React.FC = () => {
 
       {/* 住户管理 */}
       <Route path="/tenants" element={withLayout(TenantsPage)} />
-      <Route path="/tenants/:id" element={<ProtectedRoute><Layout><TenantDetailPage /></Layout></ProtectedRoute>}>
+      <Route path="/tenants/:id" element={<ProtectedRoute><AuthenticatedLayout><TenantDetailPage /></AuthenticatedLayout></ProtectedRoute>}>
         <Route path="platforms" element={<PlatformsSubPage />} />
         <Route path="ips" element={<IPsSubPage />} />
         <Route path="api-keys" element={<APIKeysSubPage />} />

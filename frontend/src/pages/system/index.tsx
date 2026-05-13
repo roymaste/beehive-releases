@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import {
   RiRefreshLine,
   RiSaveLine,
@@ -15,6 +16,7 @@ interface SystemSettings {
 }
 
 const SystemPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<SystemSettings>({
@@ -73,7 +75,17 @@ const SystemPage: React.FC = () => {
             管理平台全局配置
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {/* 语言选择器 */}
+          <select
+            className="apple-btn"
+            value={i18n.language.startsWith('zh') ? 'zh' : 'en'}
+            onChange={(e) => i18n.changeLanguage(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: 14, cursor: 'pointer' }}
+          >
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+          </select>
           <button className="apple-btn flex items-center gap-2" onClick={fetchSettings} disabled={loading}>
             <RiRefreshLine size={16} />
             刷新

@@ -55,23 +55,6 @@ const ALL_EVENTS: EventMap = {
 };
 
 // ── Palette ──
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  card: '#1a1a1a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  accentSubtle: 'rgba(255,193,7,0.08)',
-  secondary: '#1976D2',
-  secondaryHover: '#1565C0',
-  border: 'rgba(255,255,255,0.06)',
-  green: '#4caf50',
-  red: '#ef5350',
-};
 
 // ── Event Badge Colors ──
 const EVENT_COLORS: Record<string, string> = {
@@ -79,10 +62,10 @@ const EVENT_COLORS: Record<string, string> = {
   'task.failed': '#ef5350',
   'account.login_success': '#4caf50',
   'account.login_failed': '#ef5350',
-  'account.banned': '#ff9800',
+  'account.banned': 'var(--warning)',
   'executor.online': '#2196f3',
-  'executor.offline': '#9e9e9e',
-  'proxy.failed': '#ff9800',
+  'executor.offline': 'var(--text-secondary)',
+  'proxy.failed': 'var(--warning)',
 };
 
 // ── Component ──
@@ -197,7 +180,7 @@ const WebhooksPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: 32, color: C.textSecondary }}>
+      <div style={{ padding: 32, color: 'var(--text-secondary)' }}>
         加载中...
       </div>
     );
@@ -218,7 +201,7 @@ const WebhooksPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             Webhook 通知
           </h1>
-          <p style={{ fontSize: 13, color: C.textSecondary, marginTop: 4 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
             当自动化任务、账号状态或执行器事件发生时，蜂巢会 POST JSON 到你配置的 URL
           </p>
         </div>
@@ -228,8 +211,8 @@ const WebhooksPage: React.FC = () => {
             padding: '8px 16px',
             borderRadius: 8,
             border: 'none',
-            backgroundColor: C.accent,
-            color: '#121212',
+            backgroundColor: 'var(--hive-gold)',
+            color: 'var(--page-bg)',
             fontSize: 13,
             fontWeight: 600,
             cursor: 'pointer',
@@ -238,8 +221,8 @@ const WebhooksPage: React.FC = () => {
             gap: 6,
             transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = C.accentHover)}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = C.accent)}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--hive-gold-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--hive-gold)')}
         >
           <RiAddLine size={16} />
           {showForm ? '取消' : '新建 Webhook'}
@@ -250,19 +233,19 @@ const WebhooksPage: React.FC = () => {
       {showForm && (
         <div
           style={{
-            backgroundColor: C.card,
-            border: `1px solid ${C.border}`,
+            backgroundColor: 'var(--card-bg)',
+            border: `1px solid ${'var(--divider)'}`,
             borderRadius: 12,
             padding: 24,
             marginBottom: 24,
           }}
         >
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: C.textPrimary, margin: '0 0 16px' }}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px' }}>
             新建 Webhook 订阅
           </h3>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, color: C.textSecondary, display: 'block', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
               名称
             </label>
             <input
@@ -274,9 +257,9 @@ const WebhooksPage: React.FC = () => {
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: `1px solid ${C.border}`,
-                backgroundColor: C.surface,
-                color: C.textPrimary,
+                border: `1px solid ${'var(--divider)'}`,
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
                 fontSize: 13,
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -285,7 +268,7 @@ const WebhooksPage: React.FC = () => {
           </div>
 
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, color: C.textSecondary, display: 'block', marginBottom: 6 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
               回调 URL
             </label>
             <input
@@ -297,9 +280,9 @@ const WebhooksPage: React.FC = () => {
                 width: '100%',
                 padding: '8px 12px',
                 borderRadius: 8,
-                border: `1px solid ${C.border}`,
-                backgroundColor: C.surface,
-                color: C.textPrimary,
+                border: `1px solid ${'var(--divider)'}`,
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
                 fontSize: 13,
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -308,7 +291,7 @@ const WebhooksPage: React.FC = () => {
           </div>
 
           <div style={{ marginBottom: 20 }}>
-            <label style={{ fontSize: 12, color: C.textSecondary, display: 'block', marginBottom: 8 }}>
+            <label style={{ fontSize: 12, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
               监听事件
             </label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -319,9 +302,9 @@ const WebhooksPage: React.FC = () => {
                   style={{
                     padding: '6px 12px',
                     borderRadius: 20,
-                    border: `1px solid ${formEvents.includes(key) ? C.accent : C.border}`,
-                    backgroundColor: formEvents.includes(key) ? C.accentSubtle : 'transparent',
-                    color: formEvents.includes(key) ? C.accent : C.textSecondary,
+                    border: `1px solid ${formEvents.includes(key) ? 'var(--hive-gold)' : 'var(--divider)'}`,
+                    backgroundColor: formEvents.includes(key) ? 'var(--hive-gold)' : 'transparent',
+                    color: formEvents.includes(key) ? 'var(--hive-gold)' : 'var(--text-secondary)',
                     fontSize: 12,
                     cursor: 'pointer',
                     transition: 'all 0.15s',
@@ -343,8 +326,8 @@ const WebhooksPage: React.FC = () => {
               padding: '8px 24px',
               borderRadius: 8,
               border: 'none',
-              backgroundColor: sending ? C.textTertiary : C.secondary,
-              color: '#fff',
+              backgroundColor: sending ? 'var(--text-tertiary)' : 'var(--hive-blue)',
+              color: 'var(--text-primary)',
               fontSize: 13,
               fontWeight: 600,
               cursor: sending ? 'not-allowed' : 'pointer',
@@ -363,10 +346,10 @@ const WebhooksPage: React.FC = () => {
               style={{
                 textAlign: 'center',
                 padding: '48px 24px',
-                color: C.textSecondary,
-                backgroundColor: C.card,
+                color: 'var(--text-secondary)',
+                backgroundColor: 'var(--card-bg)',
                 borderRadius: 12,
-                border: `1px solid ${C.border}`,
+                border: `1px solid ${'var(--divider)'}`,
               }}
             >
               <RiLinksLine size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
@@ -381,8 +364,8 @@ const WebhooksPage: React.FC = () => {
                 key={wh.id}
                 onClick={() => setSelectedWebhook(wh.id === selectedWebhook ? null : wh.id)}
                 style={{
-                  backgroundColor: selectedWebhook === wh.id ? C.surfaceHover : C.card,
-                  border: `1px solid ${selectedWebhook === wh.id ? C.accent : C.border}`,
+                  backgroundColor: selectedWebhook === wh.id ? 'var(--hover-bg)' : 'var(--card-bg)',
+                  border: `1px solid ${selectedWebhook === wh.id ? 'var(--hive-gold)' : 'var(--divider)'}`,
                   borderRadius: 12,
                   padding: 16,
                   marginBottom: 8,
@@ -392,10 +375,10 @@ const WebhooksPage: React.FC = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: C.textPrimary }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                       {wh.name}
                     </div>
-                    <div style={{ fontSize: 12, color: C.textSecondary, marginTop: 2, wordBreak: 'break-all' }}>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2, wordBreak: 'break-all' }}>
                       {wh.url}
                     </div>
                   </div>
@@ -406,7 +389,7 @@ const WebhooksPage: React.FC = () => {
                         padding: '2px 8px',
                         borderRadius: 10,
                         backgroundColor: wh.status === 'active' ? 'rgba(76,175,80,0.15)' : 'rgba(158,158,158,0.15)',
-                        color: wh.status === 'active' ? C.green : C.textTertiary,
+                        color: wh.status === 'active' ? 'var(--success)' : 'var(--text-tertiary)',
                       }}
                     >
                       {wh.status === 'active' ? '运行中' : '已暂停'}
@@ -417,9 +400,9 @@ const WebhooksPage: React.FC = () => {
                       style={{
                         padding: '6px',
                         borderRadius: 6,
-                        border: `1px solid ${C.border}`,
+                        border: `1px solid ${'var(--divider)'}`,
                         backgroundColor: 'transparent',
-                        color: C.textSecondary,
+                        color: 'var(--text-secondary)',
                         cursor: 'pointer',
                         display: 'flex',
                       }}
@@ -432,9 +415,9 @@ const WebhooksPage: React.FC = () => {
                       style={{
                         padding: '6px',
                         borderRadius: 6,
-                        border: `1px solid ${C.border}`,
+                        border: `1px solid ${'var(--divider)'}`,
                         backgroundColor: 'transparent',
-                        color: C.red,
+                        color: 'var(--error)',
                         cursor: 'pointer',
                         display: 'flex',
                       }}
@@ -453,8 +436,8 @@ const WebhooksPage: React.FC = () => {
                         fontSize: 11,
                         padding: '2px 8px',
                         borderRadius: 10,
-                        backgroundColor: `${EVENT_COLORS[evt] || C.textTertiary}22`,
-                        color: EVENT_COLORS[evt] || C.textSecondary,
+                        backgroundColor: `${EVENT_COLORS[evt] || 'var(--text-tertiary)'}22`,
+                        color: EVENT_COLORS[evt] || 'var(--text-secondary)',
                       }}
                     >
                       {ALL_EVENTS[evt] || evt}
@@ -464,12 +447,12 @@ const WebhooksPage: React.FC = () => {
 
                 {/* Secret display */}
                 {selectedWebhook === wh.id && (
-                  <div style={{ marginTop: 12, padding: 8, backgroundColor: C.surface, borderRadius: 8 }}>
-                    <div style={{ fontSize: 11, color: C.textTertiary, marginBottom: 4 }}>签名密钥（secret）</div>
-                    <code style={{ fontSize: 12, color: C.textSecondary, wordBreak: 'break-all' }}>
+                  <div style={{ marginTop: 12, padding: 8, backgroundColor: 'var(--card-bg)', borderRadius: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 4 }}>签名密钥（secret）</div>
+                    <code style={{ fontSize: 12, color: 'var(--text-secondary)', wordBreak: 'break-all' }}>
                       {wh.secret}
                     </code>
-                    <div style={{ fontSize: 11, color: C.textTertiary, marginTop: 6 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 6 }}>
                       蜂巢使用 HMAC-SHA256 对请求体签名，签名值在 X-Webhook-Signature header 中
                     </div>
                   </div>
@@ -485,8 +468,8 @@ const WebhooksPage: React.FC = () => {
             style={{
               width: 340,
               flexShrink: 0,
-              backgroundColor: C.card,
-              border: `1px solid ${C.border}`,
+              backgroundColor: 'var(--card-bg)',
+              border: `1px solid ${'var(--divider)'}`,
               borderRadius: 12,
               padding: 16,
             }}
@@ -495,7 +478,7 @@ const WebhooksPage: React.FC = () => {
               style={{
                 fontSize: 13,
                 fontWeight: 600,
-                color: C.textPrimary,
+                color: 'var(--text-primary)',
                 margin: '0 0 12px',
                 display: 'flex',
                 alignItems: 'center',
@@ -512,7 +495,7 @@ const WebhooksPage: React.FC = () => {
                   borderRadius: 4,
                   border: 'none',
                   backgroundColor: 'transparent',
-                  color: C.textSecondary,
+                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   display: 'flex',
                 }}
@@ -522,7 +505,7 @@ const WebhooksPage: React.FC = () => {
             </h3>
 
             {logs.length === 0 ? (
-              <p style={{ fontSize: 12, color: C.textTertiary, textAlign: 'center', padding: '24px 0' }}>
+              <p style={{ fontSize: 12, color: 'var(--text-tertiary)', textAlign: 'center', padding: '24px 0' }}>
                 暂无发送记录
               </p>
             ) : (
@@ -531,30 +514,30 @@ const WebhooksPage: React.FC = () => {
                   key={log.id}
                   style={{
                     padding: '10px 0',
-                    borderBottom: `1px solid ${C.border}`,
+                    borderBottom: `1px solid ${'var(--divider)'}`,
                     fontSize: 12,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: C.textPrimary, fontWeight: 500 }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
                       {ALL_EVENTS[log.event] || log.event}
                     </span>
                     {log.status === 'success' ? (
-                      <span style={{ color: C.green, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <RiCheckLine size={12} />
                         {log.response_code}
                       </span>
                     ) : (
-                      <span style={{ color: C.red, display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <span style={{ color: 'var(--error)', display: 'flex', alignItems: 'center', gap: 3 }}>
                         <RiCloseLine size={12} />
                         {log.response_code || '超时'}
                       </span>
                     )}
                   </div>
                   {log.error && (
-                    <div style={{ color: C.red, marginTop: 2, fontSize: 11 }}>{log.error}</div>
+                    <div style={{ color: 'var(--error)', marginTop: 2, fontSize: 11 }}>{log.error}</div>
                   )}
-                  <div style={{ color: C.textTertiary, marginTop: 2, fontSize: 11 }}>
+                  <div style={{ color: 'var(--text-tertiary)', marginTop: 2, fontSize: 11 }}>
                     {new Date(log.created_at).toLocaleString('zh-CN')}
                     {log.retry_count > 0 && ` · 重试 ${log.retry_count} 次`}
                   </div>

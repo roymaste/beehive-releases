@@ -6,15 +6,7 @@ import toast from 'react-hot-toast';
 import { RiUserAddLine } from 'react-icons/ri';
 
 // UX: Design System colors — centralized to avoid hard-coded hex drift
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const COUNTDOWN_SECONDS = 60;
 
@@ -164,26 +156,26 @@ const RegisterPage: React.FC = () => {
           </div>
           <h1
             className="text-2xl font-bold mb-1"
-            style={{ color: C.textPrimary, letterSpacing: '-0.3px' }}
+            style={{ color: 'var(--text-primary)', letterSpacing: '-0.3px' }}
           >
             注册住户账号
           </h1>
-          <p style={{ color: C.textSecondary, fontSize: '13px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
             BEEHIVE AGENT · 创建你的智能体空间
           </p>
         </div>
 
         {/* Divider */}
-        <div className="border-t mb-6" style={{ borderColor: C.border }} />
+        <div className="border-t mb-6" style={{ borderColor: 'var(--divider)' }} />
 
         <form onSubmit={handleSubmit}>
           {/* 邮箱 */}
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: C.textSecondary }}
+              style={{ color: 'var(--text-secondary)' }}
             >
-              邮箱 <span style={{ color: C.accent }}>*</span>
+              邮箱 <span style={{ color: 'var(--hive-gold)' }}>*</span>
             </label>
             <div className="flex gap-2">
               <input
@@ -198,10 +190,10 @@ const RegisterPage: React.FC = () => {
                 onClick={handleSendCode}
                 disabled={sendingCode || countdown > 0}
                 className="apple-btn px-3 py-2 text-sm whitespace-nowrap"
-                // UX: unify countdown colors with C.accent; add opacity when sendingCode
+                // UX: unify countdown colors with 'var(--hive-gold)'; add opacity when sendingCode
                 style={{
-                  background: countdown > 0 ? 'rgba(255,193,7,0.15)' : C.accent,
-                  color: countdown > 0 ? C.textSecondary : C.bg,
+                  background: countdown > 0 ? 'rgba(255,193,7,0.15)' : 'var(--hive-gold)',
+                  color: countdown > 0 ? 'var(--text-secondary)' : 'var(--page-bg)',
                   border: 'none',
                   cursor: countdown > 0 || sendingCode ? 'not-allowed' : 'pointer',
                   minWidth: 96,
@@ -223,9 +215,9 @@ const RegisterPage: React.FC = () => {
             <div className="mb-4">
               <label
                 className="block text-sm mb-2 font-medium"
-                style={{ color: C.textSecondary }}
+                style={{ color: 'var(--text-secondary)' }}
               >
-                邮箱验证码 <span style={{ color: C.accent }}>*</span>
+                邮箱验证码 <span style={{ color: 'var(--hive-gold)' }}>*</span>
               </label>
               <div className="flex gap-2" onPaste={handleCodePaste}>
                 {verificationCode.map((digit, i) => (
@@ -245,7 +237,7 @@ const RegisterPage: React.FC = () => {
                 ))}
               </div>
               {errors.verificationCode && <p className="text-sm text-destructive mt-1">{errors.verificationCode}</p>}
-              <p style={{ color: C.textTertiary, fontSize: 12, marginTop: 6 }}>
+              <p style={{ color: 'var(--text-tertiary)', fontSize: 12, marginTop: 6 }}>
                 没收到？检查一下垃圾邮件，或等待 {countdown === 0 ? '60' : countdown} 秒后重新发送
               </p>
             </div>
@@ -255,9 +247,9 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: C.textSecondary }}
+              style={{ color: 'var(--text-secondary)' }}
             >
-              密码 <span style={{ color: C.accent }}>*</span>
+              密码 <span style={{ color: 'var(--hive-gold)' }}>*</span>
             </label>
             <input
               type="password"
@@ -273,9 +265,9 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: C.textSecondary }}
+              style={{ color: 'var(--text-secondary)' }}
             >
-              确认密码 <span style={{ color: C.accent }}>*</span>
+              确认密码 <span style={{ color: 'var(--hive-gold)' }}>*</span>
             </label>
             <input
               type="password"
@@ -291,9 +283,9 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: C.textSecondary }}
+              style={{ color: 'var(--text-secondary)' }}
             >
-              住户名称 <span style={{ color: C.accent }}>*</span>
+              住户名称 <span style={{ color: 'var(--hive-gold)' }}>*</span>
             </label>
             <input
               type="text"
@@ -309,7 +301,7 @@ const RegisterPage: React.FC = () => {
           <div className="mb-4">
             <label
               className="block text-sm mb-2 font-medium"
-              style={{ color: C.textSecondary }}
+              style={{ color: 'var(--text-secondary)' }}
             >
               公司名称
             </label>
@@ -339,7 +331,7 @@ const RegisterPage: React.FC = () => {
             />
             <label
               htmlFor="tos-agree"
-              style={{ color: C.textTertiary, fontSize: 12, lineHeight: 1.5, cursor: 'pointer' }}
+              style={{ color: 'var(--text-tertiary)', fontSize: 12, lineHeight: 1.5, cursor: 'pointer' }}
             >
               我已阅读并同意{' '}
               <a
@@ -368,11 +360,11 @@ const RegisterPage: React.FC = () => {
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p style={{ color: C.textTertiary, fontSize: '13px' }}>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '13px' }}>
             已有账号？{' '}
             <Link
               to="/login"
-              style={{ color: C.accent, fontWeight: 500, textDecoration: 'none' }}
+              style={{ color: 'var(--hive-gold)', fontWeight: 500, textDecoration: 'none' }}
             >
               立即登录
             </Link>

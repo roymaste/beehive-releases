@@ -9,20 +9,7 @@ import toast from 'react-hot-toast';
 import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
 // Beehive Design System Colors
-const C = {
-  bg: '#121212',
-  surface: '#1e1e1e',
-  surfaceHover: '#2a2a2a',
-  textPrimary: '#fafafa',
-  textSecondary: '#9e9e9e',
-  textTertiary: '#757575',
-  accent: '#FFC107',
-  accentHover: '#FFA000',
-  secondary: '#1976D2',
-  success: '#4CAF50',
-  error: '#F44336',
-  border: 'rgba(255,255,255,0.06)',
-};
+
 
 const RADIUS_CARD = 16;
 const RADIUS_SM = 10;
@@ -226,7 +213,7 @@ const AdminBillingPage: React.FC = () => {
           <h1 className="text-2xl font-semibold text-foreground mb-6">
             套餐管理
           </h1>
-          <p style={{ fontSize: 14, color: C.textSecondary, margin: 0 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: 0 }}>
             配置和管理订阅套餐
           </p>
         </div>
@@ -237,8 +224,8 @@ const AdminBillingPage: React.FC = () => {
             alignItems: 'center',
             gap: 6,
             padding: '10px 16px',
-            background: C.accent,
-            color: C.bg,
+            background: 'var(--hive-gold)',
+            color: 'var(--page-bg)',
             border: 'none',
             borderRadius: RADIUS_BTN,
             fontSize: 14,
@@ -253,11 +240,11 @@ const AdminBillingPage: React.FC = () => {
 
       {/* Plans Grid */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: C.textSecondary }}>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-secondary)' }}>
           加载中...
         </div>
       ) : plans.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px 0', color: C.textSecondary }}>
+        <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--text-secondary)' }}>
           暂无套餐数据
         </div>
       ) : (
@@ -266,8 +253,8 @@ const AdminBillingPage: React.FC = () => {
             <div
               key={plan.id}
               style={{
-                background: C.surface,
-                border: `1px solid ${C.border}`,
+                background: 'var(--card-bg)',
+                border: `1px solid ${'var(--divider)'}`,
                 borderRadius: RADIUS_CARD,
                 padding: 20,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
@@ -277,7 +264,7 @@ const AdminBillingPage: React.FC = () => {
               {/* Plan header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, color: C.textPrimary, margin: 0 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                     {plan.name}
                   </h3>
                   <span
@@ -289,7 +276,7 @@ const AdminBillingPage: React.FC = () => {
                       fontSize: 11,
                       fontWeight: 500,
                       background: plan.type === 'premium' ? 'rgba(255,193,7,0.12)' : 'rgba(25,118,210,0.12)',
-                      color: plan.type === 'premium' ? C.accent : C.secondary,
+                      color: plan.type === 'premium' ? 'var(--hive-gold)' : 'var(--hive-blue)',
                       border: `1px solid ${plan.type === 'premium' ? 'rgba(255,193,7,0.2)' : 'rgba(25,118,210,0.2)'}`,
                     }}
                   >
@@ -304,7 +291,7 @@ const AdminBillingPage: React.FC = () => {
                       fontSize: 11,
                       fontWeight: 500,
                       background: 'rgba(244,67,54,0.12)',
-                      color: C.error,
+                      color: 'var(--error)',
                       border: '1px solid rgba(244,67,54,0.2)',
                     }}
                   >
@@ -317,14 +304,14 @@ const AdminBillingPage: React.FC = () => {
               <div style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', gap: 16 }}>
                   <div>
-                    <span style={{ fontSize: 12, color: C.textTertiary }}>月付</span>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: C.accent }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>月付</span>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--hive-gold)' }}>
                       {formatPrice(plan.price_monthly)}
                     </div>
                   </div>
                   <div>
-                    <span style={{ fontSize: 12, color: C.textTertiary }}>年付</span>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: C.accent }}>
+                    <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>年付</span>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--hive-gold)' }}>
                       {formatPrice(plan.price_yearly)}
                     </div>
                   </div>
@@ -334,26 +321,26 @@ const AdminBillingPage: React.FC = () => {
               {/* Quotas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: 10, borderRadius: RADIUS_SM }}>
-                  <div style={{ fontSize: 11, color: C.textTertiary }}>环境配额</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary }}>{plan.env_quota}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>环境配额</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{plan.env_quota}</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.03)', padding: 10, borderRadius: RADIUS_SM }}>
-                  <div style={{ fontSize: 11, color: C.textTertiary }}>API调用/月</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: C.textPrimary }}>{plan.api_call_quota.toLocaleString()}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>API调用/月</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>{plan.api_call_quota.toLocaleString()}</div>
                 </div>
               </div>
 
               {/* Features */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: C.textTertiary, marginBottom: 8 }}>功能</div>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 8 }}>功能</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {plan.can_invite && (
-                    <span style={{ padding: '3px 8px', background: 'rgba(76,175,80,0.12)', color: C.success, borderRadius: 999, fontSize: 11 }}>
+                    <span style={{ padding: '3px 8px', background: 'rgba(76,175,80,0.12)', color: 'var(--success)', borderRadius: 999, fontSize: 11 }}>
                       团队邀请
                     </span>
                   )}
                   {(plan.features || []).slice(0, 3).map((f, i) => (
-                    <span key={i} style={{ padding: '3px 8px', background: 'rgba(255,255,255,0.06)', color: C.textSecondary, borderRadius: 999, fontSize: 11 }}>
+                    <span key={i} style={{ padding: '3px 8px', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', borderRadius: 999, fontSize: 11 }}>
                       {f}
                     </span>
                   ))}
@@ -372,8 +359,8 @@ const AdminBillingPage: React.FC = () => {
                     gap: 4,
                     padding: '8px 12px',
                     background: 'transparent',
-                    color: C.textPrimary,
-                    border: `1px solid ${C.border}`,
+                    color: 'var(--text-primary)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
                     fontSize: 13,
                     cursor: 'pointer',
@@ -393,7 +380,7 @@ const AdminBillingPage: React.FC = () => {
                       gap: 4,
                       padding: '8px 12px',
                       background: 'transparent',
-                      color: C.error,
+                      color: 'var(--error)',
                       border: `1px solid rgba(244,67,54,0.3)`,
                       borderRadius: RADIUS_BTN,
                       fontSize: 13,
@@ -429,7 +416,7 @@ const AdminBillingPage: React.FC = () => {
         >
           <div
             style={{
-              background: C.surface,
+              background: 'var(--card-bg)',
               borderRadius: RADIUS_CARD,
               padding: 24,
               width: '100%',
@@ -440,10 +427,10 @@ const AdminBillingPage: React.FC = () => {
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, margin: 0 }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                 {editingPlan ? '编辑套餐' : '新建套餐'}
               </h2>
-              <button onClick={closeModal} style={{ background: 'none', border: 'none', color: C.textSecondary, cursor: 'pointer' }}>
+              <button onClick={closeModal} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                 <RiCloseLine size={24} />
               </button>
             </div>
@@ -451,7 +438,7 @@ const AdminBillingPage: React.FC = () => {
             <form onSubmit={handleSubmit}>
               {/* Name */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>套餐名称</label>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>套餐名称</label>
                 <input
                   type="text"
                   value={formData.name}
@@ -460,10 +447,10 @@ const AdminBillingPage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--page-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     boxSizing: 'border-box',
                   }}
@@ -472,7 +459,7 @@ const AdminBillingPage: React.FC = () => {
 
               {/* Type */}
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>套餐类型</label>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>套餐类型</label>
                 <div style={{ display: 'flex', gap: 8 }}>
                   {['basic', 'premium'].map(type => (
                     <button
@@ -482,9 +469,9 @@ const AdminBillingPage: React.FC = () => {
                       style={{
                         flex: 1,
                         padding: '10px 12px',
-                        background: formData.type === type ? C.accent : 'transparent',
-                        color: formData.type === type ? C.bg : C.textSecondary,
-                        border: `1px solid ${formData.type === type ? C.accent : C.border}`,
+                        background: formData.type === type ? 'var(--hive-gold)' : 'transparent',
+                        color: formData.type === type ? 'var(--page-bg)' : 'var(--text-secondary)',
+                        border: `1px solid ${formData.type === type ? 'var(--hive-gold)' : 'var(--divider)'}`,
                         borderRadius: RADIUS_BTN,
                         fontSize: 14,
                         cursor: 'pointer',
@@ -500,7 +487,7 @@ const AdminBillingPage: React.FC = () => {
               {/* Prices */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>月付价格（分）</label>
+                  <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>月付价格（分）</label>
                   <input
                     type="number"
                     value={formData.price_monthly}
@@ -510,17 +497,17 @@ const AdminBillingPage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      background: C.bg,
-                      border: `1px solid ${C.border}`,
+                      background: 'var(--page-bg)',
+                      border: `1px solid ${'var(--divider)'}`,
                       borderRadius: RADIUS_BTN,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       fontSize: 14,
                       boxSizing: 'border-box',
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>年付价格（分）</label>
+                  <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>年付价格（分）</label>
                   <input
                     type="number"
                     value={formData.price_yearly}
@@ -530,10 +517,10 @@ const AdminBillingPage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      background: C.bg,
-                      border: `1px solid ${C.border}`,
+                      background: 'var(--page-bg)',
+                      border: `1px solid ${'var(--divider)'}`,
                       borderRadius: RADIUS_BTN,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       fontSize: 14,
                       boxSizing: 'border-box',
                     }}
@@ -544,7 +531,7 @@ const AdminBillingPage: React.FC = () => {
               {/* Quotas */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>环境配额</label>
+                  <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>环境配额</label>
                   <input
                     type="number"
                     value={formData.env_quota}
@@ -554,17 +541,17 @@ const AdminBillingPage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      background: C.bg,
-                      border: `1px solid ${C.border}`,
+                      background: 'var(--page-bg)',
+                      border: `1px solid ${'var(--divider)'}`,
                       borderRadius: RADIUS_BTN,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       fontSize: 14,
                       boxSizing: 'border-box',
                     }}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>API调用配额/月</label>
+                  <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>API调用配额/月</label>
                   <input
                     type="number"
                     value={formData.api_call_quota}
@@ -574,10 +561,10 @@ const AdminBillingPage: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '10px 12px',
-                      background: C.bg,
-                      border: `1px solid ${C.border}`,
+                      background: 'var(--page-bg)',
+                      border: `1px solid ${'var(--divider)'}`,
                       borderRadius: RADIUS_BTN,
-                      color: C.textPrimary,
+                      color: 'var(--text-primary)',
                       fontSize: 14,
                       boxSizing: 'border-box',
                     }}
@@ -592,9 +579,9 @@ const AdminBillingPage: React.FC = () => {
                     type="checkbox"
                     checked={formData.can_invite}
                     onChange={e => setFormData({ ...formData, can_invite: e.target.checked })}
-                    style={{ width: 18, height: 18, accentColor: C.accent }}
+                    style={{ width: 18, height: 18, accentColor: 'var(--hive-gold)' }}
                   />
-                  <span style={{ fontSize: 14, color: C.textPrimary }}>支持团队邀请</span>
+                  <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>支持团队邀请</span>
                 </label>
               </div>
 
@@ -606,16 +593,16 @@ const AdminBillingPage: React.FC = () => {
                       type="checkbox"
                       checked={formData.is_active}
                       onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-                      style={{ width: 18, height: 18, accentColor: C.accent }}
+                      style={{ width: 18, height: 18, accentColor: 'var(--hive-gold)' }}
                     />
-                    <span style={{ fontSize: 14, color: C.textPrimary }}>上架销售</span>
+                    <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>上架销售</span>
                   </label>
                 </div>
               )}
 
               {/* Features */}
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', fontSize: 13, color: C.textSecondary, marginBottom: 6 }}>功能列表（每行一个）</label>
+                <label style={{ display: 'block', fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>功能列表（每行一个）</label>
                 <textarea
                   value={featuresInput}
                   onChange={e => setFeaturesInput(e.target.value)}
@@ -624,10 +611,10 @@ const AdminBillingPage: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: C.bg,
-                    border: `1px solid ${C.border}`,
+                    background: 'var(--page-bg)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
-                    color: C.textPrimary,
+                    color: 'var(--text-primary)',
                     fontSize: 14,
                     boxSizing: 'border-box',
                     resize: 'vertical',
@@ -645,8 +632,8 @@ const AdminBillingPage: React.FC = () => {
                     flex: 1,
                     padding: '12px',
                     background: 'transparent',
-                    color: C.textSecondary,
-                    border: `1px solid ${C.border}`,
+                    color: 'var(--text-secondary)',
+                    border: `1px solid ${'var(--divider)'}`,
                     borderRadius: RADIUS_BTN,
                     fontSize: 14,
                     cursor: 'pointer',
@@ -664,8 +651,8 @@ const AdminBillingPage: React.FC = () => {
                     justifyContent: 'center',
                     gap: 6,
                     padding: '12px',
-                    background: C.accent,
-                    color: C.bg,
+                    background: 'var(--hive-gold)',
+                    color: 'var(--page-bg)',
                     border: 'none',
                     borderRadius: RADIUS_BTN,
                     fontSize: 14,
