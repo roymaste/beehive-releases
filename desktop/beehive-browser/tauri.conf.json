@@ -46,7 +46,7 @@
     "updater": {
       "active": true,
       "dialog": true,
-      "pubkey": "RWQUhdlumXEUBHwOEYvVatmYxCgBEsSvIJ3AWgFa3MX7PWxGrZaGIqZA",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQxNDcxOTk2RUQ5ODUxNApSV1FVaGRsdW1YRVVCSHdPRVl2VmF0bVl4Q2dCRXNTdklKM0FXZ0ZhM01YN1BXeEdyWmFHSXFaQQo=",
       "endpoints": ["https://github.com/roymaste/beehive-releases/releases/download/v0.2.0/latest.json"]
     }
   }
