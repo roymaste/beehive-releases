@@ -2,7 +2,7 @@ import './i18n';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PageTransition } from './components/ui/page-transition';
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth, isTokenExpired } from './context/AuthContext';
 import { AuthenticatedLayout } from './components/layout/authenticated-layout';
 import LoginPage from './pages/sign-in';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -51,16 +51,8 @@ import PostsNewPage from './pages/posts/NewPage';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { token, isLoading } = useAuth();
   const localToken = localStorage.getItem('access_token');
-  const hasToken = token || localToken;
-
-  // Debug logging for session bug investigation
-  console.debug('[ProtectedRoute]', {
-    pathname: window.location.pathname,
-    isLoading,
-    token: token ? `✓ (${token.slice(0, 8)}...)` : 'null',
-    localToken: localToken ? `✓ (${localToken.slice(0, 8)}...)` : 'null',
-    hasToken,
-  });
+  const effectiveToken = token || localToken;
+  const isValid = effectiveToken ? !isTokenExpired(effectiveToken) : false;
 
   if (isLoading) {
     return (
@@ -70,12 +62,11 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
 
-  if (!hasToken) {
-    console.warn('[ProtectedRoute] No token — redirecting to /login', {
-      token,
-      localToken,
-      isLoading,
-    });
+  if (!isValid) {
+    // Token missing or expired — clean up and redirect
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('is_admin');
+    localStorage.removeItem('is_tenant');
     return <Navigate to="/login" replace />;
   }
 

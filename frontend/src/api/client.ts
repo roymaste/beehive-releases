@@ -9,7 +9,7 @@ const DESKTOP_MODE = typeof window !== 'undefined' && (
   (window as any).__TAURI__ || (window as any).__TAURI_INTERNALS__
 );
 const API_BASE = DESKTOP_MODE
-  ? 'http://107.173.70.124:8000/api/v1'
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1')
   : '/api/v1';
 
 const apiClient = axios.create({
@@ -30,6 +30,8 @@ apiClient.interceptors.request.use((config) => {
 });
 
 // Response interceptor: global error handling
+let isRedirecting = false;
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -38,9 +40,12 @@ apiClient.interceptors.response.use(
     const isAuthEndpoint = url && /^\/auth\//.test(url);
     const isLoginPage = window.location.pathname === '/login';
 
-    if (status === 401) {
-      console.warn('[API 401]', url, error.response?.data);
+    if (status === 401 && !isRedirecting) {
       if (!isAuthEndpoint && !isLoginPage) {
+        isRedirecting = true;
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('is_admin');
+        localStorage.removeItem('is_tenant');
         window.dispatchEvent(new CustomEvent('auth:401', { detail: error.response?.data }));
         window.location.href = '/login';
       }

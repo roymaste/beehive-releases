@@ -120,7 +120,6 @@ export default function SignUpPage() {
   }
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
-    alert('onSubmit called! ' + JSON.stringify({name: data.name, email: data.email, codeLen: data.verificationCode?.length}))
     setIsLoading(true)
     try {
       await register(

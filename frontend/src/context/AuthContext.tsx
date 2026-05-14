@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../api/client';
 
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 interface AuthContextType {
   token: string | null;
   isAdmin: boolean;
@@ -35,10 +44,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const stored = localStorage.getItem('access_token');
     const admin = localStorage.getItem('is_admin') === 'true';
     const tenant = localStorage.getItem('is_tenant') === 'true';
-    if (stored) {
+    if (stored && !isTokenExpired(stored)) {
       setToken(stored);
       setIsAdmin(admin);
       setIsTenant(tenant);
+    } else if (stored) {
+      // Token expired — clean up
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('is_tenant');
     }
     setIsLoading(false);
   }, []);
@@ -83,6 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setIsAdmin(false);
     setIsTenant(false);
+    // Force redirect to login to clear any stale UI state
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
   }, []);
 
   return (

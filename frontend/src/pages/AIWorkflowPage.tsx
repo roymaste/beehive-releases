@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
 import { agentsAPI, ContentGenerateResponse, rpaScriptAPI, RpaGenerateScriptResponse, RpaScriptStep } from '../api/client';
 import apiClient from '../api/client';
@@ -629,7 +630,7 @@ const ScriptTab: React.FC = () => {
           {showHtmlPreview ? (
             <div
               style={{ borderRadius: 10, overflow: 'hidden', border: `1px solid ${'var(--divider)'}` }}
-              dangerouslySetInnerHTML={{ __html: generated.preview_html }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(generated.preview_html) }}
             />
           ) : (
             <div>

@@ -36,6 +36,12 @@ export default function SignInPage() {
   const redirectTo = searchParams.get('redirect') || undefined
   const { tenantLogin } = useAuth()
 
+  const ALLOWED_REDIRECTS = ['/', '/dashboard', '/accounts', '/settings', '/automation', '/agents']
+  const getSafeRedirect = (redirect: string | undefined): string => {
+    if (redirect && ALLOWED_REDIRECTS.includes(redirect)) return redirect
+    return '/'
+  }
+
   const [downloads, setDownloads] = useState<Record<string, string>>({})
   const [sendingPwd, setSendingPwd] = useState(false)
   const [pwdSent, setPwdSent] = useState(false)
@@ -81,7 +87,7 @@ export default function SignInPage() {
     try {
       await tenantLogin(data.email, data.password)
       toast.success(`${t('signIn.welcome')}, ${data.email}!`)
-      const targetPath = redirectTo || '/'
+      const targetPath = getSafeRedirect(redirectTo)
       navigate(targetPath, { replace: true })
     } catch (err: any) {
       toast.error(err?.response?.data?.detail || 'Login failed')
