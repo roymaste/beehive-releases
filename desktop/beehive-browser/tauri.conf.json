@@ -5,11 +5,11 @@
   "identifier": "com.beehive.browser",
   "build": {
     "devUrl": "http://localhost:5173",
-    "frontendDist": "https://api.hiveagent.com"
+    "frontendDist": "http://107.173.70.124:8080"
   },
   "app": {
     "security": {
-      "csp": "default-src 'self' https://api.hiveagent.com; connect-src 'self' http: https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' https://api.hiveagent.com; font-src 'self' data: https:;"
+      "csp": "default-src 'self' http://107.173.70.124:8080; connect-src 'self' http: https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' http://107.173.70.124:8080; font-src 'self' data: https:;"
     }
   },
   "bundle": {
