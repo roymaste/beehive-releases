@@ -50,9 +50,9 @@ jobs:
           npm run build
         working-directory: frontend
 
-      - name: Build Tauri app (AppImage)
+      - name: Build Tauri app (deb)
         run: |
-          cargo tauri build --bundles "appimage"
+          cargo tauri build --bundles "deb"
         working-directory: desktop/beehive-browser
         env:
           TAURI_SKIP_DEVSERVER_CHECK: true
@@ -81,17 +81,17 @@ jobs:
           gh release create "$TAG" \
             --repo roymaste/beehive-releases \
             --title "蜂巢智能体 $TAG" \
-            --notes "桌面客户端 $TAG（Linux AppImage）" \
-            desktop/beehive-browser/target/release/bundle/appimage/*.AppImage || true
+            --notes "桌面客户端 $TAG（Linux deb）" \
+            desktop/beehive-browser/target/release/bundle/deb/*.deb || true
           gh release upload "$TAG" \
             --repo roymaste/beehive-releases \
             --clobber \
-            desktop/beehive-browser/target/release/bundle/appimage/*.AppImage || true
+            desktop/beehive-browser/target/release/bundle/deb/*.deb || true
 
-      - name: Upload AppImage artifact
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: beehive-linux-appimage
+          name: beehive-linux-deb
           path: |
-            desktop/beehive-browser/target/release/bundle/appimage/*.AppImage
+            desktop/beehive-browser/target/release/bundle/deb/*.deb
           retention-days: 5
