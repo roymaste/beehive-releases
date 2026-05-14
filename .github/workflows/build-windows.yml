@@ -34,6 +34,10 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+        shell: bash
+
       - name: Build frontend
         run: |
           npm install
