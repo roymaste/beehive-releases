@@ -15,6 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Download CloakBrowser kernel
+        run: |
+          curl -L -o /tmp/cloakbrowser-darwin.tar.gz https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v145.0.7632.109.2/cloakbrowser-darwin-x64.tar.gz
+          tar xzf /tmp/cloakbrowser-darwin.tar.gz -C /tmp/
+          mkdir -p desktop/beehive-browser/cloakbrowser-core
+          cp /tmp/CloakBrowser.app/Contents/MacOS/CloakBrowser desktop/beehive-browser/cloakbrowser-core/CloakBrowser
+          chmod +x desktop/beehive-browser/cloakbrowser-core/CloakBrowser
+        working-directory: .
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -56,6 +65,24 @@ jobs:
             echo "Created proper icns file"
           fi
         working-directory: desktop/beehive-browser
+
+      - name: Upload to Release (beehive-releases)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v0.2.0"
+          gh release create "$TAG" \
+            --repo roymaste/beehive-releases \
+            --title "蜂巢智能体 $TAG" \
+            --notes "桌面客户端 $TAG（macOS 通用版）" \
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg \
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app || true
+          gh release upload "$TAG" \
+            --repo roymaste/beehive-releases \
+            --clobber \
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg \
+            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app || true
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4

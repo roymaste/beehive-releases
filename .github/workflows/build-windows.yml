@@ -15,6 +15,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download CloakBrowser kernel
+        shell: bash
+        run: |
+          curl -L -o /tmp/cloakbrowser-win.zip https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-windows-x64.zip
+          7z x /tmp/cloakbrowser-win.zip -o/tmp/cloakbrowser-win/
+          mkdir -p desktop/beehive-browser/cloakbrowser-core
+          cp -r /tmp/cloakbrowser-win/* desktop/beehive-browser/cloakbrowser-core/
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,45 +33,44 @@ jobs:
         with:
           targets: x86_64-pc-windows-msvc
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
-
-      - name: Download CloakBrowser kernel
-        run: |
-          curl -L -o cloakbrowser-kernel.tar.gz https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.tar.gz
-          tar -xzf cloakbrowser-kernel.tar.gz -C desktop/beehive-browser/
-        shell: bash
-
       - name: Build frontend
         run: |
           npm install
           npm run build
         working-directory: frontend
+        shell: bash
 
-      - name: Copy frontend to desktop dist
+      - name: Build Tauri app (Windows x64)
         run: |
-          xcopy /E /Y frontend\dist desktop\beehive-browser\frontend\dist\
-        shell: cmd
-
-      - name: Build Tauri app (Windows MSI + NSIS)
-        run: |
-          cargo tauri build --bundles "msi,nsis"
+          cargo tauri build --target x86_64-pc-windows-msvc
         working-directory: desktop/beehive-browser
+        shell: bash
         env:
-          TAURI_SKIP_DEVSERVER_CHECK: true
+          FORCE_COLOR: 0
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: beehive-windows-installer
-          path: |
-            desktop/beehive-browser/target/release/bundle/msi/*.msi
-            desktop/beehive-browser/target/release/bundle/nsis/*.exe
-          retention-days: 7
-
-      - name: Upload to release
+      - name: Upload to Release (beehive-releases)
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload v0.1.1 desktop/beehive-browser/target/release/bundle/msi/*.msi --repo roymaste/beehive-releases --clobber
-          gh release upload v0.1.1 desktop/beehive-browser/target/release/bundle/nsis/*.exe --repo roymaste/beehive-releases --clobber
+          TAG="v0.2.0"
+          gh release create "$TAG" \
+            --repo roymaste/beehive-releases \
+            --title "蜂巢智能体 $TAG" \
+            --notes "桌面客户端 $TAG（Windows x64）" \
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe \
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi || true
+          gh release upload "$TAG" \
+            --repo roymaste/beehive-releases \
+            --clobber \
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe \
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: beehive-windows-x64
+          path: |
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+            desktop/beehive-browser/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          retention-days: 5
