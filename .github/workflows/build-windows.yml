@@ -52,6 +52,7 @@ jobs:
         shell: bash
         env:
           FORCE_COLOR: 0
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Upload to Release (beehive-releases)
         if: github.ref == 'refs/heads/main'

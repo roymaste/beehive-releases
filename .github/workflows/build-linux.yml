@@ -56,6 +56,7 @@ jobs:
         working-directory: desktop/beehive-browser
         env:
           TAURI_SKIP_DEVSERVER_CHECK: true
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Upload to Release (beehive-releases)
         if: github.ref == 'refs/heads/main'
