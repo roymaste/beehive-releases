@@ -20,7 +20,7 @@ jobs:
           curl -L -o /tmp/cloakbrowser-darwin.tar.gz https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v145.0.7632.109.2/cloakbrowser-darwin-x64.tar.gz
           tar xzf /tmp/cloakbrowser-darwin.tar.gz -C /tmp/
           mkdir -p desktop/beehive-browser/cloakbrowser-core
-          cp /tmp/CloakBrowser.app/Contents/MacOS/CloakBrowser desktop/beehive-browser/cloakbrowser-core/CloakBrowser
+          cp /tmp/Chromium.app/Contents/MacOS/Chromium desktop/beehive-browser/cloakbrowser-core/CloakBrowser
           chmod +x desktop/beehive-browser/cloakbrowser-core/CloakBrowser
         working-directory: .
       

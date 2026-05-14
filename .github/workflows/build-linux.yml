@@ -20,7 +20,7 @@ jobs:
           curl -L -o /tmp/cloakbrowser-linux.tar.gz https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-linux-x64.tar.gz
           tar xzf /tmp/cloakbrowser-linux.tar.gz -C /tmp/
           mkdir -p desktop/beehive-browser/cloakbrowser-core
-          cp -r /tmp/cloakbrowser/* desktop/beehive-browser/cloakbrowser-core/ || cp -r /tmp/CloakBrowser/* desktop/beehive-browser/cloakbrowser-core/ || true
+          cp -r /tmp/chrome /tmp/chromedriver /tmp/chrome_* /tmp/*.so /tmp/*.pak /tmp/*.bin /tmp/*.dat /tmp/*.json /tmp/locales /tmp/resources.pak /tmp/headless_command_resources.pak /tmp/v8_context_snapshot.bin /tmp/icudtl.dat /tmp/snapshot_blob.bin desktop/beehive-browser/cloakbrowser-core/ || true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

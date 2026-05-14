@@ -22,6 +22,7 @@ jobs:
           7z x /tmp/cloakbrowser-win.zip -o/tmp/cloakbrowser-win/
           mkdir -p desktop/beehive-browser/cloakbrowser-core
           cp -r /tmp/cloakbrowser-win/* desktop/beehive-browser/cloakbrowser-core/
+          mv desktop/beehive-browser/cloakbrowser-core/chrome.exe desktop/beehive-browser/cloakbrowser-core/CloakBrowser.exe || true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
