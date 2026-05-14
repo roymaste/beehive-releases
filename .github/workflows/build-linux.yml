@@ -58,12 +58,26 @@ jobs:
           TAURI_SKIP_DEVSERVER_CHECK: true
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
+      - name: Get latest release tag
+        if: github.ref == 'refs/heads/main'
+        id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(gh release list --repo roymaste/beehive-releases --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$TAG" ]; then
+            echo "No existing release found, falling back to v0.2.0"
+            TAG="v0.2.0"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using release tag: $TAG"
+
       - name: Upload to Release (beehive-releases)
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="v0.2.0"
+          TAG="${{ steps.get_tag.outputs.tag }}"
           gh release create "$TAG" \
             --repo roymaste/beehive-releases \
             --title "蜂巢智能体 $TAG" \
