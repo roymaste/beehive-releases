@@ -53,13 +53,28 @@ jobs:
         env:
           FORCE_COLOR: 0
 
+      - name: Get latest release tag
+        if: github.ref == 'refs/heads/main'
+        id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG=$(gh release list --repo roymaste/beehive-releases --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$TAG" ]; then
+            echo "No existing release found, falling back to v0.4.0"
+            TAG="v0.4.0"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using release tag: $TAG"
+
       - name: Upload to Release (beehive-releases)
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          TAG="v$(grep '^version' desktop/beehive-browser/Cargo.toml | head -1 | sed 's/.*\"\(.*\)\"/\1/')"
+          TAG="${{ steps.get_tag.outputs.tag }}"
           gh release create "$TAG" \
             --repo roymaste/beehive-releases \
             --title "蜂巢智能体 $TAG" \
