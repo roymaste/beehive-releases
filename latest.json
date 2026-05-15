@@ -1,1 +1,15 @@
-{}
+{
+  "version": "0.3.0",
+  "notes": "蜂巢智能体 v0.3.0 - Linux/Windows 桌面客户端新版",
+  "pub_date": "2026-05-15T05:00:00Z",
+  "platforms": {
+    "linux-x86_64": {
+      "signature": "",
+      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.0/Beehive.Browser_0.3.0_amd64.AppImage"
+    },
+    "linux-x86_64-deb": {
+      "signature": "",
+      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.0/Beehive.Browser_0.3.0_amd64.deb"
+    }
+  }
+}
