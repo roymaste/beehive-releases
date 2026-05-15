@@ -5,7 +5,7 @@
   "platforms": {
     "linux-x86_64": {
       "signature": "",
-      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.1/Beehive.Browser_0.3.1_amd64.AppImage"
+      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.1/Beehive.Browser_0.3.1_amd64.gz"
     }
   }
 }
