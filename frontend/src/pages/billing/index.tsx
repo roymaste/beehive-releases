@@ -16,23 +16,14 @@ const C = {
 interface Plan {
   id: string;
   name: string;
-  code: string;
-  description: string | null;
+  type: 'free' | 'premium';
   price_monthly: number;
   price_yearly: number;
-  features: {
-    multi_account?: boolean;
-    api_access?: boolean;
-    team_management?: boolean;
-    webhook?: boolean;
-  };
-  limits: {
-    environments?: number;
-    executors?: number;
-    api_daily?: number;
-    members?: number;
-  };
-  sort_order: number;
+  env_quota: number;
+  api_call_quota: number;
+  can_invite: boolean;
+  features: string[];
+  sort_order?: number;
 }
 
 interface Subscription {
@@ -60,8 +51,6 @@ interface Invoice {
 }
 
 // ── API helper ──
-const getToken = () => localStorage.getItem('access_token');
-
 const apiFetch = async (path: string, options: { method?: string; body?: string } = {}) => {
   const res = await apiClient.request({
     url: path,
@@ -72,14 +61,9 @@ const apiFetch = async (path: string, options: { method?: string; body?: string 
 };
 
 // ── Feature labels ──
-const FEATURE_LABELS: Record<string, string> = {
-  multi_account: '多账号管理',
-  api_access: 'API 访问',
-  team_management: '团队管理',
-  webhook: 'Webhook 通知',
-};
+const ALL_FEATURES = ['基础指纹环境', '基础代理支持', '团队协作', '优先支持'];
 
-const PLAN_ORDER = ['free', 'personal', 'pro', 'enterprise'];
+const PLAN_ORDER = ['free', 'premium'];
 
 const BillingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -130,7 +114,7 @@ const BillingPage: React.FC = () => {
   }, [fetchPlans, fetchSubscription, fetchInvoices]);
 
   // Get current plan code
-  const currentPlanCode = subscription?.plan?.code || 'free';
+  const currentPlanCode = subscription?.plan?.type || 'free';
 
     // Handle upgrade/subscribe
   const handleSubscribe = async (planCode: string, billingCycle: string = 'monthly') => {
@@ -255,7 +239,7 @@ const BillingPage: React.FC = () => {
               {subscription.auto_renew && <span style={{ marginLeft: 12 }}>• 自动续费</span>}
             </div>
           </div>
-          {currentPlanCode !== 'enterprise' && (
+          {currentPlanCode === 'premium' && (
             <button
               onClick={handleCancel}
               style={{
@@ -314,10 +298,10 @@ const BillingPage: React.FC = () => {
       {activeTab === 'plans' && (
         <div>
           {/* Price display toggle could go here */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(plans.length, 4)}, 1fr)`, gap: 16, marginBottom: 32 }}>
             {plans.map((plan) => {
-              const isCurrent = plan.code === currentPlanCode;
-              const isUpgrade = PLAN_ORDER.indexOf(plan.code) > PLAN_ORDER.indexOf(currentPlanCode);
+              const isCurrent = plan.type === currentPlanCode;
+              const isUpgrade = PLAN_ORDER.indexOf(plan.type) > PLAN_ORDER.indexOf(currentPlanCode);
 
               return (
                 <div
@@ -328,10 +312,10 @@ const BillingPage: React.FC = () => {
                     borderRadius: 12,
                     padding: 20,
                     position: 'relative',
-                    ...(plan.code === 'pro' ? { borderColor: 'var(--hive-blue)' } : {}),
+                    ...(plan.type === 'premium' ? { borderColor: 'var(--hive-blue)' } : {}),
                   }}
                 >
-                  {plan.code === 'pro' && (
+                  {plan.type === 'premium' && (
                     <div style={{
                       position: 'absolute',
                       top: -10,
@@ -353,7 +337,7 @@ const BillingPage: React.FC = () => {
                       {plan.name}
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      {plan.description}
+                      {plan.type === 'premium' ? '适合专业用户和团队' : '基础功能免费使用'}
                     </div>
                   </div>
 
@@ -368,10 +352,10 @@ const BillingPage: React.FC = () => {
 
                   {/* Features */}
                   <div style={{ marginBottom: 20 }}>
-                    {Object.entries(FEATURE_LABELS).map(([key, label]) => {
-                      const hasFeature = plan.features[key as keyof Plan['features']];
+                    {ALL_FEATURES.map((label) => {
+                      const hasFeature = plan.features.includes(label);
                       return (
-                        <div key={key} style={{
+                        <div key={label} style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: 6,
@@ -400,10 +384,9 @@ const BillingPage: React.FC = () => {
                     color: 'var(--text-secondary)',
                   }}>
                     <div style={{ marginBottom: 4 }}>额度限制</div>
-                    <div>环境：{plan.limits.environments === 99999 ? '无限制' : plan.limits.environments}</div>
-                    <div>执行器：{plan.limits.executors === 99 ? '无限制' : plan.limits.executors}</div>
-                    <div>API日限额：{plan.limits.api_daily === 99999 ? '无限制' : plan.limits.api_daily}</div>
-                    <div>团队成员：{plan.limits.members === 999 ? '无限制' : plan.limits.members}</div>
+                    <div>环境数：{plan.env_quota === 99999 ? '无限制' : plan.env_quota}</div>
+                    <div>API日限额：{plan.api_call_quota === 99999 ? '无限制' : plan.api_call_quota}</div>
+                    <div>邀请成员：{plan.can_invite ? '是' : '否'}</div>
                   </div>
 
                   {/* Action button */}
@@ -426,27 +409,27 @@ const BillingPage: React.FC = () => {
                     </button>
                   ) : isUpgrade ? (
                     <button
-                      onClick={() => handleSubscribe(plan.code)}
-                      disabled={upgrading === plan.code}
+                      onClick={() => handleSubscribe(plan.type)}
+                      disabled={upgrading === plan.type}
                       style={{
                         width: '100%',
                         padding: '9px 0',
                         borderRadius: 8,
                         border: 'none',
-                        backgroundColor: upgrading === plan.code ? 'var(--text-tertiary)' : 'var(--hive-gold)',
+                        backgroundColor: upgrading === plan.type ? 'var(--text-tertiary)' : 'var(--hive-gold)',
                         color: '#121212',
                         fontSize: 13,
                         fontWeight: 600,
-                        cursor: upgrading === plan.code ? 'not-allowed' : 'pointer',
+                        cursor: upgrading === plan.type ? 'not-allowed' : 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 4,
                       }}
-                      onMouseEnter={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = 'var(--hive-gold-hover)'; }}
-                      onMouseLeave={(e) => { if (upgrading !== plan.code) e.currentTarget.style.backgroundColor = 'var(--hive-gold)'; }}
+                      onMouseEnter={(e) => { if (upgrading !== plan.type) e.currentTarget.style.backgroundColor = 'var(--hive-gold-hover)'; }}
+                      onMouseLeave={(e) => { if (upgrading !== plan.type) e.currentTarget.style.backgroundColor = 'var(--hive-gold)'; }}
                     >
-                      {upgrading === plan.code ? '处理中...' : (
+                      {upgrading === plan.type ? '处理中...' : (
                         <>
                           升级到{plan.name} <RiArrowRightLine size={14} />
                         </>
