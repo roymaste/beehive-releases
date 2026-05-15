@@ -55,8 +55,7 @@ jobs:
           cargo tauri build --bundles "deb"
         working-directory: desktop/beehive-browser
         env:
-          TAURI_SKIP_DEVSERVER_CHECK: true
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          FORCE_COLOR: 0
 
       - name: Get latest release tag
         if: github.ref == 'refs/heads/main'
