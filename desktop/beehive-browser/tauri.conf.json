@@ -15,7 +15,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": false,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,17 +37,6 @@
       "deb": {
         "depends": []
       }
-    },
-    "resources": {
-      "cloakbrowser-core": "cloakbrowser-core"
-    }
-  },
-  "plugins": {
-    "updater": {
-      "active": true,
-      "dialog": true,
-      "pubkey": "yMKX9StFP1xArfwShye5JX8rywKLocFJPumBhJ1Fy3M=",
-      "endpoints": ["https://raw.githubusercontent.com/roymaste/beehive-releases/main/latest.json"]
     }
   }
 }

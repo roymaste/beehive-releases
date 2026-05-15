@@ -1,7 +1,7 @@
 name: Build macOS
 
 on:
-  workflow_dispatch:  # 手动触发
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -11,87 +11,32 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Download CloakBrowser kernel
-        run: |
-          curl -L -o /tmp/cloakbrowser-darwin.tar.gz https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v145.0.7632.109.2/cloakbrowser-darwin-x64.tar.gz
-          tar xzf /tmp/cloakbrowser-darwin.tar.gz -C /tmp/
-          mkdir -p desktop/beehive-browser/cloakbrowser-core
-          cp /tmp/Chromium.app/Contents/MacOS/Chromium desktop/beehive-browser/cloakbrowser-core/CloakBrowser
-          chmod +x desktop/beehive-browser/cloakbrowser-core/CloakBrowser
-        working-directory: .
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
-      
-      - name: Build frontend
-        run: |
-          npm install
-          npm run build
-        working-directory: frontend
-      
       - name: Build Tauri app (universal binary)
         run: |
           cargo tauri build --target universal-apple-darwin
         working-directory: desktop/beehive-browser
         env:
           FORCE_COLOR: 0
-      
-      - name: Create proper icns from PNG
-        run: |
-          # Convert icon PNG to proper icns using iconutil
-          # First check if we have a valid PNG icon
-          if [ -f icons/32x32.png ]; then
-            # Create a temporary iconset
-            mkdir -p beehive.iconset
-            cp icons/32x32.png beehive.iconset/icon_16x16.png
-            cp icons/32x32.png beehive.iconset/icon_32x32.png
-            cp icons/128x128.png beehive.iconset/icon_128x128.png
-            cp icons/128x128@2x.png beehive.iconset/icon_256x256.png
-            cp icons/128x128@2x.png beehive.iconset/icon_512x512.png
-            # Generate icns
-            iconutil -c icns beehive.iconset
-            rm -rf beehive.iconset
-            echo "Created proper icns file"
-          fi
-        working-directory: desktop/beehive-browser
 
-      - name: Upload to Release (beehive-releases)
-        if: github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="v0.2.0"
-          gh release create "$TAG" \
-            --repo roymaste/beehive-releases \
-            --title "蜂巢智能体 $TAG" \
-            --notes "桌面客户端 $TAG（macOS 通用版）" \
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app || true
-          gh release upload "$TAG" \
-            --repo roymaste/beehive-releases \
-            --clobber \
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg \
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app || true
-      
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: beehive-macos-universal
           path: |
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
-            desktop/beehive-browser/src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app
-          retention-days: 5
+            desktop/beehive-browser/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            desktop/beehive-browser/target/universal-apple-darwin/release/bundle/macos/*.app
+          retention-days: 30
