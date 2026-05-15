@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'desktop/beehive-browser/**'
+      - 'frontend/**'
 
 jobs:
   build:
@@ -14,6 +15,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download CloakBrowser kernel
+        run: |
+          curl -L -o /tmp/cloakbrowser-linux.tar.gz https://github.com/CloakHQ/CloakBrowser/releases/download/chromium-v146.0.7680.177.4/cloakbrowser-linux-x64.tar.gz
+          tar xzf /tmp/cloakbrowser-linux.tar.gz -C /tmp/
+          mkdir -p desktop/beehive-browser/cloakbrowser-core
+          cp -r /tmp/chrome /tmp/chromedriver /tmp/chrome_* /tmp/*.so /tmp/*.pak /tmp/*.bin /tmp/*.dat /tmp/*.json /tmp/locales /tmp/resources.pak /tmp/headless_command_resources.pak /tmp/v8_context_snapshot.bin /tmp/icudtl.dat /tmp/snapshot_blob.bin desktop/beehive-browser/cloakbrowser-core/ || true
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -21,6 +29,9 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
 
       - name: Install Linux dependencies
         run: |
@@ -33,6 +44,12 @@ jobs:
             libgtk-3-dev \
             libayatana-appindicator3-dev
 
+      - name: Build frontend
+        run: |
+          npm install
+          npm run build
+        working-directory: frontend
+
       - name: Build Tauri app (deb)
         run: |
           cargo tauri build --bundles "deb"
@@ -40,10 +57,40 @@ jobs:
         env:
           FORCE_COLOR: 0
 
-      - name: Upload artifact
+      - name: Get latest release tag
+        if: github.ref == 'refs/heads/main'
+        id: get_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG=$(gh release list --repo roymaste/beehive-releases --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$TAG" ]; then
+            echo "No existing release found, falling back to v0.2.0"
+            TAG="v0.2.0"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Using release tag: $TAG"
+
+      - name: Upload to Release (beehive-releases)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.get_tag.outputs.tag }}"
+          gh release create "$TAG" \
+            --repo roymaste/beehive-releases \
+            --title "蜂巢智能体 $TAG" \
+            --notes "桌面客户端 $TAG（Linux deb）" \
+            desktop/beehive-browser/target/release/bundle/deb/*.deb || true
+          gh release upload "$TAG" \
+            --repo roymaste/beehive-releases \
+            --clobber \
+            desktop/beehive-browser/target/release/bundle/deb/*.deb || true
+
+      - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: beehive-linux-deb
           path: |
             desktop/beehive-browser/target/release/bundle/deb/*.deb
-          retention-days: 30
+          retention-days: 5
