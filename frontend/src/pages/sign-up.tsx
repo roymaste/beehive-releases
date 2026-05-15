@@ -347,7 +347,7 @@ export default function SignUpPage() {
                   )}
                 />
 
-                <Button className='mt-2' disabled={isLoading}>
+                <Button type="submit" className='mt-2' disabled={isLoading}>
                   {isLoading ? (
                     <Loader2 className='animate-spin' />
                   ) : (

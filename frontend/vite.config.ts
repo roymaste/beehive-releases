@@ -2,7 +2,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { scriptTemplates } from './src/data/scriptTemplates'
@@ -92,32 +91,7 @@ const mockDashboardPlugin = () => ({
 })
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    scriptTemplatesPlugin(),
-    mockDashboardPlugin(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      devOptions: { enabled: false },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /\/api\//,
-            handler: 'NetworkOnly',
-            options: {},
-          },
-        ],
-      },
-      manifest: {
-        name: '蜂巢智能体',
-        short_name: '蜂巢',
-        display: 'standalone',
-        theme_color: '#000000',
-      },
-    }),
-  ],
+  plugins: [react(), tailwindcss(), scriptTemplatesPlugin(), mockDashboardPlugin()],
   server: {
     port: 5173,
     proxy: {

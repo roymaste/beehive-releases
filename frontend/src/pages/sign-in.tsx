@@ -187,7 +187,7 @@ export default function SignInPage() {
                   )}
                 />
                 <div className='flex gap-3 mt-2'>
-                  <Button className='flex-1' disabled={isLoading}>
+                  <Button type="submit" className='flex-1' disabled={isLoading}>
                     {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
                     {t('signIn.signIn')}
                   </Button>

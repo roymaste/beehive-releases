@@ -27,6 +27,7 @@ import RPASelectorPage from './pages/RPASelectorPage';
 import TeamPage from './pages/team/index';
 import SystemPage from './pages/system/index';
 import PlaceholderPage from './components/PlaceholderPage';
+import AgentManagementPage from './pages/AgentManagementPage';
 import AddProxyPage from './pages/proxies/add';
 import EditProxyPage from './pages/proxies/edit';
 import BuyIPPage from './pages/proxies/buy';
@@ -41,6 +42,7 @@ import BillingPage from './pages/billing';
 import AdminBillingPage from './pages/admin/BillingPage';
 import AdminLogsPage from './pages/admin/LogsPage';
 import ContentPolicyPage from './pages/admin/ContentPolicyPage';
+import ModelKeysPage from './pages/admin/ModelKeysPage';
 import KernelsPage from './pages/KernelsPage';
 import PricingPage from './pages/PricingPage';
 import AnalyticsPage from './pages/analytics/index';
@@ -91,7 +93,10 @@ const AppRoutes: React.FC = () => {
       <Route path="/register" element={<RegisterPage />} />
 
       {/* Dashboard */}
-      <Route path="/" element={withLayout(DashboardPage)} />
+      <Route path="/dashboard" element={withLayout(DashboardPage)} />
+
+      {/* Agent Console as home page */}
+      <Route path="/" element={withLayout(AgentConsolePage)} />
 
       {/* 环境管理 */}
       <Route path="/groups" element={withLayout(GroupListPage)} />
@@ -158,8 +163,12 @@ const AppRoutes: React.FC = () => {
         <Route path="api-keys" element={<APIKeysSubPage />} />
       </Route>
 
-      {/* Agent console */}
-      <Route path="/agent" element={withLayout(AgentConsolePage)} />
+      {/* AI智能体 */}
+      <Route path="/agent/console" element={withLayout(AgentConsolePage)} />
+      <Route path="/agent/management" element={withLayout(AgentManagementPage)} />
+      <Route path="/agent/auto-reply" element={withLayout(() => <PlaceholderPage title="智能互动" description="自动回复和互动规则配置即将上线。" />)} />
+      <Route path="/agent/logs" element={withLayout(() => <PlaceholderPage title="Agent日志" description="Agent操作记录和审计日志即将上线。" />)} />
+      <Route path="/agent" element={<Navigate to="/agent/console" replace />} />
 
       {/* Admin */}
       <Route path="/admin" element={withLayout(AdminDashboardPage)} />
@@ -169,6 +178,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin/billing" element={withLayout(AdminBillingPage)} />
       <Route path="/admin/logs" element={withLayout(AdminLogsPage)} />
       <Route path="/admin/content-policy" element={withLayout(ContentPolicyPage)} />
+      <Route path="/admin/model-keys" element={withLayout(ModelKeysPage)} />
 
       {/* Public */}
       <Route path="/pricing" element={<PricingPage />} />

@@ -12,6 +12,10 @@ import {
   Shield,
   Bot,
   Workflow,
+  List,
+  Repeat,
+  ClipboardList,
+  KeyRound,
 } from "lucide-react"
 import { type SidebarData } from "../types"
 
@@ -22,8 +26,18 @@ export const sidebarData: SidebarData = {
     {
       title: "概览",
       items: [
-        { title: "仪表盘", url: "/", icon: LayoutDashboard },
+        { title: "Agent对话", url: "/", icon: Bot },
+        { title: "仪表盘", url: "/dashboard", icon: LayoutDashboard },
         { title: "数据看板", url: "/analytics", icon: BarChart3 },
+      ],
+    },
+    {
+      title: "AI智能体",
+      items: [
+        { title: "Agent对话", url: "/agent/console", icon: Bot },
+        { title: "Agent管理", url: "/agent/management", icon: List },
+        { title: "智能互动", url: "/agent/auto-reply", icon: Repeat },
+        { title: "Agent日志", url: "/agent/logs", icon: ClipboardList },
       ],
     },
     {
@@ -48,6 +62,7 @@ export const sidebarData: SidebarData = {
         { title: "会员订阅", url: "/subscription", icon: CreditCard },
         { title: "安全设置", url: "/security", icon: Shield },
         { title: "系统设置", url: "/settings", icon: Settings },
+        { title: "模型API", url: "/admin/model-keys", icon: KeyRound },
         { title: "帮助中心", url: "/help", icon: HelpCircle },
       ],
     },

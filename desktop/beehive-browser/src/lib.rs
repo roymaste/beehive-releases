@@ -501,6 +501,202 @@ fn check_cloakbrowser_installed() -> String {
     }
 }
 
+/// 运行系统检测
+/// 检查 CloakBrowser CDP、VPS 后端、前端页面的可用性
+#[tauri::command]
+async fn run_diagnostic() -> Result<String, String> {
+    let mut results = serde_json::json!({
+        "timestamp": chrono::Utc::now().to_rfc3339(),
+        "checks": {},
+        "summary": {
+            "total": 0,
+            "passed": 0,
+            "failed": 0,
+        }
+    });
+
+    let checks = results["checks"].as_object_mut().unwrap();
+    let mut passed = 0u32;
+    let mut failed = 0u32;
+
+    // 1. CDP 端口检测
+    let cdp_result = check_cdp().await;
+    match &cdp_result["status"].as_str() {
+        Some("ok") => passed += 1,
+        _ => failed += 1,
+    }
+    checks.insert("cdp".to_string(), cdp_result);
+
+    // 2. VPS 后端检测
+    let backend_result = check_vps_backend().await;
+    match &backend_result["status"].as_str() {
+        Some("ok") => passed += 1,
+        _ => failed += 1,
+    }
+    checks.insert("backend".to_string(), backend_result);
+
+    // 3. VPS 前端检测
+    let frontend_result = check_vps_frontend().await;
+    match &frontend_result["status"].as_str() {
+        Some("ok") => passed += 1,
+        _ => failed += 1,
+    }
+    checks.insert("frontend".to_string(), frontend_result);
+
+    results["summary"]["total"] = serde_json::json!(3);
+    results["summary"]["passed"] = serde_json::json!(passed);
+    results["summary"]["failed"] = serde_json::json!(failed);
+
+    Ok(results.to_string())
+}
+
+/// 检查 CloakBrowser CDP 端口
+async fn check_cdp() -> serde_json::Value {
+    let start = std::time::Instant::now();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(3))
+        .build()
+        .unwrap_or_default();
+
+    // 检查端口是否可连接（先 TCP 探测）
+    match tokio::net::TcpStream::connect("127.0.0.1:9222").await {
+        Ok(_) => {
+            // 再检查 CDP 协议是否正常响应
+            match client.get("http://127.0.0.1:9222/json/version").send().await {
+                Ok(resp) => {
+                    let elapsed = start.elapsed().as_millis();
+                    if resp.status().is_success() {
+                        let body: serde_json::Value = resp.json().await.unwrap_or_default();
+                        serde_json::json!({
+                            "status": "ok",
+                            "name": "CloakBrowser CDP",
+                            "ping_ms": elapsed,
+                            "detail": format!("端口 9222 响应正常"),
+                            "browser": body.get("Browser").and_then(|v| v.as_str()).unwrap_or("unknown"),
+                        })
+                    } else {
+                        serde_json::json!({
+                            "status": "warn",
+                            "name": "CloakBrowser CDP",
+                            "ping_ms": elapsed,
+                            "detail": format!("端口 9222 可连接但响应异常: HTTP {}", resp.status()),
+                        })
+                    }
+                }
+                Err(e) => {
+                    let elapsed = start.elapsed().as_millis();
+                    serde_json::json!({
+                        "status": "error",
+                        "name": "CloakBrowser CDP",
+                        "ping_ms": elapsed,
+                        "detail": format!("端口 9222 可连接但请求失败: {}", e),
+                    })
+                }
+            }
+        }
+        Err(_) => {
+            let elapsed = start.elapsed().as_millis();
+            serde_json::json!({
+                "status": "error",
+                "name": "CloakBrowser CDP",
+                "ping_ms": elapsed,
+                "detail": "CloakBrowser 未运行（127.0.0.1:9222 无法连接）",
+                "hint": "请在客户端中启动一个浏览器环境后再试",
+            })
+        }
+    }
+}
+
+/// 检查 VPS 后端健康
+async fn check_vps_backend() -> serde_json::Value {
+    let vps_url = std::env::var("BEEHIVE_API_URL")
+        .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
+    let start = std::time::Instant::now();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
+
+    match client.get(format!("{}/health", vps_url)).send().await {
+        Ok(resp) => {
+            let elapsed = start.elapsed().as_millis();
+            if resp.status().is_success() {
+                serde_json::json!({
+                    "status": "ok",
+                    "name": "VPS 后端",
+                    "ping_ms": elapsed,
+                    "detail": format!("{} 响应正常（{}ms）", vps_url, elapsed),
+                })
+            } else {
+                serde_json::json!({
+                    "status": "error",
+                    "name": "VPS 后端",
+                    "ping_ms": elapsed,
+                    "detail": format!("{} 返回 HTTP {}", vps_url, resp.status()),
+                })
+            }
+        }
+        Err(e) => {
+            let elapsed = start.elapsed().as_millis();
+            serde_json::json!({
+                "status": "error",
+                "name": "VPS 后端",
+                "ping_ms": elapsed,
+                "detail": format!("{} 无法连接: {}", vps_url, e),
+                "hint": "请检查网络连接或联系管理员",
+            })
+        }
+    }
+}
+
+/// 检查 VPS 前端页面
+async fn check_vps_frontend() -> serde_json::Value {
+    let frontend_url = "http://107.173.70.124:8080";
+    let start = std::time::Instant::now();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
+
+    match client.get(frontend_url).send().await {
+        Ok(resp) => {
+            let elapsed = start.elapsed().as_millis();
+            if resp.status().is_success() {
+                // 检查返回内容是否包含关键标识
+                let body = resp.text().await.unwrap_or_default();
+                let has_title = body.contains("蜂巢智能体") || body.contains("Beehive");
+                serde_json::json!({
+                    "status": if has_title { "ok" } else { "warn" },
+                    "name": "VPS 前端",
+                    "ping_ms": elapsed,
+                    "detail": if has_title {
+                        format!("前端页面可达（{}ms）", elapsed)
+                    } else {
+                        format!("前端响应但内容异常，可能未正确加载")
+                    },
+                })
+            } else {
+                serde_json::json!({
+                    "status": "error",
+                    "name": "VPS 前端",
+                    "ping_ms": elapsed,
+                    "detail": format!("前端返回 HTTP {}", resp.status()),
+                })
+            }
+        }
+        Err(e) => {
+            let elapsed = start.elapsed().as_millis();
+            serde_json::json!({
+                "status": "error",
+                "name": "VPS 前端",
+                "ping_ms": elapsed,
+                "detail": format!("前端无法连接: {}", e),
+                "hint": "请检查网络连接或联系管理员",
+            })
+        }
+    }
+}
+
 // ── 内部辅助函数（供后台自动更新调用）────────────────────────
 
 /// 内部下载函数（不暴露为 Tauri 命令）
@@ -848,7 +1044,7 @@ fn extract_core(zip_path: String) -> Result<String, String> {
 /// 首次启动时检查 BeehiveBrowser 二进制是否存在
 /// 不存在则尝试从安装包 resource 目录复制内置内核
 fn check_cloak_binary_setup(app: &tauri::AppHandle) {
-    if let Err(msg) = find_cloak_binary(None) {
+    if let Err(_msg) = find_cloak_binary(None) {
         // 尝试从安装包 resource 目录复制内置内核
         if let Ok(resource_dir) = app.path().resource_dir() {
             let bundled_kernel = resource_dir.join("kernel/chromium");
@@ -887,20 +1083,44 @@ fn check_cloak_binary_setup(app: &tauri::AppHandle) {
             }
         }
 
-        // 无内置内核或复制失败，弹窗提示用户
-        #[cfg(target_os = "windows")]
-        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
-        #[cfg(target_os = "macos")]
-        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
-        #[cfg(target_os = "linux")]
-        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
-        #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-        let install_hint = "正在自动下载 CloakBrowser 内核，请稍候...";
-        let _ = tauri_plugin_dialog::DialogExt::dialog(app)
-            .message(format!("未找到 CloakBrowser。\n\n{}\n\n{}", msg, install_hint))
-            .title("蜂巢浏览器 — 缺少 CloakBrowser")
-            .kind(tauri_plugin_dialog::MessageDialogKind::Warning)
-            .blocking_show();
+        // 无内置内核或复制失败，自动下载内核
+        log::info!("未找到 CloakBrowser 内核，开始自动下载...");
+        let app_handle = app.clone();
+        let _ = app.emit("kernel-download-start", serde_json::json!({
+            "message": "正在自动下载 CloakBrowser 内核，请稍候...",
+        }));
+
+        tauri::async_runtime::spawn(async move {
+            const DOWNLOAD_URL: &str = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
+            match download_core_internal(app_handle.clone(), DOWNLOAD_URL.to_string()).await {
+                Ok(zip_path) => {
+                    log::info!("内核下载完成: {}", zip_path);
+                    match extract_core_internal(&zip_path) {
+                        Ok(result) => {
+                            log::info!("内核解压完成: {}", result);
+                            let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
+                                "status": "success",
+                                "result": result,
+                            }));
+                        }
+                        Err(e) => {
+                            log::error!("内核解压失败: {}", e);
+                            let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
+                                "status": "error",
+                                "message": format!("解压失败: {}", e),
+                            }));
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("内核下载失败: {}", e);
+                    let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
+                        "status": "error",
+                        "message": format!("下载失败: {}", e),
+                    }));
+                }
+            }
+        });
     }
 }
 
@@ -1038,6 +1258,7 @@ pub fn run() {
             get_core_versions,
             download_core,
             extract_core,
+            run_diagnostic,
         ])
         .setup(|app| {
             // 首次启动检查 CloakBrowser 二进制
@@ -1168,7 +1389,7 @@ pub fn run() {
 
             // 后台任务：注册+心跳+轮询（基于 tauri async runtime）
             let api_base = std::env::var("BEEHIVE_API_URL")
-                .unwrap_or_else(|_| "http://107.173.70.124:8000".to_string());
+                .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
             let handle = app.handle().clone();
 
             tauri::async_runtime::spawn(async move {

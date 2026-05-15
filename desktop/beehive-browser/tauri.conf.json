@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/nicoverbruggen/tauri-v2-schema/main/tauri.conf.schema.json",
   "productName": "Beehive Browser",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "com.beehive.browser",
   "build": {
     "devUrl": "http://localhost:5173",
@@ -9,12 +9,12 @@
   },
   "app": {
     "security": {
-      "csp": "default-src 'self' http://107.173.70.124:8080; connect-src 'self' http: https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' http://107.173.70.124:8080; font-src 'self' data: https:;"
+      "csp": "default-src 'self'; connect-src 'self' http: https:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' http: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:; font-src 'self' data: http: https:;"
     }
   },
   "bundle": {
     "active": true,
-    "targets": "deb",
+    "targets": "all",
     "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
@@ -46,8 +46,8 @@
     "updater": {
       "active": true,
       "dialog": true,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQxNDcxOTk2RUQ5ODUxNApSV1FVaGRsdW1YRVVCSHdPRVl2VmF0bVl4Q2dCRXNTdklKM0FXZ0ZhM01YN1BXeEdyWmFHSXFaQQo=",
-      "endpoints": ["https://github.com/roymaste/beehive-releases/releases/download/v0.2.0/latest.json"]
+      "pubkey": "yMKX9StFP1xArfwShye5JX8rywKLocFJPumBhJ1Fy3M=",
+      "endpoints": ["https://raw.githubusercontent.com/roymaste/beehive-releases/main/latest.json"]
     }
   }
 }

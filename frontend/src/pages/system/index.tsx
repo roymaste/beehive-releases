@@ -5,6 +5,8 @@ import {
   RiRefreshLine,
   RiSaveLine,
   RiSettings3Line,
+  RiBugLine,
+  RiErrorWarningLine,
 } from 'react-icons/ri';
 import apiClient from '../../api/client';
 
@@ -19,6 +21,15 @@ const SystemPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [diagnosticRunning, setDiagnosticRunning] = useState(false);
+  const [diagnosticResult, setDiagnosticResult] = useState<Record<string, any> | null>(null);
+  const [isTauri, setIsTauri] = useState(false);
+
+  useEffect(() => {
+    // 检测是否在 Tauri 环境中
+    setIsTauri(typeof window !== 'undefined' && (window as any).__TAURI__ !== undefined);
+  }, []);
+
   const [form, setForm] = useState<SystemSettings>({
     max_profiles_per_tenant: 50,
     max_proxies_per_tenant: 50,
@@ -52,6 +63,27 @@ const SystemPage: React.FC = () => {
       toast.error('保存失败');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const runDiagnostic = async () => {
+    setDiagnosticRunning(true);
+    setDiagnosticResult(null);
+    try {
+      const tauri = (window as any).__TAURI__;
+      if (tauri) {
+        const resultStr = await tauri.invoke<string>('run_diagnostic');
+        const result = JSON.parse(resultStr);
+        setDiagnosticResult(result);
+      }
+    } catch (e) {
+      setDiagnosticResult({
+        summary: { total: 0, passed: 0, failed: 0 },
+        checks: {},
+        error: String(e),
+      });
+    } finally {
+      setDiagnosticRunning(false);
     }
   };
 
@@ -171,6 +203,80 @@ const SystemPage: React.FC = () => {
         <p className="text-xs mt-1" style={{ color: '#78716c' }}>
           关闭后仅管理员可创建住户账号
         </p>
+      </div>
+
+      {/* ── 系统检测 ── */}
+      <div className="apple-card p-6 mt-6">
+        <h2 className="text-lg font-bold mb-4" style={{ color: '#1c1917' }}>系统检测</h2>
+        <p className="text-sm mb-4" style={{ color: '#78716c' }}>
+          检查 CloakBrowser、VPS 后端和前端页面的可用性
+        </p>
+
+        {!isTauri ? (
+          <div className="p-4 rounded-lg" style={{ background: '#fef9ef', border: '1px solid #fde68a' }}>
+            <div className="flex items-center gap-2">
+              <RiErrorWarningLine size={20} style={{ color: '#d97706' }} />
+              <span className="text-sm" style={{ color: '#92400e' }}>
+                系统检测功能需要在桌面客户端中使用
+              </span>
+            </div>
+            <p className="text-xs mt-2" style={{ color: '#a16207' }}>
+              请下载并打开桌面客户端，进入设置页面使用此功能
+            </p>
+          </div>
+        ) : (
+          <div>
+            <button
+              className="apple-btn flex items-center gap-2"
+              onClick={runDiagnostic}
+              disabled={diagnosticRunning}
+              style={{ padding: '8px 20px' }}
+            >
+              <RiBugLine size={16} />
+              {diagnosticRunning ? '检测中...' : '开始检测'}
+            </button>
+
+            {diagnosticRunning && (
+              <div className="mt-4 p-4 rounded-lg" style={{ background: '#f5f5f4' }}>
+                <p className="text-sm" style={{ color: '#78716c' }}>正在检测各项服务...</p>
+              </div>
+            )}
+
+            {diagnosticResult && !diagnosticRunning && (
+              <div className="mt-4 space-y-3">
+                {/* 汇总 */}
+                <div className="flex gap-4 text-sm" style={{ color: '#44403c' }}>
+                  <span>总检测: {diagnosticResult.summary?.total || 0}</span>
+                  <span style={{ color: '#16a34a' }}>✅ 通过: {diagnosticResult.summary?.passed || 0}</span>
+                  <span style={{ color: '#dc2626' }}>❌ 失败: {diagnosticResult.summary?.failed || 0}</span>
+                </div>
+
+                {/* 各检测项详情 */}
+                {diagnosticResult.checks && Object.entries(diagnosticResult.checks).map(([key, check]: [string, any]) => {
+                  const statusIcon = check.status === 'ok' ? '✅' : check.status === 'warn' ? '⚠️' : '❌';
+                  const statusColor = check.status === 'ok' ? '#16a34a' : check.status === 'warn' ? '#d97706' : '#dc2626';
+                  return (
+                    <div key={key} className="p-4 rounded-lg border" style={{ borderColor: '#e7e5e4' }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span>{statusIcon}</span>
+                          <span className="font-medium text-sm" style={{ color: '#1c1917' }}>{check.name || key}</span>
+                        </div>
+                        {check.ping_ms && (
+                          <span className="text-xs" style={{ color: '#78716c' }}>{check.ping_ms}ms</span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: '#78716c' }}>{check.detail || ''}</p>
+                      {check.hint && (
+                        <p className="text-xs mt-1" style={{ color: '#d97706' }}>💡 {check.hint}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

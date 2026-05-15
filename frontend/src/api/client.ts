@@ -9,7 +9,7 @@ const DESKTOP_MODE = typeof window !== 'undefined' && (
   (window as any).__TAURI__ || (window as any).__TAURI_INTERNALS__
 );
 const API_BASE = DESKTOP_MODE
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1')
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://107.173.70.124:8080/api/v1')
   : '/api/v1';
 
 const apiClient = axios.create({
@@ -481,6 +481,57 @@ export interface AgentProfileUpdate {
 export const agentProfileAPI = {
   get: () => apiClient.get<AgentProfile>('/agent/profile'),
   update: (data: AgentProfileUpdate) => apiClient.put<AgentProfile>('/agent/profile', data),
+};
+
+export interface ChatSessionItem {
+  id: string;
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface ChatSessionListResult {
+  sessions: ChatSessionItem[];
+}
+
+export interface ChatSessionMessage {
+  role: string;
+  content: string;
+  timestamp?: string;
+}
+
+export interface ChatSessionDetail {
+  id: string;
+  messages: ChatSessionMessage[];
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export const agentChatAPI = {
+  /** 获取会话列表 */
+  listSessions: () => apiClient.get<ChatSessionListResult>('/agent/sessions'),
+
+  /** 获取单个会话详情 */
+  getSession: (sessionId: string) => apiClient.get<ChatSessionDetail>(`/agent/sessions/${sessionId}`),
+
+  /** 删除会话 */
+  deleteSession: (sessionId: string) => apiClient.delete(`/agent/sessions/${sessionId}`),
+
+  /** SSE流式聊天 */
+  chatStreamFetch: (message: string, sessionId?: string | null, signal?: AbortSignal, modelName?: string | null) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const params = new URLSearchParams({ message });
+    if (sessionId) params.append('session_id', sessionId);
+    if (modelName) params.append('model_name', modelName);
+    const baseUrl = (apiClient as { defaults?: { baseURL?: string } }).defaults?.baseURL || '';
+    return fetch(`${baseUrl}/agent/chat/stream?${params}`, {
+      headers: {
+        Accept: 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      ...(signal ? { signal } : {}),
+    });
+  },
 };
 
 // --- Script Templates API ---
