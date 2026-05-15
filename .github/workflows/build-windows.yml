@@ -59,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          TAG="v$(grep '^version' desktop/beehive-browser/Cargo.toml | cut -d'\"' -f2)"
+          TAG="v$(grep '^version' desktop/beehive-browser/Cargo.toml | head -1 | sed 's/.*\"\(.*\)\"/\1/')"
           gh release create "$TAG" \
             --repo roymaste/beehive-releases \
             --title "蜂巢智能体 $TAG" \
