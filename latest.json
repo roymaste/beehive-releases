@@ -1,11 +1,11 @@
 {
   "version": "0.3.1",
-  "notes": "新增：Agent Chat 发推意图检测 + Executor 自动认领任务 + JWT 认证注册",
+  "notes": "新增：Agent Chat 发推意图检测 + Executor JWT 注册 + 静默自动更新",
   "pub_date": "2026-05-15T12:00:00Z",
   "platforms": {
     "linux-x86_64": {
       "signature": "",
-      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.1/Beehive.Browser_0.3.1_amd64.gz"
+      "url": "https://github.com/roymaste/beehive-releases/releases/download/v0.3.1/Beehive.Browser_0.3.1_amd64"
     }
   }
 }
