@@ -24,6 +24,7 @@ import {
 } from 'react-icons/ri';
 
 import { ScriptTemplate } from '@/api/client';
+import apiClient from '@/api/client';
 
 // Icon mapping
 const ICON_MAP: Record<string, React.FC<{ size?: number; style?: React.CSSProperties }>> = {
@@ -110,9 +111,9 @@ const RpaEditorPage: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     setActionTypesError(false);
-    fetch('/api/v1/action-types')
-      .then((r) => r.json())
-      .then((data) => {
+    apiClient.get('/action-types')
+      .then((res) => {
+        const data = res.data;
         setActionTypes(data.action_types || []);
         setCategories(data.categories || {});
       })
@@ -125,20 +126,17 @@ const RpaEditorPage: React.FC = () => {
 
   // Load script templates
   useEffect(() => {
-    fetch('/api/v1/script-templates')
-      .then((r) => r.json())
-      .then((data) => setScriptTemplates(data.templates || []))
+    apiClient.get('/script-templates')
+      .then((res) => setScriptTemplates(res.data.templates || []))
       .catch(() => {/* silent fail — templates are optional */});
   }, []);
 
   // Load existing task if editing
   useEffect(() => {
     if (!isEditMode) return;
-    fetch(`/api/v1/automations/tasks/${id}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
+    apiClient.get(`/automations/tasks/${id}`)
+      .then((res) => {
+        const data = res.data;
         setForm({
           name: data.name || '',
           action: data.action || 'custom',

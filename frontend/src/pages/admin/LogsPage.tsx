@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { RiFilterOffLine } from 'react-icons/ri';
 import toast from 'react-hot-toast';
+import apiClient from '../../api/client';
 
 // Beehive Design System Colors
 
@@ -79,23 +80,17 @@ const AdminLogsPage: React.FC = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
       const skip = (page - 1) * limit;
-      const params = new URLSearchParams({
+      const params: Record<string, string> = {
         skip: String(skip),
         limit: String(limit),
-        ...(action && { action }),
-        ...(targetType && { target_type: targetType }),
-        ...(userId && { user_id: userId }),
-      });
+      };
+      if (action) params.action = action;
+      if (targetType) params.target_type = targetType;
+      if (userId) params.user_id = userId;
 
-      const res = await fetch(`/api/v1/admin/operation-logs?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await res.json();
+      const res = await apiClient.get('/admin/operation-logs', { params });
+      const data = res.data;
       if (data.code === 0) {
         setLogs(data.data.logs || []);
         setTotal(data.data.total || 0);

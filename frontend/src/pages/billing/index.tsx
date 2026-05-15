@@ -7,6 +7,7 @@ import {
   RiArrowRightLine,
   RiRefundLine,
 } from 'react-icons/ri';
+import apiClient from '../../api/client';
 
 // ── Palette ──
 const C = {
@@ -61,22 +62,13 @@ interface Invoice {
 // ── API helper ──
 const getToken = () => localStorage.getItem('access_token');
 
-const apiFetch = async (path: string, options: RequestInit = {}) => {
-  const token = getToken();
-  const res = await fetch(`/api/v1${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+const apiFetch = async (path: string, options: { method?: string; body?: string } = {}) => {
+  const res = await apiClient.request({
+    url: path,
+    method: options.method || 'GET',
+    data: options.body ? JSON.parse(options.body) : undefined,
   });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-    throw new Error(err.detail || `HTTP ${res.status}`);
-  }
-  if (res.status === 204) return null;
-  return res.json();
+  return res.data;
 };
 
 // ── Feature labels ──

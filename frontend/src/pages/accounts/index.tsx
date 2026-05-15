@@ -8,7 +8,7 @@ import {
   RiRefreshLine,
   RiErrorWarningLine,
 } from 'react-icons/ri';
-import { tenantsAPI, platformsAPI, PlatformAccount } from '../../api/client';
+import apiClient, { tenantsAPI, platformsAPI, PlatformAccount } from '../../api/client';
 import DataTable, { Column } from '../../components/DataTable';
 
 // Extended account type with tenant info and proxy status
@@ -65,10 +65,7 @@ const AccountListPage: React.FC = () => {
     try {
       toast.loading('正在登录...', { id: `login-${id}` });
       // 调用 agent API 登录
-      await fetch(`/api/v1/agents/accounts/${id}/login`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }
-      });
+      await apiClient.post(`/agents/accounts/${id}/login`);
       toast.success('登录成功', { id: `login-${id}` });
     } catch {
       toast.error('登录失败', { id: `login-${id}` });
@@ -80,14 +77,7 @@ const AccountListPage: React.FC = () => {
     if (!content) return;
     try {
       toast.loading('正在发帖...', { id: `post-${id}` });
-      await fetch(`/api/v1/agents/accounts/${id}/post`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        },
-        body: JSON.stringify({ content })
-      });
+      await apiClient.post(`/agents/accounts/${id}/post`, { content });
       toast.success('发帖成功', { id: `post-${id}` });
     } catch {
       toast.error('发帖失败', { id: `post-${id}` });

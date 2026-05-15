@@ -1,6 +1,7 @@
 import './i18n';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PageTransition } from './components/ui/page-transition';
+import { ErrorBoundary } from './components/ui/error-boundary';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth, isTokenExpired } from './context/AuthContext';
 import { useEffect } from 'react';
@@ -77,11 +78,31 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 const withLayout = (Page: React.FC) => (
   <ProtectedRoute>
     <AuthenticatedLayout>
-      <Page />
+      <ErrorBoundary>
+        <Page />
+      </ErrorBoundary>
     </AuthenticatedLayout>
+  </ProtectedRoute>
+);
+
+const withAdminLayout = (Page: React.FC) => (
+  <ProtectedRoute>
+    <AdminRoute>
+      <AuthenticatedLayout>
+        <ErrorBoundary>
+          <Page />
+        </ErrorBoundary>
+      </AuthenticatedLayout>
+    </AdminRoute>
   </ProtectedRoute>
 );
 
@@ -173,14 +194,14 @@ const AppRoutes: React.FC = () => {
       <Route path="/agent" element={<Navigate to="/agent/console" replace />} />
 
       {/* Admin */}
-      <Route path="/admin" element={withLayout(AdminDashboardPage)} />
-      <Route path="/admin/clients" element={withLayout(AdminClientsPage)} />
-      <Route path="/admin/clients/:id" element={withLayout(AdminClientDetailPage)} />
-      <Route path="/admin/executors" element={withLayout(ExecutorListPage)} />
-      <Route path="/admin/billing" element={withLayout(AdminBillingPage)} />
-      <Route path="/admin/logs" element={withLayout(AdminLogsPage)} />
-      <Route path="/admin/content-policy" element={withLayout(ContentPolicyPage)} />
-      <Route path="/admin/model-keys" element={withLayout(ModelKeysPage)} />
+      <Route path="/admin" element={withAdminLayout(AdminDashboardPage)} />
+      <Route path="/admin/clients" element={withAdminLayout(AdminClientsPage)} />
+      <Route path="/admin/clients/:id" element={withAdminLayout(AdminClientDetailPage)} />
+      <Route path="/admin/executors" element={withAdminLayout(ExecutorListPage)} />
+      <Route path="/admin/billing" element={withAdminLayout(AdminBillingPage)} />
+      <Route path="/admin/logs" element={withAdminLayout(AdminLogsPage)} />
+      <Route path="/admin/content-policy" element={withAdminLayout(ContentPolicyPage)} />
+      <Route path="/admin/model-keys" element={withAdminLayout(ModelKeysPage)} />
 
       {/* Public */}
       <Route path="/pricing" element={<PricingPage />} />

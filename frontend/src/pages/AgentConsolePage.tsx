@@ -515,20 +515,14 @@ const AgentConsolePage: React.FC = () => {
       }
 
       try {
-        const subRes = await fetch('/api/v1/billing/subscription', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
-          },
-        });
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          if (mounted) {
-            const plan = subData?.plan;
-            if (plan?.limits?.api_daily) {
-              setApiQuota(plan.limits.api_daily);
-            } else {
-              setApiQuota(null);
-            }
+        const subRes = await apiClient.get('/billing/subscription');
+        const subData = subRes.data;
+        if (mounted) {
+          const plan = subData?.plan;
+          if (plan?.limits?.api_daily) {
+            setApiQuota(plan.limits.api_daily);
+          } else {
+            setApiQuota(null);
           }
         }
       } catch {

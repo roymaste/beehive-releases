@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import {RiRefreshLine, RiTimeLine} from 'react-icons/ri';
+import apiClient from '../../api/client';
 
 // ── Types ──
 
@@ -65,18 +66,12 @@ const ExecutorListPage: React.FC = () => {
   const fetchExecutors = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ skip: '0', limit: '100' });
+      const params: Record<string, string> = { skip: '0', limit: '100' };
       if (statusFilter !== 'all') {
-        params.set('status', statusFilter);
+        params.status = statusFilter;
       }
-      const res = await fetch(`/api/v1/executors?${params}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('access_token') || ''}`,
-        },
-      });
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
+      const res = await apiClient.get('/executors', { params });
+      const data = res.data;
       setExecutors(Array.isArray(data) ? data : data.executors || []);
     } catch {
       toast.error('获取执行器列表失败');

@@ -7,6 +7,7 @@ import {
   RiFileCopyLine,
   RiCheckLine,
 } from 'react-icons/ri';
+import apiClient from '../../api/client';
 
 const C = {
   orange: '#FF9800',
@@ -59,18 +60,14 @@ interface RewardRecord {
 // ── API helper ──
 const getToken = () => localStorage.getItem('access_token');
 
-const apiFetch = async (path: string, options: RequestInit = {}) => {
-  const token = getToken();
-  const res = await fetch(`/api/v1${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
+const apiFetch = async (path: string, options: { method?: string; body?: string } = {}) => {
+  const res = await apiClient.request({
+    url: path,
+    method: options.method || 'GET',
+    data: options.body ? JSON.parse(options.body) : undefined,
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+  if (res.status >= 400) throw new Error(`HTTP ${res.status}`);
+  return res.data;
 };
 
 // ── Tab definition ──

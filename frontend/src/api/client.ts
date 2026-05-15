@@ -9,7 +9,7 @@ const DESKTOP_MODE = typeof window !== 'undefined' && (
   (window as any).__TAURI__ || (window as any).__TAURI_INTERNALS__
 );
 const API_BASE = DESKTOP_MODE
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://107.173.70.124:8080/api/v1')
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://107.173.70.124:8080' + '/api/v1')
   : '/api/v1';
 
 const apiClient = axios.create({

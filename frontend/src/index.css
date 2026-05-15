@@ -12,8 +12,8 @@
 
 body {
   margin: 0;
-  background-color: #09090b;
-  color: #fafafa;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro', system-ui, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -65,49 +65,6 @@ body {
 .btn-danger:hover {
   background: #dc2626;
   opacity: 0.8;
-}
-
-/* ── Input ── */
-.input {
-  background: #18181b;
-  border: 1px solid #27272a;
-  color: #fafafa;
-  padding: 9px 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro', system-ui, sans-serif;
-  font-size: 14px;
-  border-radius: 8px;
-  width: 100%;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.input:focus {
-  border-color: var(--hive-gold, #f59e0b);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
-}
-
-.input::placeholder {
-  color: #52525b;
-}
-
-/* ── Select ── */
-.select {
-  background: #18181b;
-  border: 1px solid #27272a;
-  color: #fafafa;
-  padding: 9px 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'SF Pro', system-ui, sans-serif;
-  font-size: 14px;
-  border-radius: 8px;
-  outline: none;
-  cursor: pointer;
-  appearance: auto;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.select:focus {
-  border-color: var(--hive-gold, #f59e0b);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
 }
 
 /* ── Table ── */

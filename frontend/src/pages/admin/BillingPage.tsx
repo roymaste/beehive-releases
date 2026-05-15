@@ -3,10 +3,10 @@ import {
   RiAddLine,
   RiEditLine,
   RiDeleteBinLine,
-  RiCloseLine,
 } from 'react-icons/ri';
 import toast from 'react-hot-toast';
-import { useConfirmDialog } from '../../components/ui/confirm-dialog';
+import { useConfirmDialog } from '@/components/ui/confirm-dialog';
+import apiClient from '../../api/client';
 
 // Beehive Design System Colors
 
@@ -71,14 +71,8 @@ const AdminBillingPage: React.FC = () => {
   // Fetch plans
   const fetchPlans = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch('/api/v1/admin/plans', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await res.json();
+      const res = await apiClient.get('/admin/plans');
+      const data = res.data;
       if (data.code === 0) {
         setPlans(data.data.plans || []);
       } else {
@@ -143,22 +137,18 @@ const AdminBillingPage: React.FC = () => {
     };
 
     try {
-      const token = localStorage.getItem('access_token');
       const url = editingPlan
-        ? `/api/v1/admin/plans/${editingPlan.id}`
-        : '/api/v1/admin/plans';
-      const method = editingPlan ? 'PUT' : 'POST';
+        ? `/admin/plans/${editingPlan.id}`
+        : '/admin/plans';
+      const method = editingPlan ? 'put' : 'post';
 
-      const res = await fetch(url, {
+      const res = await apiClient.request({
+        url,
         method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        data: payload,
       });
 
-      const data = await res.json();
+      const data = res.data;
       if (data.code === 0) {
         toast.success(editingPlan ? '套餐已更新' : '套餐已创建');
         closeModal();
@@ -181,16 +171,8 @@ const AdminBillingPage: React.FC = () => {
       description: `确定要下架「${plan.name}」吗？`,
       onConfirm: async () => {
         try {
-          const token = localStorage.getItem('access_token');
-          const res = await fetch(`/api/v1/admin/plans/${plan.id}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          const data = await res.json();
+          const res = await apiClient.delete(`/admin/plans/${plan.id}`);
+          const data = res.data;
           if (data.code === 0) {
             toast.success('套餐已下架');
             fetchPlans();

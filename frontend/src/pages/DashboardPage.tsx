@@ -347,45 +347,43 @@ const TenantDashboard: React.FC<{ stats: DashboardStats; loading: boolean }> = (
   const statCards: StatCardProps[] = useMemo(() => [
     {
       icon: <RiGlobalLine size={20} />,
-      label: '环境总数',
-      value: loading ? '—' : stats.total_envs,
-      subLabel: `运行中 ${stats.running_envs} · 已停止 ${stats.stopped_envs}`,
+      label: '账号数',
+      value: loading ? '—' : (stats as any).total_accounts ?? '—',
+      subLabel: `已绑定 ${(stats as any).bound_accounts ?? '—'}`,
       color: 'var(--hive-gold)',
       glowColor: 'rgba(255,193,7,0.20)',
-      onClick: () => navigate('/profiles'),
-    },
-    {
-      icon: <RiLinkM size={20} />,
-      label: '代理总数',
-      value: loading ? '—' : stats.total_proxies,
-      subLabel: `已绑定 ${stats.bound_proxies}`,
-      color: 'var(--hive-blue)',
-      glowColor: 'rgba(25,118,210,0.20)',
-      onClick: () => navigate('/proxies'),
+      onClick: () => navigate('/accounts'),
     },
     {
       icon: <RiSendPlaneLine size={20} />,
       label: '今日发帖',
-      value: loading ? '—' : stats.today_posts,
+      value: loading ? '—' : stats.today_posts ?? '—',
       color: '#9C27B0',
       glowColor: 'rgba(156,39,176,0.15)',
-      onClick: () => navigate('/posts'),
+      onClick: () => navigate('/ai-workflow'),
     },
     {
-      icon: <RiShieldCheckLine size={20} />,
-      label: '成功率',
-      value: loading ? '—' : `${Math.round(stats.success_rate)}%`,
-      subValue: stats.success_rate >= 80 ? '优秀' : stats.success_rate >= 50 ? '良好' : '需优化',
-      color: stats.success_rate >= 80 ? 'var(--success)' : stats.success_rate >= 50 ? 'var(--hive-gold)' : 'var(--error)',
-      glowColor: stats.success_rate >= 80 ? 'rgba(76,175,80,0.20)' : stats.success_rate >= 50 ? 'rgba(255,193,7,0.20)' : 'rgba(244,67,54,0.20)',
+      icon: <RiTimeLine size={20} />,
+      label: '待发布',
+      value: loading ? '—' : (stats as any).pending_posts ?? '—',
+      color: 'var(--hive-blue)',
+      glowColor: 'rgba(25,118,210,0.20)',
+      onClick: () => navigate('/automations'),
+    },
+    {
+      icon: <RiPulseLine size={20} />,
+      label: '互动消息',
+      value: loading ? '—' : (stats as any).interactions ?? '—',
+      color: 'var(--success)',
+      glowColor: 'rgba(76,175,80,0.20)',
+      onClick: () => navigate('/agent/auto-reply'),
     },
   ], [stats, loading, navigate]);
 
   const quickActions = [
-    { icon: <RiAddLine size={22} />, label: '新建环境', desc: '创建浏览器环境', href: '/profiles/create', variant: 'primary' as const },
-    { icon: <RiEditLine size={22} />, label: '发帖', desc: '快速发布内容', href: '/posts/new', variant: 'secondary' as const },
-    { icon: <RiCheckLine size={22} />, label: '检查账号', desc: '验证账号状态', href: '/accounts', variant: 'ghost' as const },
-    { icon: <RiFileChartLine size={22} />, label: '数据报告', desc: '查看运营报表', href: '/reports', variant: 'ghost' as const },
+    { icon: <RiAddLine size={22} />, label: '绑定账号', desc: '添加社媒账号', href: '/accounts', variant: 'primary' as const },
+    { icon: <RiEditLine size={22} />, label: 'AI发帖', desc: 'AI生成并发布', href: '/ai-workflow', variant: 'secondary' as const },
+    { icon: <RiRobot2Line size={22} />, label: '自动运营', desc: '设置智能互动', href: '/agent/auto-reply', variant: 'ghost' as const },
   ];
 
   const recentRecords = stats.recent_profiles.slice(0, 5);
@@ -399,83 +397,80 @@ const TenantDashboard: React.FC<{ stats: DashboardStats; loading: boolean }> = (
         ))}
       </div>
 
-      {/* ── 中部双栏：成功率图表 + 快捷操作 ── */}
+      {/* ── 中部双栏：快捷操作 + 运营动态 ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* 成功率环形图 */}
-        <div
-          className="lg:col-span-1 flex flex-col items-center justify-center p-6"
-          style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
-        >
-          <h3 className="text-[14px] font-semibold mb-4 self-start" style={{ color: 'var(--text-primary)' }}>
-            发布成功率
-          </h3>
-          <SuccessRing rate={loading ? 0 : stats.success_rate} size={140} />
-          <div className="flex items-center gap-4 mt-4">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--success)' }} />
-              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>成功</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: 'var(--error)' }} />
-              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>失败</span>
-            </div>
-          </div>
-        </div>
-
         {/* 快捷操作 */}
         <div
-          className="lg:col-span-2 p-5"
+          className="lg:col-span-1 p-5"
           style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
         >
           <h3 className="text-[14px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
             快捷操作
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="flex flex-col gap-3">
             {quickActions.map((a) => (
               <QuickAction key={a.label} {...a} onClick={() => navigate(a.href)} />
             ))}
           </div>
+        </div>
 
-          {/* 底部迷你统计 */}
-          <div className="grid grid-cols-3 gap-4 mt-5 pt-4" style={{ borderTop: `1px solid ${'var(--divider)'}` }}>
-            {[
-              { label: '租户数', value: stats.tenant_count },
-              { label: 'IP资产', value: stats.ip_count },
-              { label: '活跃任务', value: stats.active_tasks },
-            ].map((item) => (
-              <div key={item.label} className="text-center">
-                <div className="text-[20px] font-bold" style={{ color: 'var(--text-primary)', fontFamily: "'Poppins', sans-serif" }}>
-                  {loading ? '—' : item.value}
-                </div>
-                <div className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>{item.label}</div>
+        {/* 运营动态 */}
+        <div
+          className="lg:col-span-2 p-5"
+          style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
+        >
+          <h3 className="text-[14px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+            运营动态
+          </h3>
+          {loading ? (
+            <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>加载中...</div>
+          ) : recentRecords.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-[13px] mb-2" style={{ color: 'var(--text-tertiary)' }}>还没有运营记录</div>
+              <div className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
+                点击上方「绑定账号」开始使用，或让AI帮你操作
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {recentRecords.map((r) => (
+                <RecordRow
+                  key={r.id}
+                  platform={r.platform}
+                  name={r.name}
+                  content={r.group || '无内容预览'}
+                  status={r.runtime_status === 'running' ? 'success' : 'failed'}
+                  time={formatRelativeTime(r.updated_at)}
+                  onClick={() => navigate(`/profiles/${r.id}`)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* ── 最近环境记录 ── */}
+      {/* ── 最近运营动态 ── */}
       <div
         className="p-5"
         style={{ background: 'var(--card-bg)', border: `1px solid ${'var(--divider)'}`, borderRadius: RADIUS.card, boxShadow: SHADOW.card }}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-semibold" style={{ color: 'var(--text-primary)' }}>
-            最近环境记录
+            最近运营动态
           </h3>
-          <button
-            onClick={() => navigate('/profiles')}
-            className="flex items-center gap-1 text-[12px] font-medium cursor-pointer"
-            style={{ color: 'var(--hive-gold)' }}
-          >
-            查看全部 <RiArrowRightSLine size={14} />
-          </button>
         </div>
 
         {loading ? (
           <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>加载中...</div>
         ) : recentRecords.length === 0 ? (
-          <div className="text-center py-8 text-[13px]" style={{ color: 'var(--text-tertiary)' }}>暂无环境记录</div>
+          <div className="text-center py-8">
+            <div className="text-[13px] mb-2" style={{ color: 'var(--text-tertiary)' }}>
+              还没有运营记录
+            </div>
+            <div className="text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
+              绑定你的第一个社媒账号，开始运营
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col gap-1">
             {recentRecords.map((r) => (

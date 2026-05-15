@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RiCheckLine, RiArrowRightSLine } from 'react-icons/ri';
+import apiClient from '../api/client';
 
 // Beehive Design System Colors
 
@@ -32,8 +33,8 @@ const PricingPage: React.FC = () => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await fetch('/api/v1/billing/plans');
-        const data = await res.json();
+        const res = await apiClient.get('/billing/plans');
+        const data = res.data;
         if (data.code === 0) {
           setPlans(data.data.plans || []);
         }
