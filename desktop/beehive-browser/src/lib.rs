@@ -29,19 +29,56 @@ use tauri::{Emitter, Manager};
 #[cfg(unix)]
 use nix::libc;
 
+// ── 认证状态 ─────────────────────────────────────────────
+
+#[derive(Clone)]
+struct AuthState {
+    token: std::sync::Arc<Mutex<Option<String>>>,
+    api_base: String,
+}
+
+impl AuthState {
+    fn new(api_base: String) -> Self {
+        Self {
+            token: std::sync::Arc::new(Mutex::new(None)),
+            api_base,
+        }
+    }
+
+    fn set_token(&self, token: String) {
+        if let Ok(mut guard) = self.token.lock() {
+            *guard = Some(token);
+        }
+    }
+
+    fn get_token(&self) -> Option<String> {
+        self.token.lock().ok().and_then(|g| g.clone())
+    }
+}
+
+#[tauri::command]
+fn set_auth_token(token: String, state: tauri::State<AuthState>) {
+    log::info!("收到 JWT token，长度: {}", token.len());
+    state.set_token(token);
+}
+
 // ── 执行器注册与心跳 ──────────────────────────────────
 
 /// 注册到后端，返回 executor_id + token
-async fn register_executor(api_base: &str) -> Result<(String, String), String> {
+async fn register_executor(api_base: &str, jwt_token: Option<&str>) -> Result<(String, String), String> {
     let client = reqwest::Client::new();
     let body = serde_json::json!({
         "name": hostname(),
         "executor_type": "desktop",
         "cpu_cores": num_cpus(),
     });
-    let resp = client
+    let mut req = client
         .post(format!("{}/api/v1/executors", api_base))
-        .json(&body)
+        .json(&body);
+    if let Some(tk) = jwt_token {
+        req = req.header("Authorization", format!("Bearer {}", tk));
+    }
+    let resp = req
         .send()
         .await
         .map_err(|e| format!("注册失败: {}", e))?;
@@ -1245,10 +1282,14 @@ pub fn run() {
         let _ = write!(f, "{}", std::process::id());
     }
 
+    let api_base = std::env::var("BEEHIVE_API_URL")
+        .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
+
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(CloakState::new())
+        .manage(AuthState::new(api_base.clone()))
         .invoke_handler(tauri::generate_handler![
             launch_cloak,
             stop_cloak,
@@ -1259,6 +1300,7 @@ pub fn run() {
             download_core,
             extract_core,
             run_diagnostic,
+            set_auth_token,
         ])
         .setup(|app| {
             // 首次启动检查 CloakBrowser 二进制
@@ -1388,19 +1430,39 @@ pub fn run() {
             });
 
             // 后台任务：注册+心跳+轮询（基于 tauri async runtime）
-            let api_base = std::env::var("BEEHIVE_API_URL")
-                .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
             let handle = app.handle().clone();
+            let auth_state: AuthState = app.state::<AuthState>().inner().clone();
 
             tauri::async_runtime::spawn(async move {
+                // 等待前端传入 JWT token（最多等 60 秒，每 1 秒轮询）
+                let jwt_token = {
+                    let mut waited = 0u64;
+                    loop {
+                        if let Some(tk) = auth_state.get_token() {
+                            break Some(tk);
+                        }
+                        if waited >= 60 {
+                            log::warn!("60 秒内未收到 JWT token，跳过本次执行器注册");
+                            break None;
+                        }
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                        waited += 1;
+                    }
+                };
+
+                let jwt_token = match jwt_token {
+                    Some(t) => t,
+                    None => return,
+                };
+
                 // 注册
-                match register_executor(&api_base).await {
-                    Ok((id, token)) => {
+                match register_executor(&api_base, Some(&jwt_token)).await {
+                    Ok((id, _token)) => {
                         log::info!("执行器注册成功: {} 于 {}", id, api_base);
                         let executor_id = id.clone();
-                        let executor_token = token.clone();
                         let api_base_clone = api_base.clone();
                         let executor_id_clone = executor_id.clone();
+                        let jwt_token_clone = jwt_token.clone();
 
                         // 心跳并发运行（独立的 tokio::spawn）
                         tokio::spawn(async move {
@@ -1412,7 +1474,7 @@ pub fn run() {
                                         "{}/api/v1/executors/{}/heartbeat",
                                         api_base_clone, executor_id_clone
                                     ))
-                                    .header("Authorization", format!("Bearer {}", executor_token))
+                                    .header("Authorization", format!("Bearer {}", jwt_token_clone))
                                     .send()
                                     .await;
                             }
@@ -1427,7 +1489,7 @@ pub fn run() {
                                     "{}/api/v1/executors/{}/pending-tasks",
                                     api_base, executor_id
                                 ))
-                                .header("Authorization", format!("Bearer {}", token))
+                                .header("Authorization", format!("Bearer {}", jwt_token))
                                 .send()
                                 .await;
 
@@ -1442,11 +1504,9 @@ pub fn run() {
 
                                                 if action == "post_tweet" {
                                                     // 从 task params 提取必要字段
-                                                    let username = task["params"]["username"].as_str().unwrap_or("");
-                                                    let password = task["params"]["password"].as_str().unwrap_or("");
-                                                    let tweet = task["params"]["tweet"].as_str().unwrap_or("");
+                                                    let content = task["params"]["content"].as_str().unwrap_or("");
                                                     let profile_id = task["profile_id"].as_str().unwrap_or("default");
-                                                    let account_id = task["account_id"].as_str().unwrap_or(username);
+                                                    let account_id = task["account_id"].as_str().unwrap_or("");
                                                     let cdp_port = task["params"]["cdp_port"].as_i64().unwrap_or(9222) as i32;
 
                                                     // 获取 CloakState
@@ -1499,9 +1559,7 @@ pub fn run() {
                                                                 .args([
                                                                     script_path.to_str().unwrap_or("scripts/rpa/rpa_twitter.py"),
                                                                     "--action", "post_tweet",
-                                                                    "--username", username,
-                                                                    "--password", password,
-                                                                    "--tweet", tweet,
+                                                                    "--content", content,
                                                                     "--cdp-port", &cdp_port_used.to_string(),
                                                                     "--account-id", account_id,
                                                                 ])
@@ -1550,7 +1608,7 @@ pub fn run() {
                                                             "{}/api/v1/executors/{}/tasks/{}/result",
                                                             api_base, executor_id, task_id
                                                         ))
-                                                        .header("Authorization", format!("Bearer {}", token))
+                                                        .header("Authorization", format!("Bearer {}", jwt_token))
                                                         .json(&serde_json::json!({
                                                             "status": status_str,
                                                             "result": result_json,
@@ -1565,7 +1623,7 @@ pub fn run() {
                                                             "{}/api/v1/executors/{}/tasks/{}/result",
                                                             api_base, executor_id, task_id
                                                         ))
-                                                        .header("Authorization", format!("Bearer {}", token))
+                                                        .header("Authorization", format!("Bearer {}", jwt_token))
                                                         .json(&serde_json::json!({
                                                             "status": "completed",
                                                             "result": {"message": "任务执行成功（模拟）"},

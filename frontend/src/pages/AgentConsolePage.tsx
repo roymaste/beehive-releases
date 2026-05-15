@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { agentProfileAPI, AgentProfileUpdate, agentChatAPI } from '../api/client';
+import { automationsAPI } from '../api/automations';
 import type { ChatSessionItem } from '../api/client';
 import { accountsAPI } from '../api/accounts';
 import { llmAPI, type AvailableModel } from '../api/llm';
@@ -782,6 +783,32 @@ const AgentConsolePage: React.FC = () => {
 
       // Refresh session list to update title
       loadSessions();
+
+      // ── 发推意图检测 ──
+      const tweetKeywords = ['发推', '发推文', '发一条推', '发帖', '帮我发推', '帮我发帖', '发布推文'];
+      const isTweetIntent = tweetKeywords.some(kw => text.includes(kw));
+      
+      if (isTweetIntent) {
+        try {
+          const task = await automationsAPI.createTask({
+            name: `Agent发推: ${text.slice(0, 30)}`,
+            action: 'post_tweet',
+            params: { content: text },
+          });
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `✅ 已创建发推任务 (ID: ${task.id})，桌面客户端将自动执行。`,
+            timestamp: new Date().toISOString(),
+          }]);
+        } catch (err: any) {
+          console.error('创建发推任务失败:', err);
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: `❌ 创建发推任务失败: ${err.message || '未知错误'}`,
+            timestamp: new Date().toISOString(),
+          }]);
+        }
+      }
     } catch (err) {
       const detail = (err as Error).message || '发送失败，请稍后重试';
       toast.error(detail);

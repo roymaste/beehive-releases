@@ -60,6 +60,7 @@ export interface LaunchResult {
   pid: number;
   profile_id: string;
   user_data_dir: string;
+  cdp_port: number;
 }
 
 /** 在 Tauri 桌面端本地启动 BeehiveBrowser */

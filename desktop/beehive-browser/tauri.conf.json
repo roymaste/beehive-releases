@@ -37,6 +37,16 @@
       "deb": {
         "depends": []
       }
+    },
+    "resources": {
+      "cloakbrowser-core": "cloakbrowser-core"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": true,
+      "endpoints": ["https://raw.githubusercontent.com/roymaste/beehive-releases/main/latest.json"]
     }
   }
 }

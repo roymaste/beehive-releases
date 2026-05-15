@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PageTransition } from './components/ui/page-transition';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth, isTokenExpired } from './context/AuthContext';
+import { useEffect } from 'react';
 import { AuthenticatedLayout } from './components/layout/authenticated-layout';
 import LoginPage from './pages/sign-in';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -191,6 +192,19 @@ const AppRoutes: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  useEffect(() => {
+    // 桌面端 Tauri 环境：把 JWT token 传给 Rust 后端
+    if ((window as any).__TAURI__) {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        const { invoke } = (window as any).__TAURI__;
+        invoke('set_auth_token', { token }).catch((err: any) => {
+          console.error('Failed to set auth token in Tauri:', err);
+        });
+      }
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
