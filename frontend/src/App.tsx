@@ -4,6 +4,7 @@ import { PageTransition } from './components/ui/page-transition';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth, isTokenExpired } from './context/AuthContext';
 import { useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { AuthenticatedLayout } from './components/layout/authenticated-layout';
 import LoginPage from './pages/sign-in';
 import AdminLoginPage from './pages/AdminLoginPage';
@@ -202,6 +203,39 @@ const App: React.FC = () => {
           console.error('Failed to set auth token in Tauri:', err);
         });
       }
+
+      // ── 静默自动更新：监听 Rust 端下载完成事件 ──
+      const { listen } = (window as any).__TAURI__;
+      let unlisten: (() => void) | undefined;
+
+      listen('update-available', (event: any) => {
+        const { version, path } = event.payload;
+        toast.success(
+          `已下载更新 v${version}，请重启应用以完成更新`,
+          {
+            duration: 0, // 不自动消失
+            icon: '🚀',
+            action: {
+              label: '立即重启',
+              onClick: async () => {
+                try {
+                  // 调用 Rust 命令执行替换 + 重启
+                  await invoke('apply_update_and_restart', { newPath: path });
+                } catch (err) {
+                  console.error('重启失败:', err);
+                  toast.error('重启失败，请手动重启应用');
+                }
+              },
+            },
+          }
+        );
+      }).then((fn: () => void) => {
+        unlisten = fn;
+      });
+
+      return () => {
+        if (unlisten) unlisten();
+      };
     }
   }, []);
 
