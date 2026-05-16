@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { checkSchema, warnSchemaIssues } from '@/lib/api-safe';
 
 // 检测是否在 Tauri 桌面端运行
 // Tauri 下相对路径指向 tauri://localhost，API 请求会失败
@@ -32,8 +33,44 @@ apiClient.interceptors.request.use((config) => {
 // Response interceptor: global error handling
 let isRedirecting = false;
 
+// ── Schema 校验注册表 ──
+// 注册已知 API 端点的期望结构，收到响应后自动校验。
+// 结构不匹配时控制台警告，不阻塞响应——帮我们及时发现前后端契约偏差。
+const SCHEMA_REGISTRY: Record<string, Record<string, unknown>> = {
+  '/billing/plans': {
+    plans: [
+      {
+        id: 'string',
+        name: 'string',
+        type: 'string',
+        price_monthly: 'number',
+        price_yearly: 'number',
+        env_quota: 'number',
+        api_call_quota: 'number',
+        can_invite: 'boolean',
+        features: 'array',
+      },
+    ],
+  },
+  '/billing/subscription': { id: 'string', plan: 'object', billing_cycle: 'string', status: 'string' },
+  '/billing/invoices': { invoices: 'array' },
+  '/auth/tenant-login': { access_token: 'string', token_type: 'string' },
+};
+
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 运行时结构校验——后端改字段第一时间控制台发现，不靠页面炸了才知道
+    if (response.config.url && response.data) {
+      const schema = SCHEMA_REGISTRY[response.config.url];
+      if (schema) {
+        const issues = checkSchema(response.data, schema);
+        if (issues.length > 0) {
+          warnSchemaIssues(response.config.url, issues);
+        }
+      }
+    }
+    return response;
+  },
   (error) => {
     const status = error.response?.status as number | undefined;
     const url = error.config?.url as string | undefined;
