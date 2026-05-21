@@ -244,7 +244,7 @@ const PricingPage: React.FC = () => {
                 },
                 {
                   feature: 'MCP 协议支持',
-                  beehive: '⏳ 开发中',
+                  beehive: '蜂巢浏览器 — 指纹环境+多平台自动化',
                   yundeng: '✅ 已上线',
                   beehiveColor: 'var(--hive-gold)',
                   yundengColor: 'var(--success)',
@@ -705,7 +705,7 @@ const PricingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* FAQ placeholder */}
+      {/* FAQ 区块 — 见下方 */}
       <div style={{ maxWidth: 800, margin: '80px auto 0', textAlign: 'center' }}>
         <h2 style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 24 }}>
           常见问题
