@@ -5,7 +5,7 @@
   "identifier": "com.beehive.browser",
   "build": {
     "devUrl": "http://localhost:5173",
-    "frontendDist": "./frontend/dist"
+    "frontendDist": "../../frontend/dist"
   },
   "app": {
     "security": {
