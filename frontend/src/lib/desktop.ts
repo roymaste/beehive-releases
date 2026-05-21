@@ -135,6 +135,44 @@ export interface ExtractResult {
   path: string;
 }
 
+// ── CDP 脚本执行器类型 ──────────────────────────────────────
+
+/** 单步脚本定义 */
+export interface ScriptStep {
+  action: string;
+  target?: string;
+  value?: string;
+  wait_ms?: number;
+  humanize?: boolean;
+  optional?: boolean;
+}
+
+/** 单步执行结果 */
+export interface StepResult {
+  action: string;
+  success: boolean;
+  message: string;
+  elapsed_ms: number;
+}
+
+/** 脚本执行总结果 */
+export interface ScriptExecutionResult {
+  success: boolean;
+  steps: StepResult[];
+  message: string;
+}
+
+/** 执行 CDP 脚本步骤（Tauri 桌面端） */
+export async function executeScriptSteps(
+  cdpPort: number,
+  steps: ScriptStep[]
+): Promise<ScriptExecutionResult> {
+  return tauriInvoke<ScriptExecutionResult>('execute_script_steps_command', {
+    cdpPort,
+    steps,
+  });
+}
+
 /** 检查内核是否已安装 */
 export async function checkCoreInstalled(): Promise<CoreCheckResult> {
   return tauriInvoke<CoreCheckResult>('check_core_installed');

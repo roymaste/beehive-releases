@@ -1,0 +1,66 @@
+/* 蜂巢智能体 - 侧边栏品牌样式覆盖 */
+/* 覆盖 shadcn/ui sidebar 的 CSS 变量体系，适配暗黑主题 */
+
+/* 关键：覆盖 .dark 下的 sidebar 变量，确保优先级 */
+.dark {
+  --sidebar: rgba(18, 18, 18, 0.95);
+  --sidebar-foreground: #e0e0e0;
+  --sidebar-accent: #1976D2;
+  --sidebar-accent-foreground: #FFC107;
+  --sidebar-border: rgba(255, 255, 255, 0.04);
+  --sidebar-ring: #FFC107;
+}
+
+/* 侧边栏容器背景 */
+[data-slot="sidebar-inner"] {
+  background: rgba(18, 18, 18, 0.95) !important;
+}
+
+/* 侧边栏右边框 */
+[data-slot="sidebar-container"][data-side="left"] {
+  border-right-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 激活项样式 - 使用 data-active="true" */
+[data-sidebar="menu-button"][data-active="true"] {
+  background: #1976D2 !important;
+  color: #FFC107 !important;
+  border-left: 3px solid #FFC107;
+}
+
+/* 未激活项文字颜色 */
+[data-sidebar="menu-button"] {
+  color: #e0e0e0;
+}
+
+/* 悬停效果 */
+[data-sidebar="menu-button"]:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 子菜单按钮激活态 */
+[data-sidebar="menu-sub-button"][data-active="true"] {
+  background: #1976D2 !important;
+  color: #FFC107 !important;
+}
+
+/* 子菜单按钮文字 */
+[data-sidebar="menu-sub-button"] {
+  color: #e0e0e0;
+}
+
+/* 子菜单按钮悬停 */
+[data-sidebar="menu-sub-button"]:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 分组标签颜色 */
+[data-sidebar="group-label"] {
+  color: #e0e0e0;
+  opacity: 0.7;
+}
+
+/* 分隔线颜色 */
+[data-sidebar="separator"] {
+  background: rgba(255, 255, 255, 0.04) !important;
+}

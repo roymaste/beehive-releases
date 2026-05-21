@@ -29,6 +29,108 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
+// ── 蜂巢背景六边形 SVG ──────────────────────────────────────────
+const HoneycombPattern: React.FC = () => (
+  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 pointer-events-none opacity-30">
+    <defs>
+      <pattern id="hex-signin" width="52" height="60" patternUnits="userSpaceOnUse">
+        <path
+          d="M26 0L46 10V30L26 40L6 30V10L26 0Z"
+          fill="none"
+          stroke="#FFC107"
+          strokeWidth="0.8"
+          opacity="0.2"
+        />
+      </pattern>
+      <mask id="hexMask-signin">
+        <rect width="100%" height="100%" fill="white" />
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#hexFade-signin)" />
+      </mask>
+      <linearGradient id="hexFade-signin" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="white" stopOpacity="1" />
+        <stop offset="40%" stopColor="white" stopOpacity="0.6" />
+        <stop offset="70%" stopColor="white" stopOpacity="0.1" />
+        <stop offset="100%" stopColor="white" stopOpacity="0" />
+      </linearGradient>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#hex-signin)" mask="url(#hexMask-signin)" />
+  </svg>
+);
+
+// ── 装饰线条 + 发光节点 ─────────────────────────────────────────
+const CircuitLines: React.FC = () => (
+  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 pointer-events-none opacity-30">
+    <defs>
+      <filter id="glow-signin" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+        <feMerge>
+          <feMergeNode in="coloredBlur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    {/* 右上区域装饰线 */}
+    <g opacity="0.35" stroke="#FFC107" strokeWidth="1" fill="none">
+      <path d="M75% 5% L85% 5% L85% 15% L92% 15% L92% 25%" />
+      <path d="M70% 12% L78% 12% L78% 22% L88% 22% L88% 30%" />
+      <path d="M80% 8% L80% 18% L90% 18% L90% 28% L95% 28%" />
+    </g>
+    {/* 发光节点 */}
+    <g fill="#FFC107" filter="url(#glow-signin)">
+      <circle cx="85%" cy="5%" r="3" opacity="0.8" />
+      <circle cx="92%" cy="15%" r="2.5" opacity="0.6" />
+      <circle cx="92%" cy="25%" r="2" opacity="0.5" />
+      <circle cx="78%" cy="12%" r="2.5" opacity="0.6" />
+      <circle cx="88%" cy="22%" r="2" opacity="0.5" />
+      <circle cx="88%" cy="30%" r="2" opacity="0.4" />
+      <circle cx="90%" cy="18%" r="2.5" opacity="0.6" />
+      <circle cx="95%" cy="28%" r="2" opacity="0.4" />
+    </g>
+  </svg>
+);
+
+// ── Logo：六边形 + 蜜蜂 ─────────────────────────────────────────
+const HiveLogo: React.FC<{ size?: number }> = ({ size = 64 }) => (
+  <svg width={size} height={size} viewBox="0 0 64 64" fill="none">
+    <defs>
+      <linearGradient id="logoGrad-signin" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#FFC107" />
+        <stop offset="100%" stopColor="#FF9800" />
+      </linearGradient>
+    </defs>
+    {/* 外六边形 */}
+    <path
+      d="M32 4L54 15V41L32 52L10 41V15L32 4Z"
+      fill="url(#logoGrad-signin)"
+      fillOpacity="0.12"
+      stroke="#FFC107"
+      strokeWidth="1.5"
+    />
+    {/* 内六边形 */}
+    <path
+      d="M32 16L44 22.5V35.5L32 42L20 35.5V22.5L32 16Z"
+      fill="url(#logoGrad-signin)"
+      fillOpacity="0.25"
+      stroke="#FFC107"
+      strokeWidth="1"
+    />
+    {/* 蜜蜂身体 */}
+    <ellipse cx="32" cy="29" rx="5" ry="7" fill="#FFC107" />
+    {/* 蜜蜂条纹 */}
+    <line x1="28" y1="26" x2="36" y2="26" stroke="#121212" strokeWidth="1.2" opacity="0.6" />
+    <line x1="27.5" y1="29" x2="36.5" y2="29" stroke="#121212" strokeWidth="1.2" opacity="0.6" />
+    <line x1="28" y1="32" x2="36" y2="32" stroke="#121212" strokeWidth="1.2" opacity="0.6" />
+    {/* 蜜蜂头 */}
+    <circle cx="32" cy="21" r="3.5" fill="#FFC107" />
+    {/* 触角 */}
+    <path d="M30 18.5Q28 15 26 16" stroke="#FFC107" strokeWidth="0.8" fill="none" />
+    <path d="M34 18.5Q36 15 38 16" stroke="#FFC107" strokeWidth="0.8" fill="none" />
+    {/* 翅膀 */}
+    <ellipse cx="27" cy="23" rx="4" ry="2.5" fill="#FFC107" fillOpacity="0.35" transform="rotate(-25 27 23)" />
+    <ellipse cx="37" cy="23" rx="4" ry="2.5" fill="#FFC107" fillOpacity="0.35" transform="rotate(25 37 23)" />
+  </svg>
+);
+
 export default function SignInPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -45,6 +147,12 @@ export default function SignInPage() {
   const [downloads, setDownloads] = useState<Record<string, string>>({})
   const [sendingPwd, setSendingPwd] = useState(false)
   const [pwdSent, setPwdSent] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   useEffect(() => {
     fetch('https://api.github.com/repos/roymaste/beehive-releases/releases/latest')
@@ -116,37 +224,73 @@ export default function SignInPage() {
   }
 
   return (
-    <div className='container grid h-svh max-w-none items-center justify-center'>
-      <div className='mx-auto flex w-full flex-col justify-center space-y-2 py-8 sm:p-8 relative'>
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: '#121212' }}
+    >
+      {/* ── Layer 1: 径向渐变底 ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at 50% 30%, #212121 0%, #121212 100%)',
+        }}
+      />
+
+      {/* ── Layer 2: 右上金色辉光 ── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 60% 50% at 80% 20%, rgba(255,193,7,0.18) 0%, transparent 60%)',
+        }}
+      />
+
+      {/* ── Layer 3: 六边形网格 ── */}
+      <HoneycombPattern />
+
+      {/* ── Layer 4: 装饰线条 + 发光节点 ── */}
+      <CircuitLines />
+
+      {/* ── 主内容 ── */}
+      <div
+        className="w-full max-w-md mx-4 relative z-10"
+        style={{
+          transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+          opacity: mounted ? 1 : 0,
+          transition: 'all 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
         {/* 语言切换按钮 */}
-        <div className='absolute top-4 right-4'>
+        <div className="absolute -top-12 right-0">
           <Button
             variant='outline'
             size='sm'
-            className='bg-background/80 text-foreground border-border'
+            className='border-white/10 text-gray-300 hover:bg-white/5 hover:text-white bg-transparent'
             onClick={() => i18n.changeLanguage(i18n.language.startsWith('zh') ? 'en' : 'zh')}
           >
             {i18n.language.startsWith('zh') ? 'English' : '中文'}
           </Button>
         </div>
 
-        <div className='mb-4 flex items-center justify-center'>
-          <h1 className='text-xl font-medium'>Beehive Agent</h1>
-        </div>
-        <Card className='max-w-sm gap-4'>
-          <CardHeader>
-            <CardTitle className='text-lg tracking-tight'>{t('signIn.title')}</CardTitle>
-            <CardDescription>
-              Enter your email and password below to log into{' '}
-              <br className='max-sm:hidden' /> your account.{' '}
-              {t('signIn.noAccount')}{' '}
-              <Link
-                to='/register'
-                className='text-nowrap underline underline-offset-4 hover:text-primary'
-              >
-                {t('signIn.signUp')}
-              </Link>
-            </CardDescription>
+        <Card
+          className='border border-white/[0.06] shadow-2xl'
+          style={{
+            background: 'rgba(30,30,30,0.75)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+          }}
+        >
+          <CardHeader className="text-center space-y-3 pb-2">
+            <div className="flex justify-center">
+              <HiveLogo size={72} />
+            </div>
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-bold tracking-tight text-white">
+                蜂巢智能体
+              </CardTitle>
+              <CardDescription className="text-sm text-[#FFC107]/80 font-medium tracking-wide">
+                HiveAgent
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -159,9 +303,14 @@ export default function SignInPage() {
                   name='email'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('signIn.email')}</FormLabel>
+                      <FormLabel className="text-gray-300">{t('signIn.email')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('signIn.emailPlaceholder')} {...field} />
+                        <Input
+                          placeholder={t('signIn.emailPlaceholder')}
+                          className="bg-white/5 border-gray-600 text-white placeholder:text-gray-400 focus-visible:border-[#FFC107] focus-visible:ring-[#FFC107]/30"
+                          data-testid="login-email-input"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -172,47 +321,49 @@ export default function SignInPage() {
                   name='password'
                   render={({ field }) => (
                     <FormItem className='relative'>
-                      <FormLabel>{t('signIn.password')}</FormLabel>
+                      <FormLabel className="text-gray-300">{t('signIn.password')}</FormLabel>
                       <FormControl>
-                        <PasswordInput placeholder={t('signIn.passwordPlaceholder')} {...field} />
+                        <PasswordInput
+                          placeholder={t('signIn.passwordPlaceholder')}
+                          className="bg-white/5 border-gray-600 text-white placeholder:text-gray-400 focus-visible:border-[#FFC107] focus-visible:ring-[#FFC107]/30"
+                          data-testid="login-password-input"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                       <Link
                         to='/forgot-password'
-                        className='absolute inset-e-0 -top-0.5 text-sm font-medium text-muted-foreground hover:opacity-75'
+                        className='absolute inset-e-0 -top-0.5 text-sm font-medium text-gray-400 hover:text-white'
                       >
                         {t('signIn.forgotPassword')}
                       </Link>
                     </FormItem>
                   )}
                 />
-                <div className='flex gap-3 mt-2'>
-                  <Button type="submit" className='flex-1' disabled={isLoading}>
+                <div className='mt-2'>
+                  <Button
+                    type="submit"
+                    data-testid="login-submit-btn"
+                    disabled={isLoading}
+                    className='w-full gap-2 bg-[#FFC107] text-[#121212] hover:bg-[#FFB300] font-semibold border-0 h-10'
+                  >
                     {isLoading ? <Loader2 className='animate-spin' /> : <LogIn />}
                     {t('signIn.signIn')}
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    disabled={sendingPwd}
-                    onClick={handleGetPassword}
-                  >
-                    {sendingPwd ? '发送中...' : '获取密码'}
                   </Button>
                 </div>
               </form>
             </Form>
 
             {pwdSent && (
-              <div className='mt-3 p-3 rounded-lg text-sm text-center flex items-center justify-center gap-2 bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'>
+              <div className='mt-3 p-3 rounded-lg text-sm text-center flex items-center justify-center gap-2 bg-[#FFC107]/10 text-[#FFC107] border border-[#FFC107]/20'>
                 <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M20 6L9 17l-5-5'/></svg>
                 密码已发送到您的邮箱，请查收后登录
               </div>
             )}
 
             {/* 客户端下载区 */}
-            <div className='mt-6 pt-5 border-t'>
-              <p className='text-center mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground'>
+            <div className='mt-6 pt-5 border-t border-white/10'>
+              <p className='text-center mb-3 text-xs font-semibold uppercase tracking-wider text-gray-300'>
                 {t('common.downloadClient')}
               </p>
               <div className='flex gap-2'>
@@ -222,25 +373,25 @@ export default function SignInPage() {
                     href={downloads.macos}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border bg-muted/30 hover:bg-muted/50 transition-colors'
+                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border border-white/10 bg-white/5 hover:bg-white/10 transition-colors'
                   >
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-muted-foreground'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-gray-400'>
                         <path d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.98 1.07-3.11-1.05.05-2.31.72-3.06 1.64-.67.81-1.26 2.11-1.1 3.11 1.19.09 2.4-.6 3.09-1.64z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-medium text-muted-foreground'>{t('common.macos')}</div>
-                    <div className='text-[10px] mt-0.5 text-amber-600'>.dmg {t('common.download')}</div>
+                    <div className='text-xs font-medium text-gray-400'>{t('common.macos')}</div>
+                    <div className='text-[10px] mt-0.5 text-[#FFC107]'>.dmg {t('common.download')}</div>
                   </a>
                 ) : (
-                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border bg-muted/30'>
+                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border border-white/10 bg-white/5'>
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-muted-foreground'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-gray-400'>
                         <path d='M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.21-1.98 1.07-3.11-1.05.05-2.31.72-3.06 1.64-.67.81-1.26 2.11-1.1 3.11 1.19.09 2.4-.6 3.09-1.64z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-medium text-muted-foreground'>{t('common.macos')}</div>
-                    <div className='text-[10px] mt-0.5 text-muted-foreground/60'>{t('common.notPublished')}</div>
+                    <div className='text-xs font-medium text-gray-400'>{t('common.macos')}</div>
+                    <div className='text-[10px] mt-0.5 text-gray-400'>{t('common.notPublished')}</div>
                   </div>
                 )}
 
@@ -250,25 +401,25 @@ export default function SignInPage() {
                     href={downloads.linux}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border bg-amber-50/50 hover:bg-amber-50 dark:bg-amber-950/30 dark:hover:bg-amber-950/50 transition-colors border-amber-200 dark:border-amber-800'
+                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border border-[#FFC107]/20 bg-[#FFC107]/5 hover:bg-[#FFC107]/10 transition-colors'
                   >
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-amber-600'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-[#FFC107]'>
                         <path d='M12.5 2c-2.5 0-3.5.5-4.2 1.5-.7 1-1.3 2.5-1.3 4.5 0 1.5.3 2.5.8 3.2.5.7 1.2 1 2 1.2-.5.3-1 .8-1.3 1.5-.3.7-.5 1.5-.5 2.5 0 1.5.5 2.5 1.3 3.2.8.7 1.8 1 3 1s2.2-.3 3-1c.8-.7 1.3-1.7 1.3-3.2 0-1-.2-1.8-.5-2.5-.3-.7-.8-1.2-1.3-1.5.8-.2 1.5-.5 2-1.2.5-.7.8-1.7.8-3.2 0-2-.6-3.5-1.3-4.5-.7-1-1.7-1.5-4.2-1.5z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-semibold text-amber-600'>{t('common.linux')}</div>
-                    <div className='text-[10px] mt-0.5 text-muted-foreground'>.deb / AppImage</div>
+                    <div className='text-xs font-semibold text-[#FFC107]'>{t('common.linux')}</div>
+                    <div className='text-[10px] mt-0.5 text-gray-400'>.deb / AppImage</div>
                   </a>
                 ) : (
-                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border bg-amber-50/50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800'>
+                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border border-[#FFC107]/20 bg-[#FFC107]/5'>
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-amber-600'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-[#FFC107]'>
                         <path d='M12.5 2c-2.5 0-3.5.5-4.2 1.5-.7 1-1.3 2.5-1.3 4.5 0 1.5.3 2.5.8 3.2.5.7 1.2 1 2 1.2-.5.3-1 .8-1.3 1.5-.3.7-.5 1.5-.5 2.5 0 1.5.5 2.5 1.3 3.2.8.7 1.8 1 3 1s2.2-.3 3-1c.8-.7 1.3-1.7 1.3-3.2 0-1-.2-1.8-.5-2.5-.3-.7-.8-1.2-1.3-1.5.8-.2 1.5-.5 2-1.2.5-.7.8-1.7.8-3.2 0-2-.6-3.5-1.3-4.5-.7-1-1.7-1.5-4.2-1.5z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-semibold text-amber-600'>{t('common.linux')}</div>
-                    <div className='text-[10px] mt-0.5 text-muted-foreground/60'>{t('common.notPublished')}</div>
+                    <div className='text-xs font-semibold text-[#FFC107]'>{t('common.linux')}</div>
+                    <div className='text-[10px] mt-0.5 text-gray-400'>{t('common.notPublished')}</div>
                   </div>
                 )}
 
@@ -278,45 +429,54 @@ export default function SignInPage() {
                     href={downloads.windows}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-950/30 dark:hover:bg-blue-950/50 transition-colors border-blue-200 dark:border-blue-800'
+                    className='flex-1 py-2.5 px-2 rounded-xl text-center block no-underline border border-white/10 bg-white/5 hover:bg-white/10 transition-colors'
                   >
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-blue-600'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-gray-400'>
                         <path d='M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13zM5.5 5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5h-13z' />
                         <path d='M10 8h4v4h-4zM8 10h4v4H8zM14 10h4v4h-4zM10 14h4v4h-4z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-semibold text-blue-600'>{t('common.windows')}</div>
-                    <div className='text-[10px] mt-0.5 text-muted-foreground'>.exe {t('common.install')}</div>
+                    <div className='text-xs font-semibold text-gray-400'>{t('common.windows')}</div>
+                    <div className='text-[10px] mt-0.5 text-gray-400'>.exe {t('common.install')}</div>
                   </a>
                 ) : (
-                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border bg-blue-50/50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'>
+                  <div className='flex-1 py-2.5 px-2 rounded-xl text-center border border-white/10 bg-white/5'>
                     <div className='flex justify-center mb-1'>
-                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-blue-600'>
+                      <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor' className='text-gray-400'>
                         <path d='M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13zM5.5 5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5h-13z' />
                         <path d='M10 8h4v4h-4zM8 10h4v4H8zM14 10h4v4h-4zM10 14h4v4h-4z' />
                       </svg>
                     </div>
-                    <div className='text-xs font-semibold text-blue-600'>{t('common.windows')}</div>
-                    <div className='text-[10px] mt-0.5 text-muted-foreground/60'>{t('common.notPublished')}</div>
+                    <div className='text-xs font-semibold text-gray-400'>{t('common.windows')}</div>
+                    <div className='text-[10px] mt-0.5 text-gray-400'>{t('common.notPublished')}</div>
                   </div>
                 )}
               </div>
             </div>
           </CardContent>
+          {/* 注册入口 */}
+          <div className='px-8 text-center mt-1 mb-0'>
+            <p className='text-sm text-gray-400'>
+              还没有账号？{' '}
+              <Link to='/register' className='text-[#FFC107] hover:text-[#FFB300] font-medium underline underline-offset-4'>
+                立即注册
+              </Link>
+            </p>
+          </div>
           <CardFooter>
-            <p className='px-8 text-center text-sm text-muted-foreground'>
+            <p className='px-8 text-center text-sm text-gray-200'>
               {t('signIn.agree')}{' '}
               <a
                 href='/terms'
-                className='underline underline-offset-4 hover:text-primary'
+                className='underline underline-offset-4 hover:text-[#FFC107]'
               >
                 {t('signIn.terms')}
               </a>{' '}
-              and{' '}
+              和{' '}
               <a
                 href='/privacy'
-                className='underline underline-offset-4 hover:text-primary'
+                className='underline underline-offset-4 hover:text-[#FFC107]'
               >
                 {t('signIn.privacy')}
               </a>

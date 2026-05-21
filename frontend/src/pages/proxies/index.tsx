@@ -8,7 +8,9 @@ import {
   RiEditLine,
   RiDeleteBinLine,
   RiSpeedLine,
+  RiServerLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state'
 import { proxiesAPI, Proxy } from '../../api/proxies';
 import DataTable, { Column } from '../../components/DataTable';
 
@@ -185,15 +187,26 @@ const ProxyListPage: React.FC = () => {
       </div>
 
       <div style={{ flex: 1, minHeight: 0 }}>
-        <DataTable
-          columns={columns}
-          data={proxies}
-          rowKey={(r) => r.id}
-          loading={loading}
-          error={fetchError}
-          onRetry={fetchProxies}
-          emptyText="暂无代理，点击「添加代理」开始"
-        />
+        {!loading && proxies.length === 0 ? (
+          <EmptyState
+            data-testid="proxies-empty-state"
+            icon={<RiServerLine size={64} />}
+            title="还没有添加代理"
+            description="代理是连接社媒平台的桥梁，添加代理后即可绑定到环境"
+            actionLabel="添加代理"
+            actionUrl="/proxies/add"
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={proxies}
+            rowKey={(r) => r.id}
+            loading={loading}
+            error={fetchError}
+            onRetry={fetchProxies}
+            emptyText="暂无代理，点击「添加代理」开始"
+          />
+        )}
       </div>
       {dialog}
     </div>

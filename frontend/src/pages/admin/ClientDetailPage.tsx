@@ -12,7 +12,9 @@ import {
   RiGlobalLine,
   RiVipCrownLine,
   RiRefreshLine,
+  RiUserSearchLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state';
 import { adminAPI, AdminClient } from '../../api/admin';
 import { useConfirmDialog } from '../../components/ui/confirm-dialog';
 
@@ -114,9 +116,13 @@ const ClientDetailPage: React.FC = () => {
   if (!client) {
     return (
       <div style={{ padding: '24px 32px' }}>
-        <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: '#78716c' }}>
-          客户不存在
-        </div>
+        <EmptyState
+          icon={<RiUserSearchLine size={64} />}
+          title="客户不存在"
+          description="该客户可能已被删除或链接已失效"
+          actionLabel="返回客户列表"
+          actionUrl="/admin/clients"
+        />
       </div>
     );
   }

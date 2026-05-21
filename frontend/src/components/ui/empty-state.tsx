@@ -1,91 +1,42 @@
-import React from 'react';
-import { cn } from "@/lib/utils"
+import { type ReactNode } from 'react'
+import { Button } from './button'
+import { useNavigate } from 'react-router-dom'
 
-// UX: EmptyState component — consistent empty state with illustration, message, and optional CTA button
 interface EmptyStateProps {
-  icon?: React.ReactNode;
-  title?: string;
-  description?: string;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-  className?: string;
+  icon: ReactNode
+  title: string
+  description: string
+  actionLabel?: string
+  actionUrl?: string
+  action?: { label: string; onClick: () => void }
 }
 
-function EmptyState({
-  icon,
-  title = '暂无数据',
-  description,
-  action,
-  className,
-}: EmptyStateProps) {
+export function EmptyStateTable({ title, description }: { title?: string; description?: string }) {
   return (
-    <div
-      data-slot="empty-state"
-      className={cn(
-        "flex flex-col items-center justify-center text-center px-6 py-16 animate-in fade-in duration-300",
-        className
+    <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+      <h3 className="text-sm font-medium text-muted-foreground">{title || "暂无数据"}</h3>
+      {description && <p className="text-xs text-muted-foreground/60 mt-1">{description}</p>}
+    </div>
+  )
+}
+
+export function EmptyState({ icon, title, description, actionLabel, actionUrl, action }: EmptyStateProps) {
+  const navigate = useNavigate()
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <div className="mb-4 text-muted-foreground/40">{icon}</div>
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-md mb-6">{description}</p>
+      {actionLabel && actionUrl && (
+        <Button onClick={() => navigate(actionUrl)}>
+          {actionLabel}
+        </Button>
       )}
-    >
-      {/* Illustration */}
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-        {icon || (
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className="text-muted-foreground"
-          >
-            <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        )}
-      </div>
-
-      {/* Title */}
-      <h3 className="text-base font-semibold text-foreground mb-1.5">
-        {title}
-      </h3>
-
-      {/* Description */}
-      {description && (
-        <p className="text-sm text-muted-foreground max-w-xs mb-5">
-          {description}
-        </p>
-      )}
-
-      {/* CTA Button */}
       {action && (
-        <button
-          onClick={action.onClick}
-          className="btn"
-        >
+        <Button onClick={action.onClick}>
           {action.label}
-        </button>
+        </Button>
       )}
     </div>
-  );
+  )
 }
-
-// UX: EmptyStateTable — specialized empty state for DataTable with table-appropriate padding
-function EmptyStateTable({
-  icon,
-  title = '暂无数据',
-  description,
-  action,
-}: Omit<EmptyStateProps, 'className'>) {
-  return (
-    <EmptyState
-      icon={icon}
-      title={title}
-      description={description}
-      action={action}
-      className="py-14"
-    />
-  );
-}
-
-export { EmptyState, EmptyStateTable }

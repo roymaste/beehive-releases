@@ -165,6 +165,232 @@ const PricingPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Why Beehive - Competitor Comparison */}
+      <div style={{ maxWidth: 1000, margin: '0 auto 80px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h2
+            style={{
+              fontSize: 32,
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              margin: 0,
+              marginBottom: 12,
+            }}
+          >
+            为什么选蜂巢？
+          </h2>
+          <p style={{ fontSize: 16, color: 'var(--text-secondary)', margin: 0 }}>
+            与云登浏览器对比，蜂巢更适合 AI Agent 开发者
+          </p>
+        </div>
+
+        <div
+          style={{
+            background: 'var(--card-bg)',
+            border: `1px solid ${'var(--divider)'}`,
+            borderRadius: RADIUS_CARD,
+            overflow: 'hidden',
+          }}
+        >
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <th
+                  style={{
+                    padding: '16px 24px',
+                    textAlign: 'left',
+                    fontSize: 14,
+                    color: 'var(--text-secondary)',
+                    fontWeight: 500,
+                    width: '30%',
+                  }}
+                >
+                  能力
+                </th>
+                <th
+                  style={{
+                    padding: '16px 24px',
+                    textAlign: 'center',
+                    fontSize: 16,
+                    color: 'var(--hive-gold)',
+                    fontWeight: 700,
+                    width: '35%',
+                  }}
+                >
+                  蜂巢
+                </th>
+                <th
+                  style={{
+                    padding: '16px 24px',
+                    textAlign: 'center',
+                    fontSize: 16,
+                    color: 'var(--text-tertiary)',
+                    fontWeight: 700,
+                    width: '35%',
+                  }}
+                >
+                  云登
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  feature: 'AI Agent 原生集成',
+                  beehive: '✅ API 优先 + beekeeper skill',
+                  yundeng: '❌ 需手动操作',
+                  beehiveColor: 'var(--success)',
+                  yundengColor: 'var(--text-tertiary)',
+                },
+                {
+                  feature: 'MCP 协议支持',
+                  beehive: '⏳ 开发中',
+                  yundeng: '✅ 已上线',
+                  beehiveColor: 'var(--hive-gold)',
+                  yundengColor: 'var(--success)',
+                },
+                {
+                  feature: '执行器',
+                  beehive: '✅ PC + VPS + 手机三端',
+                  yundeng: '❌ 仅 PC 本地',
+                  beehiveColor: 'var(--success)',
+                  yundengColor: 'var(--text-tertiary)',
+                },
+                {
+                  feature: '计费模式',
+                  beehive: '✅ 按 API + 执行器授权',
+                  yundeng: '❌ 按环境数',
+                  beehiveColor: 'var(--success)',
+                  yundengColor: 'var(--text-tertiary)',
+                },
+                {
+                  feature: '价格',
+                  beehive: '✅ 免费 3 环境 + 100 API/天',
+                  yundeng: '❌ 免费 10 环境',
+                  beehiveColor: 'var(--success)',
+                  yundengColor: 'var(--text-tertiary)',
+                },
+                {
+                  feature: '目标用户',
+                  beehive: '✅ AI Agent 开发者',
+                  yundeng: '❌ 手动操作者',
+                  beehiveColor: 'var(--success)',
+                  yundengColor: 'var(--text-tertiary)',
+                },
+              ].map((row, idx) => (
+                <tr
+                  key={idx}
+                  style={{
+                    background: idx % 2 === 1 ? 'rgba(255,255,255,0.01)' : undefined,
+                  }}
+                >
+                  <td
+                    style={{
+                      padding: '14px 24px',
+                      fontSize: 14,
+                      color: 'var(--text-secondary)',
+                      borderTop: `1px solid ${'var(--divider)'}`,
+                      fontWeight: 500,
+                    }}
+                  >
+                    {row.feature}
+                  </td>
+                  <td
+                    style={{
+                      padding: '14px 24px',
+                      textAlign: 'center',
+                      fontSize: 14,
+                      color: row.beehiveColor,
+                      borderTop: `1px solid ${'var(--divider)'}`,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {row.beehive}
+                  </td>
+                  <td
+                    style={{
+                      padding: '14px 24px',
+                      textAlign: 'center',
+                      fontSize: 14,
+                      color: row.yundengColor,
+                      borderTop: `1px solid ${'var(--divider)'}`,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {row.yundeng}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary card */}
+        <div
+          style={{
+            marginTop: 24,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {[
+            {
+              title: 'AI 原生',
+              desc: '从设计之初就为 AI Agent 优化，API 优先架构',
+            },
+            {
+              title: '多端执行',
+              desc: 'PC、VPS、手机三端覆盖，灵活部署执行器',
+            },
+            {
+              title: '开发者友好',
+              desc: '按 API 调用计费，环境只是执行载体',
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              style={{
+                background: 'var(--card-bg)',
+                border: `1px solid ${'var(--divider)'}`,
+                borderRadius: RADIUS_SM,
+                padding: 20,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: 'var(--hive-gold)',
+                  marginBottom: 12,
+                }}
+              />
+              <h4
+                style={{
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  margin: '0 0 8px',
+                }}
+              >
+                {item.title}
+              </h4>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: 'var(--text-secondary)',
+                  margin: 0,
+                  lineHeight: 1.6,
+                }}
+              >
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Plans */}
       {loading ? (
         <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>

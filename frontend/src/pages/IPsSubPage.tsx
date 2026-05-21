@@ -4,6 +4,7 @@ import { ipsAPI, IPAsset } from '../api/client';
 import toast from 'react-hot-toast';
 import { RiAddLine, RiDeleteBinLine, RiRefreshLine } from 'react-icons/ri';
 import { useConfirmDialog } from '../components/ui/confirm-dialog';
+import { EmptyStateTable } from '../components/ui/empty-state';
 
 const IPsSubPage: React.FC = () => {
   const { id: tenantId } = useParams<{ id: string }>();
@@ -137,7 +138,9 @@ const IPsSubPage: React.FC = () => {
               </tr>
             ) : ips.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-8" style={{ color: '#78716c' }}>暂无IP资产</td>
+                <td colSpan={8} className="text-center py-8">
+                  <EmptyStateTable title="暂无IP资产" description="点击上方「添加IP」按钮添加代理IP" />
+                </td>
               </tr>
             ) : (
               ips.map((ip) => (

@@ -7,7 +7,9 @@ import {
   RiGlobalLine,
   RiRobot2Line,
   RiRefreshLine,
+  RiDashboardLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state';
 import { adminAPI, DashboardStats } from '../../api/admin';
 
 const StatCard: React.FC<{
@@ -145,11 +147,20 @@ const DashboardPage: React.FC = () => {
         </button>
       </div>
 
-      {loading && !stats ? (
+      {loading && !stats && (
         <div className="card" style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted-foreground)' }}>
           加载中...
         </div>
-      ) : (
+      )}
+      {!loading && !stats && (
+        <EmptyState
+          data-testid="admin-welcome-empty"
+          icon={<RiDashboardLine size={64} />}
+          title="欢迎来到管理后台"
+          description="管理后台将展示平台的整体运行状态和关键指标"
+        />
+      )}
+      {stats && (
         <>
           {/* Primary stat cards */}
           <div

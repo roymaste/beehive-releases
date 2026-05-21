@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import {RiRefreshLine, RiTimeLine} from 'react-icons/ri';
+import {RiRefreshLine, RiTimeLine, RiServerLine} from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state'
 import apiClient from '../../api/client';
 
 // ── Types ──
@@ -177,21 +178,11 @@ const ExecutorListPage: React.FC = () => {
         {/* ── List ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {executors.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '48px 24px',
-                color: 'var(--text-secondary)',
-                backgroundColor: 'var(--card-bg)',
-                borderRadius: 12,
-                border: `1px solid ${'var(--divider)'}`,
-              }}
-            >
-              <p style={{ fontSize: 14 }}>暂无执行器</p>
-              <p style={{ fontSize: 12, marginTop: 4 }}>
-                执行器注册后将显示在此处
-              </p>
-            </div>
+            <EmptyState
+              icon={<RiServerLine size={48} />}
+              title="暂无执行器"
+              description="执行器是运行环境的核心节点。安装桌面客户端并注册后，执行器将显示在此处。"
+            />
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {executors.map((ex) => {

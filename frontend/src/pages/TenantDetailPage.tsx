@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link, Outlet, useLocation } from 'react-router-dom';
 import { tenantsAPI, Tenant } from '../api/client';
 import toast from 'react-hot-toast';
-import { RiArrowLeftLine, RiSaveLine } from 'react-icons/ri';
+import { RiArrowLeftLine, RiSaveLine, RiBuildingLine } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const TenantDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -174,10 +175,13 @@ const TenantDetailPage: React.FC = () => {
           ))}
         </div>
         <div className="p-4">
-          {isBase && (
-            <div className="text-center py-8" style={{ color: '#78716c' }}>
-              请点击上方标签管理子资源
-            </div>
+          {!loading && isBase && (
+            <EmptyState
+              data-testid="tenant-empty-state"
+              icon={<RiBuildingLine size={64} />}
+              title="暂无子资源"
+              description="请点击上方标签管理子资源"
+            />
           )}
           <Outlet />
         </div>

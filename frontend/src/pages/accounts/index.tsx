@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   RiLoginBoxLine,
@@ -7,7 +8,9 @@ import {
   RiDeleteBinLine,
   RiRefreshLine,
   RiErrorWarningLine,
+  RiUserAddLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state'
 import apiClient, { tenantsAPI, platformsAPI, PlatformAccount } from '../../api/client';
 import DataTable, { Column } from '../../components/DataTable';
 
@@ -20,6 +23,7 @@ interface AccountWithTenant extends PlatformAccount {
 const AccountListPage: React.FC = () => {
   const [accounts, setAccounts] = useState<AccountWithTenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
@@ -226,13 +230,55 @@ const AccountListPage: React.FC = () => {
       )}
 
       <div style={{ flex: 1, minHeight: 0 }}>
-        <DataTable
-          columns={columns}
-          data={accounts}
-          rowKey={(r) => r.id}
-          loading={loading}
-          emptyText="暂无账号"
-        />
+        {!loading && accounts.length === 0 ? (
+          <EmptyState
+            data-testid="accounts-empty-state"
+            icon={<RiUserAddLine size={64} />}
+            title="还没有添加账号"
+            description="添加你的社媒账号，开始在平台上发布内容"
+            actionLabel="添加账号"
+            actionUrl="/accounts/create"
+          />
+        ) : (
+          <>
+            <DataTable
+              columns={columns}
+              data={accounts}
+              rowKey={(r) => r.id}
+              loading={loading}
+              emptyText="暂无账号"
+            />
+            {/* 空状态引导 */}
+            {!loading && accounts.length === 0 && (
+              <div style={{
+                marginTop: 24,
+                padding: '24px 20px',
+                borderRadius: 12,
+                background: 'var(--gray-800)',
+                textAlign: 'center',
+              }}>
+                <p style={{ margin: '0 0 16px', fontSize: 14, color: 'var(--text-secondary)' }}>
+                  账号需要先创建浏览器环境，再在环境中绑定社交平台账号
+                </p>
+                <button
+                  onClick={() => navigate('/profiles')}
+                  style={{
+                    background: 'var(--primary)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    padding: '10px 20px',
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                >
+                  去创建环境
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
       {dialog}
     </div>

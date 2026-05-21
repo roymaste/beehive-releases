@@ -35,6 +35,7 @@ import {
   Command,
   HelpCircle,
   BookOpen,
+  SendHorizontal,
 } from 'lucide-react';
 import {
   Dialog,
@@ -55,6 +56,7 @@ import { automationsAPI } from '../api/automations';
 import type { ChatSessionItem } from '../api/client';
 import { accountsAPI } from '../api/accounts';
 import { llmAPI, type AvailableModel } from '../api/llm';
+import apiClient from '../api/client';
 
 // ── Types ──
 
@@ -89,6 +91,7 @@ const CODE_BLOCK_STYLES = `
 const WRITING_STYLES = ['casual', 'professional', 'creative', 'technical'] as const;
 const TONES = ['friendly', 'formal', 'humorous', 'neutral'] as const;
 const SESSION_STORAGE_KEY = 'agent_console_session_id';
+const GUIDE_DISMISSED_KEY = 'agent-guide-dismissed';
 const SIDEBAR_WIDTH = 260;
 const RIGHT_PANEL_WIDTH = 260;
 
@@ -288,6 +291,8 @@ const MarkdownMessage: React.FC<{ content: string }> = ({ content }) => {
 // ── Component: StatCard ──
 
 const StatCard: React.FC<{ stat: DashboardStat }> = ({ stat }) => {
+  const isEmptyValue = stat.value === 0 || stat.value === '-' || stat.value === '--';
+  const displayValue = stat.value === 0 || stat.value === '-' ? '--' : stat.value;
   return (
     <div
       className="flex items-center gap-3 px-4 py-3 rounded-xl transition-colors"
@@ -303,8 +308,11 @@ const StatCard: React.FC<{ stat: DashboardStat }> = ({ stat }) => {
         {stat.icon}
       </div>
       <div className="min-w-0">
-        <div className="text-lg font-bold leading-tight" style={{ color: 'var(--text-primary)' }}>
-          {stat.value}
+        <div
+          className="text-lg font-bold leading-tight"
+          style={{ color: isEmptyValue ? 'var(--text-tertiary)' : 'var(--text-primary)' }}
+        >
+          {displayValue}
         </div>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {stat.label}
@@ -317,11 +325,11 @@ const StatCard: React.FC<{ stat: DashboardStat }> = ({ stat }) => {
 // ── Component: GuidePanel ──
 
 const GUIDE_ITEMS = [
-  { icon: <BrainCircuit size={16} />, title: '智能对话', desc: '直接输入你的需求，AI Agent 会理解并执行' },
-  { icon: <Puzzle size={16} />, title: '安装技能', desc: '在对话中说"帮我装个技能"来扩展能力' },
-  { icon: <BarChart3 size={16} />, title: '数据看板', desc: '点击左侧"数据看板"查看运营数据' },
-  { icon: <Settings2 size={16} />, title: '配置设置', desc: '点击设置图标调整 AI 风格和知识库' },
-  { icon: <Command size={16} />, title: '快捷指令', desc: '输入 /help 查看所有可用指令' },
+  { icon: <BrainCircuit size={16} />, title: '说人话指挥', desc: '"每天早上8点去推特搜AI新闻并点赞前3条" — AI自动创建技能并定时执行' },
+  { icon: <Puzzle size={16} />, title: '创建自动化技能', desc: '"帮我创建一个发推技能，每周一三五早上9点发科技新闻"' },
+  { icon: <BarChart3 size={16} />, title: '立即执行', desc: '"马上跑我的AI新闻技能" 或 "现在发一条推" — 立即触发，不等定时' },
+  { icon: <Settings2 size={16} />, title: '修改已有技能', desc: '"把早8点改成早9点" / "语气改得更毒舌" — 改技能配置一句话搞定' },
+  { icon: <Command size={16} />, title: '平台账号管理', desc: '"添加一个Twitter账号" / "给这个环境绑定代理" — 在聊天里管理一切' },
 ];
 
 const GuidePanel: React.FC<{ open: boolean; onToggle: () => void }> = ({ open, onToggle }) => {
@@ -426,8 +434,13 @@ const AgentConsolePage: React.FC = () => {
   const [sessions, setSessions] = useState<ChatSessionItem[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
 
-  // Right guide panel state
-  const [guideOpen, setGuideOpen] = useState(true);
+  // Right guide panel state (dismissible via localStorage)
+  const [guideOpen, setGuideOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(GUIDE_DISMISSED_KEY) !== 'true';
+    }
+    return true;
+  });
 
   // Dashboard stats
   const [accountCount, setAccountCount] = useState<number | null>(null);
@@ -461,7 +474,8 @@ const AgentConsolePage: React.FC = () => {
       if (window.innerWidth < 1280) {
         setGuideOpen(false);
       } else {
-        setGuideOpen(true);
+        const dismissed = localStorage.getItem(GUIDE_DISMISSED_KEY) === 'true';
+        setGuideOpen(!dismissed);
       }
     };
     handleResize();
@@ -842,32 +856,32 @@ const AgentConsolePage: React.FC = () => {
 
   const isEmpty = messages.length === 0 && !loading;
 
-  // Dashboard stats data
+  // Dashboard stats data (softened empty states)
   const stats: DashboardStat[] = [
     {
       label: '账号数量',
-      value: accountCount ?? '-',
+      value: accountCount ?? '--',
       icon: <Users size={16} />,
       color: '#22c55e',
       bgColor: 'rgba(34,197,94,0.12)',
     },
     {
       label: '今日消息',
-      value: todayMessages,
+      value: todayMessages || '--',
       icon: <MessageSquare size={16} />,
       color: '#3b82f6',
       bgColor: 'rgba(59,130,246,0.12)',
     },
     {
       label: 'API 剩余配额',
-      value: remaining !== null ? remaining : apiQuota !== null ? apiQuota : '-',
+      value: remaining !== null ? remaining : apiQuota !== null ? apiQuota : '--',
       icon: <KeyRound size={16} />,
       color: '#f59e0b',
       bgColor: 'rgba(245,158,11,0.12)',
     },
     {
       label: '活跃会话',
-      value: sessions.length,
+      value: sessions.length || '--',
       icon: <Activity size={16} />,
       color: '#a855f7',
       bgColor: 'rgba(168,85,247,0.12)',
@@ -880,10 +894,11 @@ const AgentConsolePage: React.FC = () => {
       {/* Inject code styles */}
       <style>{CODE_BLOCK_STYLES}</style>
 
-      {/* Sidebar */}
+      {/* Right Sidebar — History Sessions */}
       <aside
-        className="flex-shrink-0 flex flex-col border-r transition-all duration-300 ease-in-out"
+        className="flex-shrink-0 flex flex-col border-l transition-all duration-300 ease-in-out"
         style={{
+          order: 2,
           width: sidebarOpen ? SIDEBAR_WIDTH : 0,
           borderColor: 'var(--divider)',
           background: 'var(--sidebar-bg)',
@@ -1054,8 +1069,8 @@ const AgentConsolePage: React.FC = () => {
           {isEmpty ? (
             <EmptyState
               icon={<RiRobot2Line size={32} className="text-muted-foreground" />}
-              title="开始与 AI 助手对话"
-              description="我可以帮你策划内容、优化文案、分析数据。输入你的问题，开始对话吧！"
+              title="对蜂巢说话，AI 帮你干活"
+              description="试试说：「每天早上8点去推特搜AI新闻并点赞前3条」- AI会帮你创建技能、自动生成操作脚本、定时执行。"
               action={{
                 label: '开始对话',
                 onClick: () => inputRef.current?.focus(),
@@ -1171,70 +1186,77 @@ const AgentConsolePage: React.FC = () => {
             )}
             <div className="flex items-end gap-3">
               <div className="flex-1 relative">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="输入你的问题…"
-                rows={1}
-                disabled={loading}
-                className="input w-full resize-none pr-12"
-                style={{
-                  background: 'var(--card-bg)',
-                  borderColor: 'rgba(255,255,255,0.10)',
-                  color: 'var(--text-primary)',
-                  borderRadius: '12px',
-                  padding: '12px 48px 12px 16px',
-                  minHeight: '48px',
-                  maxHeight: '160px',
-                  lineHeight: '1.5',
-                }}
-              />
-              <span
-                className="absolute right-3 bottom-3 text-xs"
-                style={{ color: 'var(--gray-700)' }}
-              >
-                ↵
-              </span>
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="输入你的问题…"
+                  rows={1}
+                  disabled={loading}
+                  className="input w-full resize-none pr-12 focus-visible:border-[#FFC107] focus-visible:ring-2 focus-visible:ring-[#FFC107]/30"
+                  style={{
+                    background: 'var(--card-bg)',
+                    borderColor: 'rgba(255,255,255,0.10)',
+                    color: 'var(--text-primary)',
+                    borderRadius: '12px',
+                    padding: '12px 48px 12px 16px',
+                    minHeight: '48px',
+                    maxHeight: '160px',
+                    lineHeight: '1.5',
+                  }}
+                />
+                <span
+                  className="absolute right-3 bottom-3 text-xs"
+                  style={{ color: 'var(--gray-700)' }}
+                >
+                  ↵
+                </span>
+              </div>
+              {loading ? (
+                <button
+                  onClick={handleAbort}
+                  className="flex items-center justify-center w-12 h-12 p-0 rounded-xl flex-shrink-0"
+                  style={{
+                    background: 'var(--error-bg)',
+                    color: 'var(--error)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(244,67,54,0.2)',
+                  }}
+                  title="停止生成"
+                >
+                  <span className="w-3 h-3 rounded-sm bg-current" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={!input.trim() || loading}
+                  className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#FFC107] text-[#121212] hover:bg-[#FFB300] transition-colors flex-shrink-0"
+                >
+                  <SendHorizontal size={18} />
+                </button>
+              )}
             </div>
-            {loading ? (
-              <button
-                onClick={handleAbort}
-                className="flex items-center justify-center w-12 h-12 p-0 rounded-xl flex-shrink-0"
-                style={{
-                  background: 'var(--error-bg)',
-                  color: 'var(--error)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(244,67,54,0.2)',
-                }}
-                title="停止生成"
-              >
-                <span className="w-3 h-3 rounded-sm bg-current" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || loading}
-                className="btn flex items-center justify-center w-12 h-12 p-0 rounded-xl flex-shrink-0"
-                style={{
-                  background: input.trim() && !loading ? 'var(--hive-gold)' : 'rgba(255,255,255,0.06)',
-                  color: input.trim() && !loading ? 'var(--page-bg)' : 'var(--gray-700)',
-                  borderRadius: '12px',
-                }}
-              >
-                <RiSendPlaneFill size={20} />
-              </button>
-            )}
+            <p className="text-center text-xs mt-2" style={{ color: 'var(--gray-700)' }}>
+              AI 生成内容仅供参考，请核实后使用
+            </p>
           </div>
-          <p className="text-center text-xs mt-2" style={{ color: 'var(--gray-700)' }}>
-            AI 生成内容仅供参考，请核实后使用
-          </p>
         </div>
       </div>
 
       {/* Right Guide Panel */}
-      <GuidePanel open={guideOpen} onToggle={() => setGuideOpen((v) => !v)} />
+      <GuidePanel
+        open={guideOpen}
+        onToggle={() => {
+          const next = !guideOpen;
+          setGuideOpen(next);
+          if (!next) {
+            localStorage.setItem(GUIDE_DISMISSED_KEY, 'true');
+          } else {
+            localStorage.removeItem(GUIDE_DISMISSED_KEY);
+          }
+        }}
+      />
 
       {/* Settings Dialog */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
@@ -1427,7 +1449,6 @@ const AgentConsolePage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
     </div>
   );
 };

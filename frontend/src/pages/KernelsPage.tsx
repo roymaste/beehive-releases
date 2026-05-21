@@ -1,74 +1,65 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { RiChromeLine, RiDownloadLine, RiCheckLine, RiRefreshLine } from 'react-icons/ri';
+import { RiChromeLine, RiDownloadLine, RiCheckLine, RiRefreshLine, RiCloudLine } from 'react-icons/ri';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   checkCoreInstalled,
-  getCoreVersions,
   downloadCore,
   extractCore,
-  getCoreDownloadUrl,
   isDesktopApp,
-  type CoreVersions,
   type CoreCheckResult,
   type DownloadProgressEvent,
 } from '@/lib/desktop';
+import { browserKernelsAPI, type BrowserKernel } from '@/api/browserKernels';
 
-// ── Palette ──
+// ── Types ──
 
-
-interface KernelVersion {
+interface KernelItem {
+  id: string;
   name: string;
   version: string;
   installed: boolean;
+  downloadUrl: string;
   downloading?: boolean;
   progress?: number;
 }
 
 const KernelsPage: React.FC = () => {
-  const [kernels, setKernels] = useState<KernelVersion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [kernels, setKernels] = useState<KernelItem[]>([]);
+  const [loading, setLoading] = useState(() => !isDesktopApp());
+  const isDesktop = useMemo(() => isDesktopApp(), []);
+  const [syncing, setSyncing] = useState(false);
 
   const fetchVersions = useCallback(async () => {
     setLoading(true);
     try {
-      const check: CoreCheckResult = await checkCoreInstalled();
-      if (check.installed && check.versions) {
-        setKernels([
-          {
-            name: 'Chromium',
-            version: check.versions.chromium,
-            installed: true,
-          },
-          {
-            name: 'Playwright',
-            version: check.versions.playwright,
-            installed: true,
-          },
-        ]);
-      } else {
-        // Fallback: try getCoreVersions directly
-        try {
-          const versions: CoreVersions = await getCoreVersions();
-          setKernels([
-            {
-              name: 'Chromium',
-              version: versions.chromium,
-              installed: true,
-            },
-            {
-              name: 'Playwright',
-              version: versions.playwright,
-              installed: true,
-            },
-          ]);
-        } catch {
-          setKernels([]);
+      // 1. 获取远程可用内核列表
+      const { data: listData } = await browserKernelsAPI.list();
+      const remoteKernels: BrowserKernel[] = listData.kernels || [];
+
+      // 2. 获取本地已安装内核版本
+      let installedVersion = '';
+      try {
+        const check: CoreCheckResult = await checkCoreInstalled();
+        if (check.installed && check.versions) {
+          installedVersion = check.versions.chromium;
         }
+      } catch {
+        // 本地未安装或检查失败，installedVersion 保持为空
       }
+
+      // 3. 合并展示
+      const merged: KernelItem[] = remoteKernels.map((rk) => ({
+        id: rk.id,
+        name: rk.display_name || rk.version,
+        version: rk.version,
+        installed: rk.version === installedVersion,
+        downloadUrl: rk.download_url,
+      }));
+
+      setKernels(merged);
     } catch {
-      toast.error('获取内核版本失败');
+      toast.error('获取内核列表失败');
       setKernels([]);
     } finally {
       setLoading(false);
@@ -76,15 +67,36 @@ const KernelsPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setIsDesktop(isDesktopApp());
-    if (isDesktopApp()) {
+    if (!isDesktop) return;
+    // 延迟到下一帧执行数据获取，避免在 effect 中同步 setState
+    const timer = setTimeout(() => {
       fetchVersions();
-    } else {
-      setLoading(false);
-    }
-  }, [fetchVersions]);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchVersions, isDesktop]);
 
-  const handleDownload = async (kernelName: string) => {
+  const handleSync = async () => {
+    if (!isDesktop) {
+      toast.error('请在桌面端应用中同步内核');
+      return;
+    }
+    setSyncing(true);
+    try {
+      const { data } = await browserKernelsAPI.sync();
+      if (data.success) {
+        toast.success(data.message || '同步成功');
+        await fetchVersions();
+      } else {
+        toast.error(data.message || '同步失败');
+      }
+    } catch {
+      toast.error('同步远程内核失败');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleDownload = async (kernel: KernelItem) => {
     if (!isDesktop) {
       toast.error('请在桌面端应用中下载内核');
       return;
@@ -92,18 +104,20 @@ const KernelsPage: React.FC = () => {
 
     setKernels((prev) =>
       prev.map((k) =>
-        k.name === kernelName ? { ...k, downloading: true, progress: 0 } : k
+        k.id === kernel.id ? { ...k, downloading: true, progress: 0 } : k
       )
     );
 
     try {
-      // 获取当前平台对应的下载 URL
-      const url = getCoreDownloadUrl();
+      const url = kernel.downloadUrl;
+      if (!url) {
+        throw new Error('未找到下载地址');
+      }
 
       const result = await downloadCore(url, (event: DownloadProgressEvent) => {
         setKernels((prev) =>
           prev.map((k) =>
-            k.name === kernelName
+            k.id === kernel.id
               ? { ...k, progress: Math.round(event.percentage) }
               : k
           )
@@ -111,18 +125,26 @@ const KernelsPage: React.FC = () => {
       });
 
       if (result.status === 'ok') {
-        // Auto extract after download
+        // 下载成功后自动解压
         await extractCore(result.path);
-        toast.success(`${kernelName} 下载并安装成功`);
+        toast.success(`${kernel.name} 下载并安装成功`);
+
+        // 向后端汇报安装状态
+        try {
+          await browserKernelsAPI.reportInstall(kernel.version);
+        } catch {
+          // 汇报失败不影响本地流程
+        }
+
         await fetchVersions();
       } else {
         throw new Error('Download failed');
       }
-    } catch (err) {
-      toast.error(`${kernelName} 下载失败`);
+    } catch {
+      toast.error(`${kernel.name} 下载失败`);
       setKernels((prev) =>
         prev.map((k) =>
-          k.name === kernelName ? { ...k, downloading: false, progress: undefined } : k
+          k.id === kernel.id ? { ...k, downloading: false, progress: undefined } : k
         )
       );
     }
@@ -167,33 +189,65 @@ const KernelsPage: React.FC = () => {
             管理本地浏览器内核版本，下载和更新 Chromium / Playwright 内核
           </p>
         </div>
-        <button
-          onClick={fetchVersions}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 8,
-            border: `1px solid ${'var(--divider)'}`,
-            backgroundColor: 'transparent',
-            color: 'var(--text-secondary)',
-            fontSize: 13,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            transition: 'all 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-            e.currentTarget.style.color = 'var(--text-primary)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = 'var(--text-secondary)';
-          }}
-        >
-          <RiRefreshLine size={16} />
-          刷新
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: `1px solid ${'var(--divider)'}`,
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              cursor: syncing ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              if (!syncing) {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+          >
+            <RiCloudLine size={16} />
+            {syncing ? '同步中' : '同步远程'}
+          </button>
+          <button
+            onClick={fetchVersions}
+            style={{
+              padding: '8px 16px',
+              borderRadius: 8,
+              border: `1px solid ${'var(--divider)'}`,
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)',
+              fontSize: 13,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+          >
+            <RiRefreshLine size={16} />
+            刷新
+          </button>
+        </div>
       </div>
 
       {/* ── Kernel List ── */}
@@ -201,17 +255,17 @@ const KernelsPage: React.FC = () => {
         <EmptyState
           icon={<RiChromeLine size={32} className="text-muted-foreground" />}
           title="暂无内核"
-          description="尚未检测到已安装的浏览器内核。点击下方按钮下载安装。"
+          description="尚未检测到可用内核。点击「同步远程」获取最新内核列表。"
           action={{
-            label: '下载 Chromium',
-            onClick: () => handleDownload('Chromium'),
+            label: '同步远程',
+            onClick: handleSync,
           }}
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {kernels.map((kernel) => (
             <div
-              key={kernel.name}
+              key={kernel.id}
               style={{
                 backgroundColor: 'var(--card-bg)',
                 border: `1px solid ${'var(--divider)'}`,
@@ -267,6 +321,20 @@ const KernelsPage: React.FC = () => {
                         已安装
                       </span>
                     )}
+                    {!kernel.installed && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--text-tertiary)',
+                          backgroundColor: 'rgba(255,255,255,0.06)',
+                          padding: '2px 8px',
+                          borderRadius: 4,
+                          fontWeight: 500,
+                        }}
+                      >
+                        未安装
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
                     版本: {kernel.version}
@@ -308,17 +376,25 @@ const KernelsPage: React.FC = () => {
               </div>
 
               <button
-                onClick={() => handleDownload(kernel.name)}
-                disabled={kernel.downloading}
+                onClick={() => handleDownload(kernel)}
+                disabled={kernel.downloading || kernel.installed}
                 style={{
                   padding: '8px 18px',
                   borderRadius: 8,
                   border: 'none',
-                  backgroundColor: kernel.downloading ? 'rgba(255,255,255,0.06)' : 'var(--hive-blue)',
-                  color: kernel.downloading ? 'var(--text-tertiary)' : '#fff',
+                  backgroundColor: kernel.downloading
+                    ? 'rgba(255,255,255,0.06)'
+                    : kernel.installed
+                    ? 'rgba(76,175,80,0.15)'
+                    : 'var(--hive-blue)',
+                  color: kernel.downloading
+                    ? 'var(--text-tertiary)'
+                    : kernel.installed
+                    ? 'var(--success)'
+                    : '#fff',
                   fontSize: 13,
                   fontWeight: 500,
-                  cursor: kernel.downloading ? 'not-allowed' : 'pointer',
+                  cursor: kernel.downloading || kernel.installed ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
@@ -326,18 +402,18 @@ const KernelsPage: React.FC = () => {
                   whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={(e) => {
-                  if (!kernel.downloading) {
+                  if (!kernel.downloading && !kernel.installed) {
                     e.currentTarget.style.backgroundColor = 'var(--hive-blue-hover)';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!kernel.downloading) {
+                  if (!kernel.downloading && !kernel.installed) {
                     e.currentTarget.style.backgroundColor = 'var(--hive-blue)';
                   }
                 }}
               >
                 <RiDownloadLine size={16} />
-                {kernel.downloading ? '下载中' : '重新下载'}
+                {kernel.downloading ? '下载中' : kernel.installed ? '已安装' : '下载'}
               </button>
             </div>
           ))}

@@ -28,7 +28,9 @@ import {
   RiSendPlaneLine,
   RiSettings3Line,
   RiRobot2Line,
+  RiHomeSmileLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state'
 
 /* ═══════════════════════════════════════════
    HiveAgent Dashboard — 暗色科技风重设计
@@ -116,95 +118,56 @@ const PlanBadge: React.FC<{ plan: string }> = ({ plan }) => {
   );
 };
 
-/** 数据卡片 — 带发光效果 */
+
 interface StatCardProps {
   icon: React.ReactNode;
   label: string;
-  value: number | string;
+  value: string | number;
   subLabel?: string;
-  subValue?: string;
-  color: string;
-  glowColor: string;
   onClick?: () => void;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ icon, label, value, subLabel, subValue, color, glowColor, onClick }) => {
-  const [hover, setHover] = useState(false);
-  return (
+const StatCard: React.FC<StatCardProps> = ({ icon, label, value, subLabel, onClick }) => (
+  <div
+    onClick={onClick}
+    className="flex flex-col items-center justify-center p-5 rounded-xl cursor-pointer transition-all duration-200"
+    style={{
+      background: 'var(--card-bg-subtle)',
+      border: '1px solid var(--divider)',
+      borderRadius: 'var(--radius-card)',
+      boxShadow: `0 0 0 1px rgba(255,193,7,0)`,
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = 'var(--card-bg-hover)';
+      e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,193,7,0.15), 0 0 20px rgba(255,193,7,0.06)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = 'var(--card-bg-subtle)';
+      e.currentTarget.style.boxShadow = '0 0 0 1px rgba(255,193,7,0)';
+    }}
+  >
     <div
-      onClick={onClick}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      className="relative overflow-hidden cursor-pointer select-none"
+      className="flex items-center justify-center w-10 h-10 rounded-lg mb-3"
       style={{
-        background: 'var(--card-bg)',
-        border: `1px solid ${hover ? 'var(--divider)' : 'var(--divider)'}`,
-        borderRadius: RADIUS.card,
-        padding: '22px 20px 18px',
-        transition: 'all 0.25s ease',
-        boxShadow: hover ? SHADOW.cardHover : SHADOW.card,
+        background: 'var(--hive-gold-bg)',
+        color: 'var(--hive-gold)',
       }}
     >
-      {/* 顶部发光条 */}
-      <div
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{
-          background: `linear-gradient(90deg, transparent, ${color}, transparent)`,
-          opacity: hover ? 1 : 0.5,
-          transition: 'opacity 0.25s',
-        }}
-      />
-      {/* 悬停背景光 */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at 50% 0%, ${glowColor}, transparent 70%)`,
-          opacity: hover ? 0.6 : 0.2,
-          transition: 'opacity 0.25s',
-        }}
-      />
-
-      <div className="relative z-10">
-        {/* 顶部：图标 + 标签 */}
-        <div className="flex items-center justify-between mb-3">
-          <div
-            className="flex items-center justify-center w-10 h-10 rounded-xl"
-            style={{ background: glowColor, color }}
-          >
-            {icon}
-          </div>
-          <span className="text-[11px] font-medium" style={{ color: 'var(--text-tertiary)' }}>
-            {label}
-          </span>
-        </div>
-
-        {/* 数值 */}
-        <div
-          className="text-[32px] font-bold leading-none tracking-tight"
-          style={{ color, fontFamily: "'Poppins', sans-serif" }}
-        >
-          {value}
-        </div>
-
-        {/* 子信息 */}
-        {(subLabel || subValue) && (
-          <div className="flex items-center gap-2 mt-2">
-            {subValue && (
-              <span className="text-[13px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
-                {subValue}
-              </span>
-            )}
-            {subLabel && (
-              <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>
-                {subLabel}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+      {icon}
     </div>
-  );
-};
+    <span className="text-2xl font-bold" style={{ color: 'var(--hive-gold)' }}>
+      {value}
+    </span>
+    <span className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+      {label}
+    </span>
+    {subLabel && (
+      <span className="text-[11px] mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+        {subLabel}
+      </span>
+    )}
+  </div>
+);
 
 /** 迷你环形图 — 成功率 */
 const SuccessRing: React.FC<{ rate: number; size?: number }> = ({ rate, size = 120 }) => {
@@ -346,52 +309,61 @@ const TenantDashboard: React.FC<{ stats: DashboardStats; loading: boolean }> = (
 
   const statCards: StatCardProps[] = useMemo(() => [
     {
-      icon: <RiGlobalLine size={20} />,
+      icon: <RiHomeSmileLine size={20} />,
       label: '账号数',
       value: loading ? '—' : (stats as any).total_accounts ?? '—',
       subLabel: `已绑定 ${(stats as any).bound_accounts ?? '—'}`,
-      color: 'var(--hive-gold)',
-      glowColor: 'rgba(255,193,7,0.20)',
       onClick: () => navigate('/accounts'),
     },
     {
       icon: <RiSendPlaneLine size={20} />,
       label: '今日发帖',
       value: loading ? '—' : stats.today_posts ?? '—',
-      color: '#9C27B0',
-      glowColor: 'rgba(156,39,176,0.15)',
       onClick: () => navigate('/ai-workflow'),
     },
     {
       icon: <RiTimeLine size={20} />,
       label: '待发布',
       value: loading ? '—' : (stats as any).pending_posts ?? '—',
-      color: 'var(--hive-blue)',
-      glowColor: 'rgba(25,118,210,0.20)',
       onClick: () => navigate('/automations'),
     },
     {
       icon: <RiPulseLine size={20} />,
       label: '互动消息',
       value: loading ? '—' : (stats as any).interactions ?? '—',
-      color: 'var(--success)',
-      glowColor: 'rgba(76,175,80,0.20)',
       onClick: () => navigate('/agent/auto-reply'),
     },
   ], [stats, loading, navigate]);
 
   const quickActions = [
     { icon: <RiAddLine size={22} />, label: '绑定账号', desc: '添加社媒账号', href: '/accounts', variant: 'primary' as const },
-    { icon: <RiEditLine size={22} />, label: 'AI发帖', desc: 'AI生成并发布', href: '/ai-workflow', variant: 'secondary' as const },
+    { icon: <RiEditLine size={22} />, label: 'AI发帖', desc: 'AI生成并发布', href: '/ai-workflow', variant: 'primary' as const },
     { icon: <RiRobot2Line size={22} />, label: '自动运营', desc: '设置智能互动', href: '/agent/auto-reply', variant: 'ghost' as const },
   ];
 
   const recentRecords = stats.recent_profiles.slice(0, 5);
 
+  // 判断是否为全新用户（所有核心数据为 0）
+  const isNewUser = !loading &&
+    (stats.total_envs ?? 0) === 0 &&
+    (stats.total_proxies ?? 0) === 0;
+
   return (
     <div className="space-y-5">
+      {/* ── 全新用户空状态引导 ── */}
+      {isNewUser && (
+        <EmptyState
+          data-testid="welcome-empty-state"
+          icon={<RiHomeSmileLine size={64} />}
+          title="欢迎来到蜂巢智能体"
+          description="开始使用只需三步：1. 创建环境 → 2. 绑定代理 → 3. 添加账号开始运营"
+          actionLabel="开始创建环境"
+          actionUrl="/profiles"
+        />
+      )}
+
       {/* ── 数据卡片行 ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {statCards.map((card) => (
           <StatCard key={card.label} {...card} />
         ))}
@@ -728,9 +700,7 @@ const DashboardPage: React.FC = () => {
           >
             {isAdmin ? '管理概览' : '运营概览'}
           </h1>
-          <p className="text-[13px] mt-1" style={{ color: 'var(--text-secondary)' }}>
-            {isAdmin ? '全局运营数据 · 实时监控' : '蜂巢智能体 · 实时运营数据'}
-          </p>
+
         </div>
         <button
           onClick={fetchStats}

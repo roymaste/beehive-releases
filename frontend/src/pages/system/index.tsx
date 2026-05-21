@@ -36,15 +36,22 @@ const SystemPage: React.FC = () => {
     session_timeout_minutes: 60,
     allow_registration: false,
   });
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
+    setPermissionDenied(false);
     try {
       const res = await apiClient.get<{ settings: SystemSettings }>('/system/settings');
       const s = res.data.settings;
       setForm(s);
-    } catch {
-      toast.error('获取系统设置失败');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 403) {
+        setPermissionDenied(true);
+      } else {
+        toast.error('获取系统设置失败');
+      }
     } finally {
       setLoading(false);
     }
@@ -59,8 +66,13 @@ const SystemPage: React.FC = () => {
     try {
       await apiClient.put('/system/settings', form);
       toast.success('设置已保存');
-    } catch {
-      toast.error('保存失败');
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 403) {
+        setPermissionDenied(true);
+      } else {
+        toast.error('保存失败');
+      }
     } finally {
       setSaving(false);
     }
@@ -92,6 +104,34 @@ const SystemPage: React.FC = () => {
       <div style={{ padding: 40, textAlign: 'center', color: '#78716c' }}>
         <RiSettings3Line size={32} style={{ color: '#d6d3d1', marginBottom: 12 }} />
         <p>加载系统设置...</p>
+      </div>
+    );
+  }
+
+  if (permissionDenied) {
+    return (
+      <div style={{ maxWidth: 720 }}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-foreground mb-6">系统设置</h1>
+            <p className="text-sm mt-1" style={{ color: '#78716c' }}>管理平台全局配置</p>
+          </div>
+        </div>
+        <div style={{
+          padding: 32,
+          borderRadius: 12,
+          backgroundColor: 'rgba(255,193,7,0.08)',
+          border: '1px solid rgba(255,193,7,0.2)',
+          textAlign: 'center',
+        }}>
+          <RiErrorWarningLine size={36} style={{ color: '#FFC107', marginBottom: 12 }} />
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--text-primary)' }}>
+            仅管理员可访问
+          </h2>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+            系统设置仅管理员可访问，如需修改请联系管理员
+          </p>
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {apiKeysAPI} from '../../api/client';
 import toast from 'react-hot-toast';
 import { useConfirmDialog } from '@/components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import { RiKey2Line, RiAddLine, RiFileCopyLine, RiDeleteBinLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
 
 // 可用的权限范围
@@ -192,18 +193,11 @@ const APIKeysPage: React.FC = () => {
           <p style={{ color: '#78716c' }}>加载中...</p>
         </div>
       ) : keys.length === 0 ? (
-        <div className="apple-card p-8 text-center">
-          <RiKey2Line size={48} style={{ color: '#d2d2d7', margin: '0 auto 16px' }} />
-          <p className="text-base mb-2" style={{ color: '#1c1917' }}>暂无 API Key</p>
-          <p className="text-sm mb-4" style={{ color: '#78716c' }}>点击上方按钮创建第一个 API Key</p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="apple-btn flex items-center gap-2 mx-auto"
-          >
-            <RiAddLine size={16} />
-            创建 Key
-          </button>
-        </div>
+        <EmptyState
+          icon={<RiKey2Line size={48} />}
+          title="暂无 API Key"
+          description="点击右上角「新建 Key」按钮创建第一个 API Key"
+        />
       ) : (
         <div className="space-y-3">
           {keys.map((key) => (

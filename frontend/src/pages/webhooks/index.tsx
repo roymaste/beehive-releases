@@ -11,6 +11,7 @@ import {
 } from 'react-icons/ri';
 import apiClient from '../../api/client';
 import { useConfirmDialog } from '../../components/ui/confirm-dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ── Types ──
 
@@ -342,22 +343,11 @@ const WebhooksPage: React.FC = () => {
         {/* ── List ── */}
         <div style={{ flex: 1, minWidth: 0 }}>
           {webhooks.length === 0 ? (
-            <div
-              style={{
-                textAlign: 'center',
-                padding: '48px 24px',
-                color: 'var(--text-secondary)',
-                backgroundColor: 'var(--card-bg)',
-                borderRadius: 12,
-                border: `1px solid ${'var(--divider)'}`,
-              }}
-            >
-              <RiLinksLine size={32} style={{ marginBottom: 8, opacity: 0.4 }} />
-              <p style={{ fontSize: 14 }}>暂无 Webhook 订阅</p>
-              <p style={{ fontSize: 12, marginTop: 4 }}>
-                创建你的第一个 Webhook 来接收事件通知
-              </p>
-            </div>
+            <EmptyState
+              icon={<RiLinksLine size={48} />}
+              title="暂无 Webhook 订阅"
+              description="创建你的第一个 Webhook 来接收事件通知"
+            />
           ) : (
             webhooks.map((wh) => (
               <div

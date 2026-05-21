@@ -42,49 +42,7 @@
   --gray-900: #212121;
   --black: #121212;
 
-  /* ★ Light mode defaults (fallback) */
-  --page-bg: var(--gray-200);
-  --card-bg: var(--white);
-  --card-border: var(--gray-300);
-  --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
-  --text-tertiary: var(--gray-500);
-  --input-bg: var(--white);
-  --input-border: var(--gray-300);
-  --input-focus-border: var(--hive-gold);
-  --sidebar-bg: var(--white);
-  --sidebar-border: var(--gray-300);
-  --header-bg: var(--white);
-  --header-border: var(--gray-300);
-  --table-header-bg: var(--gray-100);
-  --table-border: var(--gray-300);
-  --hover-bg: var(--gray-100);
-  --divider: var(--gray-300);
-}
-
-/* ── 浅色模式 (Light) — 登录/注册页 ── */
-.light {
-  --page-bg: var(--gray-200);
-  --card-bg: var(--white);
-  --card-border: var(--gray-300);
-  --text-primary: var(--gray-900);
-  --text-secondary: var(--gray-600);
-  --text-tertiary: var(--gray-500);
-  --input-bg: var(--white);
-  --input-border: var(--gray-300);
-  --input-focus-border: var(--hive-gold);
-  --sidebar-bg: var(--white);
-  --sidebar-border: var(--gray-300);
-  --header-bg: var(--white);
-  --header-border: var(--gray-300);
-  --table-header-bg: var(--gray-100);
-  --table-border: var(--gray-300);
-  --hover-bg: var(--gray-100);
-  --divider: var(--gray-300);
-}
-
-/* ── 暗色模式 (Dark) — 管理后台 ── */
-.dark {
+  /* ★ 暗色主题默认值 */
   --page-bg: #121212;
   --card-bg: #1E1E1E;
   --card-border: rgba(255,255,255,0.06);
@@ -102,6 +60,13 @@
   --table-border: rgba(255,255,255,0.06);
   --hover-bg: rgba(255,255,255,0.04);
   --divider: rgba(255,255,255,0.06);
+
+  /* ★ Linear 风格表面层级 */
+  --card-bg-subtle: rgba(255,255,255,0.03);
+  --card-bg-hover: rgba(255,255,255,0.06);
+  --glow-gold: rgba(255,193,7,0.15);
+  --radius-card: 12px;
+  --radius-btn: 8px;
 }
 
 /* ── 字体 ── */

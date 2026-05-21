@@ -25,7 +25,9 @@ use std::time::Duration;
 
 use base64::Engine;
 use ed25519_dalek::{Signature, Verifier, VerifyingKey, PUBLIC_KEY_LENGTH};
-use serde::Deserialize;
+use futures_util::{SinkExt, StreamExt};
+use rand::Rng;
+use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager};
 
 #[cfg(unix)]
@@ -139,6 +141,245 @@ pub struct LaunchConfig {
     pub humanize: Option<bool>,
     pub cdp_port: Option<i32>,
     pub kernel_version: Option<String>,
+}
+
+// ── CDP 脚本执行器 ─────────────────────────────────────────
+
+/// 单步脚本定义
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ScriptStep {
+    pub action: String,
+    pub target: Option<String>,
+    pub value: Option<String>,
+    pub wait_ms: Option<u64>,
+    pub humanize: Option<bool>,
+    pub optional: Option<bool>,
+}
+
+/// 单步执行结果
+#[derive(Debug, Clone, Serialize)]
+pub struct StepResult {
+    pub action: String,
+    pub success: bool,
+    pub message: String,
+    pub elapsed_ms: u64,
+}
+
+/// 脚本执行总结果
+#[derive(Debug, Clone, Serialize)]
+pub struct ScriptExecutionResult {
+    pub success: bool,
+    pub steps: Vec<StepResult>,
+    pub message: String,
+}
+
+/// Tauri 命令包装：执行 CDP 脚本步骤
+#[tauri::command]
+async fn execute_script_steps_command(
+    cdp_port: i32,
+    steps: Vec<ScriptStep>,
+) -> Result<ScriptExecutionResult, String> {
+    execute_script_steps(cdp_port, steps).await
+}
+
+/// 发送 CDP 命令到指定端口
+async fn send_cdp_command(cdp_port: i32, method: &str, params: serde_json::Value) -> Result<serde_json::Value, String> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("创建 HTTP 客户端失败: {}", e))?;
+
+    // 1. 获取当前 page 的 websocket debugger URL
+    let resp = client
+        .get(format!("http://localhost:{}/json", cdp_port))
+        .send()
+        .await
+        .map_err(|e| format!("连接 CDP /json 失败: {}", e))?;
+
+    let pages: Vec<serde_json::Value> = resp
+        .json()
+        .await
+        .map_err(|e| format!("解析 CDP /json 响应失败: {}", e))?;
+
+    let page = pages.first().ok_or("没有可用的 CDP page")?;
+    let ws_url = page["webSocketDebuggerUrl"]
+        .as_str()
+        .ok_or("缺少 webSocketDebuggerUrl")?;
+
+    // 2. 通过 WebSocket 发送 CDP 命令use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::connect_async;
+    let (mut ws_stream, _) = connect_async(ws_url)
+        .await
+        .map_err(|e| format!("WebSocket 连接失败: {}", e))?;
+
+    let cmd = serde_json::json!({
+        "id": 1,
+        "method": method,
+        "params": params,
+    });
+
+    ws_stream
+        .send(tokio_tungstenite::tungstenite::Message::Text(cmd.to_string()))
+        .await
+        .map_err(|e| format!("发送 CDP 命令失败: {}", e))?;
+
+    // 等待响应
+    let cdp_timeout = tokio::time::Duration::from_secs(10);
+    let result = tokio::time::timeout(cdp_timeout, async {
+        while let Some(msg) = ws_stream.next().await {
+            match msg {
+                Ok(tokio_tungstenite::tungstenite::Message::Text(text)) => {
+                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
+                        if json.get("id").is_some() {
+                            return Ok(json);
+                        }
+                    }
+                }
+                Ok(_) => continue,
+                Err(e) => return Err(format!("WebSocket 错误: {}", e)),
+            }
+        }
+        Err("WebSocket 连接关闭".to_string())
+    })
+    .await
+    .map_err(|_| "CDP 命令超时".to_string())?;
+
+    let _ = ws_stream.close(None).await;
+    result
+}
+
+/// 通用 CDP 脚本执行器
+pub async fn execute_script_steps(
+    cdp_port: i32,
+    steps: Vec<ScriptStep>,
+) -> Result<ScriptExecutionResult, String> {
+    let mut step_results = Vec::new();
+
+    for (idx, step) in steps.iter().enumerate() {
+        let t0 = std::time::Instant::now();
+        let action = step.action.to_lowercase();
+
+        if step.humanize.unwrap_or(false) {
+            let delay = {
+                use rand::Rng;
+                rand::thread_rng().gen_range(200..=800)
+            };
+            tokio::time::sleep(Duration::from_millis(delay)).await;
+        }
+
+        let result = match action.as_str() {
+            "navigate" => {
+                let url = step.target.as_deref().unwrap_or("about:blank");
+                let params = serde_json::json!({ "url": url });
+                match send_cdp_command(cdp_port, "Page.navigate", params).await {
+                    Ok(_) => Ok(format!("导航到 {}", url)),
+                    Err(e) => Err(format!("导航失败: {}", e)),
+                }
+            }
+            "click" => {
+                let selector = step.target.as_deref().unwrap_or("");
+                if selector.is_empty() {
+                    Err("click 缺少 target (CSS selector)".to_string())
+                } else {
+                    let js = format!(
+                        "(function() {{ const el = document.querySelector({}); if (!el) return null; const rect = el.getBoundingClientRect(); return {{ x: rect.x + rect.width/2, y: rect.y + rect.height/2 }}; }})()",
+                        serde_json::to_string(selector).unwrap_or_default()
+                    );
+                    match send_cdp_command(cdp_port, "Runtime.evaluate", serde_json::json!({"expression": js, "returnByValue": true})).await {
+                        Ok(resp) => {
+                            if let Some(pos) = resp["result"]["result"]["value"].as_object() {
+                                let x = pos["x"].as_f64().unwrap_or(0.0);
+                                let y = pos["y"].as_f64().unwrap_or(0.0);
+                                let _ = send_cdp_command(cdp_port, "Input.dispatchMouseEvent", serde_json::json!({"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1})).await;
+                                let _ = send_cdp_command(cdp_port, "Input.dispatchMouseEvent", serde_json::json!({"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1})).await;
+                                Ok(format!("点击元素: {} 坐标({:.1}, {:.1})", selector, x, y))
+                            } else {
+                                Err(format!("未找到元素: {}", selector))
+                            }
+                        }
+                        Err(e) => Err(format!("点击失败: {}", e)),
+                    }
+                }
+            }
+            "type" => {
+                let selector = step.target.as_deref().unwrap_or("");
+                let text = step.value.as_deref().unwrap_or("");
+                if selector.is_empty() {
+                    Err("type 缺少 target".to_string())
+                } else {
+                    let _ = send_cdp_command(cdp_port, "Runtime.evaluate", serde_json::json!({"expression": format!("document.querySelector({}).focus()", serde_json::to_string(selector).unwrap_or_default())})).await;
+                    for ch in text.chars() {
+                        let _ = send_cdp_command(cdp_port, "Input.dispatchKeyEvent", serde_json::json!({"type": "keyDown", "text": ch.to_string(), "key": ch.to_string()})).await;
+                        let _ = send_cdp_command(cdp_port, "Input.dispatchKeyEvent", serde_json::json!({"type": "keyUp", "text": ch.to_string(), "key": ch.to_string()})).await;
+                        if step.humanize.unwrap_or(false) {
+                            let type_delay = rand::thread_rng().gen_range(50..=150);
+                            tokio::time::sleep(Duration::from_millis(type_delay)).await;
+                        }
+                    }
+                    Ok(format!("输入文本到 {}: {} 字", selector, text.len()))
+                }
+            }
+            "scroll" => {
+                let direction = step.value.as_deref().unwrap_or("down");
+                let dy = if direction == "up" { -500 } else { 500 };
+                match send_cdp_command(cdp_port, "Runtime.evaluate", serde_json::json!({"expression": format!("window.scrollBy(0, {})", dy)})).await {
+                    Ok(_) => Ok(format!("滚动 {}", direction)),
+                    Err(e) => Err(format!("滚动失败: {}", e)),
+                }
+            }
+            "wait" => {
+                let ms = step.value.as_deref().and_then(|v| v.parse::<u64>().ok()).or(step.wait_ms).unwrap_or(1000);
+                tokio::time::sleep(Duration::from_millis(ms)).await;
+                Ok(format!("等待 {}ms", ms))
+            }
+            "screenshot" => {
+                match send_cdp_command(cdp_port, "Page.captureScreenshot", serde_json::json!({})).await {
+                    Ok(resp) => {
+                        if let Some(data) = resp["result"]["data"].as_str() {
+                            if let Ok(bytes) = base64::engine::general_purpose::STANDARD.decode(data) {
+                                let path = step.value.as_deref().unwrap_or("/tmp/screenshot.png");
+                                std::fs::write(path, bytes).map_err(|e| format!("保存截图失败: {}", e))?;
+                                Ok(format!("截图已保存: {}", path))
+                            } else {
+                                Err("截图 Base64 解码失败".to_string())
+                            }
+                        } else {
+                            Err("截图返回数据异常".to_string())
+                        }
+                    }
+                    Err(e) => Err(format!("截图失败: {}", e)),
+                }
+            }
+            "evaluate" => {
+                let js = step.value.as_deref().unwrap_or("");
+                if js.is_empty() {
+                    Err("evaluate 缺少 value".to_string())
+                } else {
+                    match send_cdp_command(cdp_port, "Runtime.evaluate", serde_json::json!({"expression": js, "returnByValue": true})).await {
+                        Ok(resp) => Ok(format!("执行 JS 结果: {}", resp["result"]["result"]["value"])),
+                        Err(e) => Err(format!("执行 JS 失败: {}", e)),
+                    }
+                }
+            }
+            _ => Err(format!("未知的 action 类型: {}", action)),
+        };
+
+        let elapsed = t0.elapsed().as_millis() as u64;
+        let (success, message) = match result {
+            Ok(msg) => { log::info!("[Script] {}/{} {} OK {}ms: {}", idx+1, steps.len(), action, elapsed, msg); (true, msg) }
+            Err(err) => {
+                log::warn!("[Script] {}/{} {} FAIL {}ms: {}", idx+1, steps.len(), action, elapsed, err);
+                if step.optional.unwrap_or(false) { (true, format!("可选跳过: {}", err)) }
+                else {
+                    step_results.push(StepResult { action: action.clone(), success: false, message: err.clone(), elapsed_ms: elapsed });
+                    return Ok(ScriptExecutionResult { success: false, steps: step_results, message: format!("步骤 {}/{} 失败: {}", idx+1, steps.len(), err) });
+                }
+            }
+        };
+        step_results.push(StepResult { action: action.clone(), success, message: message.clone(), elapsed_ms: elapsed });
+        if let Some(ms) = step.wait_ms { if ms > 0 { tokio::time::sleep(Duration::from_millis(ms)).await; } }
+    }
+    Ok(ScriptExecutionResult { success: true, steps: step_results, message: format!("全部 {} 步执行完成", steps.len()) })
 }
 
 // ── 工具函数 ───────────────────────────────────────────────
@@ -1120,41 +1361,129 @@ fn check_cloak_binary_setup(app: &tauri::AppHandle) {
             }
         }
 
-        // 无内置内核或复制失败，自动下载内核
-        log::info!("未找到 CloakBrowser 内核，开始自动下载...");
+        // 无内置内核或复制失败，不再自动下载，改为通知前端引导用户手动下载
+        log::info!("未找到 CloakBrowser 内核，尝试从后端获取可用内核列表...");
         let app_handle = app.clone();
-        let _ = app.emit("kernel-download-start", serde_json::json!({
-            "message": "正在自动下载 CloakBrowser 内核，请稍候...",
-        }));
 
         tauri::async_runtime::spawn(async move {
-            const DOWNLOAD_URL: &str = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
-            match download_core_internal(app_handle.clone(), DOWNLOAD_URL.to_string()).await {
-                Ok(zip_path) => {
-                    log::info!("内核下载完成: {}", zip_path);
-                    match extract_core_internal(&zip_path) {
-                        Ok(result) => {
-                            log::info!("内核解压完成: {}", result);
-                            let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
-                                "status": "success",
-                                "result": result,
-                            }));
-                        }
-                        Err(e) => {
-                            log::error!("内核解压失败: {}", e);
-                            let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
-                                "status": "error",
-                                "message": format!("解压失败: {}", e),
-                            }));
+            let api_base = std::env::var("BEEHIVE_API_URL")
+                .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
+
+            // 尝试从本地存储读取用户 JWT（前端登录后写入）
+            let jwt_token = dirs::data_dir()
+                .map(|d| d.join("com.beehive.browser").join("auth.token"))
+                .and_then(|p| std::fs::read_to_string(&p).ok())
+                .map(|s| s.trim().to_string());
+
+            if let Some(token) = jwt_token {
+                // 用户已登录，向后端查询可用内核列表
+                let client = reqwest::Client::new();
+                match client
+                    .get(format!("{}/api/v1/browser-kernels", api_base))
+                    .header("Authorization", format!("Bearer {}", token))
+                    .send()
+                    .await
+                {
+                    Ok(resp) if resp.status().is_success() => {
+                        match resp.json::<serde_json::Value>().await {
+                            Ok(body) => {
+                                if let Some(kernels) = body["kernels"].as_array() {
+                                    if !kernels.is_empty() {
+                                        log::info!("后端返回 {} 个可用内核，自动下载第一个", kernels.len());
+                                        // 自动下载第一个可用内核
+                                        let first = &kernels[0];
+                                        let download_url = first["download_url"].as_str()
+                                            .or_else(|| first["url"].as_str())
+                                            .unwrap_or("https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip");
+                                        let _ = app_handle.emit("kernel-download-start", serde_json::json!({
+                                            "message": "正在自动下载 CloakBrowser 内核...",
+                                            "url": download_url,
+                                        }));
+                                        match download_core_internal(app_handle.clone(), download_url.to_string()).await {
+                                            Ok(zip_path) => {
+                                                log::info!("内核下载完成: {}", zip_path);
+                                                let _ = app_handle.emit("kernel-download-progress", serde_json::json!({
+                                                    "percent": 100,
+                                                    "status": "extracting",
+                                                }));
+                                                match extract_core_internal(&zip_path) {
+                                                    Ok(result) => {
+                                                        log::info!("内核安装成功: {}", result);
+                                                        let _ = app_handle.emit("kernel-ready", serde_json::json!({
+                                                            "message": "CloakBrowser 内核安装完成",
+                                                            "version": result["version"],
+                                                        }));
+                                                    }
+                                                    Err(e) => {
+                                                        log::error!("内核解压失败: {}", e);
+                                                        let _ = app_handle.emit("kernel-error", serde_json::json!({"error": format!("解压失败: {}", e)}));
+                                                    }
+                                                }
+                                            }
+                                            Err(e) => {
+                                                log::error!("内核下载失败: {}", e);
+                                                let _ = app_handle.emit("kernel-error", serde_json::json!({"error": format!("下载失败: {}", e)}));
+                                                // 下载失败，尝试备用 URL
+                                                let fallback_url = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
+                                                log::info!("尝试备用下载地址: {}", fallback_url);
+                                                match download_core_internal(app_handle.clone(), fallback_url.to_string()).await {
+                                                    Ok(zip_path) => {
+                                                        log::info!("备用下载完成: {}", zip_path);
+                                                        match extract_core_internal(&zip_path) {
+                                                            Ok(result) => {
+                                                                log::info!("内核安装成功: {}", result);
+                                                                let _ = app_handle.emit("kernel-ready", serde_json::json!({"message": "内核安装完成"}));
+                                                            }
+                                                            Err(e) => log::error!("备用下载解压也失败: {}", e),
+                                                        }
+                                                    }
+                                                    Err(e) => log::error!("备用下载也失败: {}", e),
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        log::warn!("后端返回内核列表为空");
+                                        let _ = app_handle.emit("kernel-missing", serde_json::json!({
+                                            "message": "CloakBrowser 内核未安装，且后端暂无可下载内核",
+                                            "kernels_available": 0,
+                                        }));
+                                    }
+                                } else {
+                                    log::warn!("后端返回数据格式异常，缺少 kernels 字段");
+                                }
+                            }
+                            Err(e) => {
+                                log::error!("解析后端内核列表失败: {}", e);
+                            }
                         }
                     }
+                    Ok(resp) => {
+                        log::warn!("获取内核列表失败，HTTP 状态: {}", resp.status());
+                    }
+                    Err(e) => {
+                        log::error!("请求后端内核列表失败: {}", e);
+                    }
                 }
-                Err(e) => {
-                    log::error!("内核下载失败: {}", e);
-                    let _ = app_handle.emit("kernel-download-complete", serde_json::json!({
-                        "status": "error",
-                        "message": format!("下载失败: {}", e),
-                    }));
+            } else {
+                // 用户未登录，用默认地址尝试下载
+                log::info!("用户未登录，尝试从默认地址下载内核...");
+                let fallback_url = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
+                let _ = app_handle.emit("kernel-download-start", serde_json::json!({
+                    "message": "正在自动下载 CloakBrowser 内核...",
+                    "url": fallback_url,
+                }));
+                match download_core_internal(app_handle.clone(), fallback_url.to_string()).await {
+                    Ok(zip_path) => {
+                        log::info!("内核下载完成: {}", zip_path);
+                        match extract_core_internal(&zip_path) {
+                            Ok(result) => {
+                                log::info!("内核安装成功: {}", result);
+                                let _ = app_handle.emit("kernel-ready", serde_json::json!({"message": "内核安装完成"}));
+                            }
+                            Err(e) => log::error!("内核解压失败: {}", e),
+                        }
+                    }
+                    Err(e) => log::error!("默认地址下载失败: {}", e),
                 }
             }
         });
@@ -1228,6 +1557,13 @@ fn init_logging() {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // ── WebKit 远程 inspector（最早设置，确保 WebKit 初始化前生效）──
+    #[cfg(target_os = "linux")]
+    {
+        std::env::set_var("WEBKIT_DEVELOPER_EXTRAS", "1");
+        std::env::set_var("WEBKIT_INSPECTOR_HTTP_SERVER", "0.0.0.0:12346");
+    }
+
     init_logging();
 
     log::info!("启动单实例控制...");
@@ -1296,8 +1632,19 @@ pub fn run() {
             download_core,
             extract_core,
             run_diagnostic,
+            execute_script_steps_command,
         ])
         .setup(|app| {
+            // 启用 WebKit 远程 inspector（必须在 WebView 创建前设置）
+            #[cfg(target_os = "linux")]
+            {
+                std::env::set_var("WEBKIT_DEVELOPER_EXTRAS", "1");
+                if std::env::var("WEBKIT_INSPECTOR_HTTP_SERVER").is_err() {
+                    std::env::set_var("WEBKIT_INSPECTOR_HTTP_SERVER", "0.0.0.0:12346");
+                }
+                log::info!("WebKit remote inspector: 0.0.0.0:12346");
+            }
+
             // 首次启动检查 CloakBrowser 二进制
             check_cloak_binary_setup(app.handle());
 
@@ -1305,168 +1652,50 @@ pub fn run() {
             #[cfg(desktop)]
             let _ = app.handle().plugin(tauri_plugin_updater::Builder::new().build());
 
-            // ── 后台自动检测内核更新 ─────────────────────────────
+            // ── 后台检测可用内核（仅通知，不自动下载） ─────────────────────────────
             let update_handle = app.handle().clone();
-            let update_pubkey_for_task: Option<String> = None;
             tauri::async_runtime::spawn(async move {
-                // 等待3秒给主窗口先加载
-                tokio::time::sleep(Duration::from_secs(3)).await;
+                // 等待 5 秒让主窗口先加载
+                tokio::time::sleep(Duration::from_secs(5)).await;
 
-                const LATEST_VERSION: &str = "146.0.7680.177.4";
-                const DOWNLOAD_URL: &str = "https://github.com/roymaste/beehive-releases/releases/download/v0.1.1/cloakbrowser-chromium-146.zip";
+                let api_base = std::env::var("BEEHIVE_API_URL")
+                    .unwrap_or_else(|_| "http://107.173.70.124:8080".to_string());
 
-                // 检查当前安装的内核版本
-                match find_cloak_binary(None) {
-                    Ok(path) => {
-                        let current_version = path
-                            .parent()
-                            .and_then(|p| p.file_name())
-                            .and_then(|n| {
-                                let s = n.to_string_lossy().to_string();
-                                s.strip_prefix("chromium-").map(|v| v.to_string())
-                            })
-                            .unwrap_or_else(|| "unknown".to_string());
+                let jwt_token = dirs::data_dir()
+                    .map(|d| d.join("com.beehive.browser").join("auth.token"))
+                    .and_then(|p| std::fs::read_to_string(&p).ok())
+                    .map(|s| s.trim().to_string());
 
-                        log::info!("当前内核版本: {}", current_version);
-
-                        if current_version != LATEST_VERSION {
-                            log::info!(
-                                "内核版本 {} 不是最新版 {}，开始后台静默下载更新...",
-                                current_version, LATEST_VERSION
-                            );
-
-                            // 发送更新开始事件
-                            let _ = update_handle.emit(
-                                "download-progress",
-                                serde_json::json!({
-                                    "status": "updating",
-                                    "current_version": current_version,
-                                    "latest_version": LATEST_VERSION,
-                                    "message": "正在下载最新内核...",
-                                }),
-                            );
-
-                            // 后台静默下载
-                            let download_result = download_core_internal(
-                                update_handle.clone(),
-                                DOWNLOAD_URL.to_string(),
-                            )
-                            .await;
-
-                            match download_result {
-                                Ok(zip_path) => {
-                                    log::info!("内核下载完成: {}", zip_path);
-
-                                    // ── 签名验证（如果已获取公钥）─────────────────
-                                    let sig_url = format!("{}.sig", DOWNLOAD_URL);
-                                    let sig_valid = if let Some(ref pubkey) = update_pubkey_for_task.as_ref() {
-                                        match reqwest::get(&sig_url).await {
-                                            Ok(sig_resp) => {
-                                                if let Ok(sig_hex) = sig_resp.text().await {
-                                                    let zip_bytes = std::fs::read(&zip_path)
-                                                        .unwrap_or_default();
-                                                    match verify_update_signature(&zip_bytes, &sig_hex, pubkey) {
-                                                        Ok(()) => {
-                                                            log::info!("签名验证通过 ✅");
-                                                            true
-                                                        }
-                                                        Err(e) => {
-                                                            log::error!("签名验证失败 ❌: {}", e);
-                                                            false
-                                                        }
-                                                    }
-                                                } else {
-                                                    log::warn!("无法读取签名文件内容");
-                                                    false
-                                                }
-                                            }
-                                            Err(e) => {
-                                                log::warn!("下载签名文件失败: {}", e);
-                                                false
-                                            }
-                                        }
-                                    } else {
-                                        log::warn!("无公钥，跳过签名验证");
-                                        true // 无公钥时不阻塞更新
-                                    };
-
-                                    if !sig_valid {
-                                        let _ = std::fs::remove_file(&zip_path);
-                                        let _ = update_handle.emit(
-                                            "download-progress",
-                                            serde_json::json!({
-                                                "status": "error",
-                                                "message": "签名验证失败，已删除下载文件",
-                                            }),
-                                        );
-                                        return;
+                if let Some(ref token) = jwt_token {
+                    let client = reqwest::Client::new();
+                    match client
+                        .get(format!("{}/api/v1/browser-kernels", api_base))
+                        .header("Authorization", format!("Bearer {}", token))
+                        .send()
+                        .await
+                    {
+                        Ok(resp) if resp.status().is_success() => {
+                            if let Ok(body) = resp.json::<serde_json::Value>().await {
+                                if let Some(kernels) = body["kernels"].as_array() {
+                                    if !kernels.is_empty() {
+                                        log::info!("后端返回 {} 个可用内核", kernels.len());
+                                        let _ = update_handle.emit("kernels-available", serde_json::json!({
+                                            "count": kernels.len(),
+                                            "message": format!("有 {} 个浏览器内核可供下载", kernels.len()),
+                                        }));
                                     }
-
-                                    // 发送下载完成事件
-                                    let _ = update_handle.emit(
-                                        "download-progress",
-                                        serde_json::json!({
-                                            "status": "extracting",
-                                            "message": "正在解压内核...",
-                                        }),
-                                    );
-
-                                    // 解压前将旧版本目录重命名为 .bak
-                                    if let Some(old_dir) = path.parent() {
-                                        let bak_dir = old_dir.with_extension("bak");
-                                        log::info!(
-                                            "备份旧版本目录: {} -> {}",
-                                            old_dir.display(),
-                                            bak_dir.display()
-                                        );
-                                        if let Err(e) = std::fs::rename(old_dir, &bak_dir) {
-                                            log::warn!("备份旧版本目录失败: {}", e);
-                                        }
-                                    }
-
-                                    // 解压新版本
-                                    match extract_core_internal(&zip_path) {
-                                        Ok(result) => {
-                                            log::info!("内核更新成功: {}", result);
-                                            let _ = update_handle.emit(
-                                                "download-progress",
-                                                serde_json::json!({
-                                                    "status": "completed",
-                                                    "message": "内核更新成功",
-                                                    "result": result,
-                                                }),
-                                            );
-                                        }
-                                        Err(e) => {
-                                            log::error!("内核解压失败: {}", e);
-                                            let _ = update_handle.emit(
-                                                "download-progress",
-                                                serde_json::json!({
-                                                    "status": "error",
-                                                    "message": format!("解压失败: {}", e),
-                                                }),
-                                            );
-                                        }
-                                    }
-                                }
-                                Err(e) => {
-                                    log::error!("内核下载失败: {}", e);
-                                    let _ = update_handle.emit(
-                                        "download-progress",
-                                        serde_json::json!({
-                                            "status": "error",
-                                            "message": format!("下载失败: {}", e),
-                                        }),
-                                    );
                                 }
                             }
-                        } else {
-                            log::info!("内核已是最新版 {}", LATEST_VERSION);
+                        }
+                        Ok(resp) => {
+                            log::warn!("查询内核列表失败: HTTP {}", resp.status());
+                        }
+                        Err(e) => {
+                            log::warn!("查询内核列表网络错误: {}", e);
                         }
                     }
-                    Err(_) => {
-                        log::info!("内核未安装，等待用户手动下载");
-                    }
+                } else {
+                    log::info!("用户未登录，跳过内核检测");
                 }
             });
 

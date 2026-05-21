@@ -15,7 +15,9 @@ import {
   RiLoader4Line,
   RiFolderLine,
   RiUploadLine,
+  RiWindowLine,
 } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state'
 import { profilesAPI, Profile } from '../../api/profiles';
 import { groupsAPI, Group } from '../../api/groups';
 import { isDesktopApp, launchLocalBeehiveBrowser, stopLocalBeehiveBrowser, listLocalRunningCloaks, fingerprintToLauncherConfig, checkCoreInstalled, installCore, getCoreDownloadUrl, type DownloadProgressEvent } from '../../lib/desktop';
@@ -633,20 +635,31 @@ const ProfilesPage: React.FC = () => {
 
       {/* Data Table */}
       <div style={{ flex: 1, minHeight: 0 }}>
-        <DataTable
-          columns={columns}
-          data={profiles}
-          rowKey={(r) => r.id}
-          selectedIds={selectedIds}
-          onSelectionChange={setSelectedIds}
-          sortKey={sortKey}
-          sortDir={sortDir}
-          onSort={handleSort}
-          loading={loading}
-          error={fetchError}
-          onRetry={fetchProfiles}
-          emptyText="暂无环境，点击「新建环境」开始"
-        />
+        {!loading && profiles.length === 0 ? (
+          <EmptyState
+            data-testid="profiles-empty-state"
+            icon={<RiWindowLine size={64} />}
+            title="还没有创建环境"
+            description="环境是浏览器指纹的载体，创建后即可绑定代理和社媒账号开始运营"
+            actionLabel="创建环境"
+            actionUrl="/profiles/create"
+          />
+        ) : (
+          <DataTable
+            columns={columns}
+            data={profiles}
+            rowKey={(r) => r.id}
+            selectedIds={selectedIds}
+            onSelectionChange={setSelectedIds}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={handleSort}
+            loading={loading}
+            error={fetchError}
+            onRetry={fetchProfiles}
+            emptyText="暂无环境，点击「新建环境」开始"
+          />
+        )}
       </div>
 
       {/* Pagination */}

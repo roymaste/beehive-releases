@@ -42,6 +42,10 @@ const mockDashboardPlugin = () => ({
         bound_proxies: 10,
         today_posts: 47,
         success_rate: 87.5,
+        total_accounts: 12,
+        bound_accounts: 8,
+        pending_posts: 3,
+        interactions: 156,
         recent_profiles: [
           { id: '1', name: 'Twitter 主账号', platform: 'twitter', runtime_status: 'running', group: '社交媒体组', updated_at: new Date(Date.now() - 300000).toISOString() },
           { id: '2', name: '小红书 品牌号', platform: 'xhs', runtime_status: 'running', group: '电商运营组', updated_at: new Date(Date.now() - 900000).toISOString() },
@@ -96,7 +100,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://107.173.70.124:8000',
+        target: 'http://107.173.70.124:8080',
         changeOrigin: true,
       },
     },
@@ -105,6 +109,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+  },
+  build: {
+    crossorigin: '',
   },
   test: {
     globals: true,

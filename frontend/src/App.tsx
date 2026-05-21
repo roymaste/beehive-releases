@@ -1,5 +1,5 @@
 import './i18n';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PageTransition } from './components/ui/page-transition';
 import { ErrorBoundary } from './components/ui/error-boundary';
 import { Toaster } from 'react-hot-toast';
@@ -29,7 +29,6 @@ import RpaEditorPage from './pages/automations/editor';
 import RPASelectorPage from './pages/RPASelectorPage';
 import TeamPage from './pages/team/index';
 import SystemPage from './pages/system/index';
-import PlaceholderPage from './components/PlaceholderPage';
 import AgentManagementPage from './pages/AgentManagementPage';
 import AddProxyPage from './pages/proxies/add';
 import EditProxyPage from './pages/proxies/edit';
@@ -165,18 +164,16 @@ const AppRoutes: React.FC = () => {
       {/* Webhook 通知 */}
       <Route path="/webhooks" element={withLayout(WebhooksPage)} />
 
-      {/* 帮助中心 */}
-      <Route path="/help" element={withLayout(() => <PlaceholderPage title="帮助中心" description="使用指南和常见问题即将上线。" />)} />
-
-      {/* 占位页面 */}
-      <Route path="/quick-launch" element={withLayout(() => <PlaceholderPage title="快速启动" />)} />
-      <Route path="/cookies" element={withLayout(() => <PlaceholderPage title="Cookie 管理" />)} />
-      <Route path="/security" element={withLayout(() => <PlaceholderPage title="安全设置" />)} />
-      <Route path="/plugins" element={withLayout(() => <PlaceholderPage title="插件管理" />)} />
-      <Route path="/cloud-browser" element={withLayout(() => <PlaceholderPage title="云浏览器" />)} />
+      {/* 隐藏中的占位页面 */}
+      <Route path="/help" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">帮助中心即将上线</p></div>)} />
+      <Route path="/quick-launch" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">页面开发中</p></div>)} />
+      <Route path="/cookies" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">页面开发中</p></div>)} />
+      <Route path="/security" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">页面开发中</p></div>)} />
+      <Route path="/plugins" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">页面开发中</p></div>)} />
+      <Route path="/cloud-browser" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">云浏览器即将上线</p></div>)} />
       <Route path="/kernels" element={withLayout(KernelsPage)} />
       <Route path="/billing" element={withLayout(BillingPage)} />
-      <Route path="/trash" element={withLayout(() => <PlaceholderPage title="回收站" />)} />
+      <Route path="/trash" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">页面开发中</p></div>)} />
 
       {/* 住户管理 */}
       <Route path="/tenants" element={withLayout(TenantsPage)} />
@@ -189,8 +186,8 @@ const AppRoutes: React.FC = () => {
       {/* AI智能体 */}
       <Route path="/agent/console" element={withLayout(AgentConsolePage)} />
       <Route path="/agent/management" element={withLayout(AgentManagementPage)} />
-      <Route path="/agent/auto-reply" element={withLayout(() => <PlaceholderPage title="智能互动" description="自动回复和互动规则配置即将上线。" />)} />
-      <Route path="/agent/logs" element={withLayout(() => <PlaceholderPage title="Agent日志" description="Agent操作记录和审计日志即将上线。" />)} />
+      <Route path="/agent/auto-reply" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">智能互动即将上线</p></div>)} />
+      <Route path="/agent/logs" element={withLayout(() => <div className="flex items-center justify-center h-full min-h-[60vh]"><p className="text-gray-500 text-sm">Agent日志即将上线</p></div>)} />
       <Route path="/agent" element={<Navigate to="/agent/console" replace />} />
 
       {/* Admin */}
@@ -211,6 +208,12 @@ const AppRoutes: React.FC = () => {
     </Routes>
     </PageTransition>
   );
+};
+
+const AppRouter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI__;
+  const Router = isTauri ? HashRouter : BrowserRouter;
+  return <Router>{children}</Router>;
 };
 
 const App: React.FC = () => {
@@ -261,7 +264,7 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <BrowserRouter>
+    <AppRouter>
       <AuthProvider>
         <AppRoutes />
         <Toaster
@@ -272,7 +275,7 @@ const App: React.FC = () => {
           }}
         />
       </AuthProvider>
-    </BrowserRouter>
+    </AppRouter>
   );
 };
 

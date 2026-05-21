@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { agentsAPI, ContentGenerateResponse, rpaScriptAPI, RpaGenerateScriptResponse, RpaScriptStep } from '../api/client';
 import apiClient from '../api/client';
 import toast from 'react-hot-toast';
-import { RiRobot2Line, RiFlashlightFill, RiFileCodeLine, RiEyeLine, RiEditLine } from 'react-icons/ri';
+import { RiRobot2Line, RiFlashlightFill, RiFileCodeLine, RiEyeLine, RiEditLine, RiRobot3Line } from 'react-icons/ri';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ── Beehive Dark Palette ──
 
@@ -50,15 +51,17 @@ const ContentTab: React.FC = () => {
   const [platform, setPlatform] = useState('twitter');
   const [style, setStyle] = useState('sharp');
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
   const [step, setStep] = useState<ContentStep>('idle');
   const [result, setResult] = useState<ContentGenerateResponse | null>(null);
   const [publishResults, setPublishResults] = useState<any[]>([]);
 
   useEffect(() => {
+    setLoading(true);
     agentsAPI.accounts().then((res) => {
       setAccounts(res.data.accounts || []);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const filteredAccounts = accounts.filter(
@@ -245,11 +248,17 @@ const ContentTab: React.FC = () => {
           )}
         </div>
 
-        {filteredAccounts.length === 0 ? (
-          <p style={{ color: 'var(--text-tertiary)', fontSize: 13, padding: 16, textAlign: 'center', background: 'var(--card-bg)', borderRadius: 8 }}>
-            当前平台没有可用账号，请先在「账号管理」绑定账号
-          </p>
-        ) : (
+        {!loading && filteredAccounts.length === 0 && (
+          <EmptyState
+            data-testid="ai-workflow-empty"
+            icon={<RiRobot3Line size={64} />}
+            title="暂无可用账号"
+            description="请先在账号管理中添加平台账号"
+            actionLabel="添加账号"
+            actionUrl="/accounts"
+          />
+        )}
+        {filteredAccounts.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {filteredAccounts.map((acc) => (
               <button

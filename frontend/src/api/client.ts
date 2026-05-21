@@ -10,7 +10,7 @@ const DESKTOP_MODE = typeof window !== 'undefined' && (
   (window as any).__TAURI__ || (window as any).__TAURI_INTERNALS__
 );
 const API_BASE = DESKTOP_MODE
-  ? (import.meta.env.VITE_API_BASE_URL || 'http://107.173.70.124:8080' + '/api/v1')
+  ? (import.meta.env.VITE_API_BASE_URL || 'http://107.173.70.124:8080/api/v1')
   : '/api/v1';
 
 const apiClient = axios.create({
@@ -87,7 +87,7 @@ apiClient.interceptors.response.use(
         window.location.href = '/login';
       }
     } else if (status === 403) {
-      toast.error('权限不足，无法访问该资源');
+      // 403 by each page handles itself (system page, etc.)
     } else if (status === 500) {
       toast.error('服务器错误，请稍后重试');
     } else if (!error.response && error.request) {
