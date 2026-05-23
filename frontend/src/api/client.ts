@@ -476,11 +476,11 @@ export const agentsAPI = {
 // --- API Keys API ---
 export const apiKeysAPI = {
   list: () =>
-    apiClient.get<{ keys: unknown[] }>('/api-keys'),
+    apiClient.get<{ keys: unknown[] }>('/agents/api-keys'),
   create: (data: { name: string; scopes?: string[]; rate_limit?: number; daily_quota?: number }) =>
-    apiClient.post<unknown>('/api-keys', data),
+    apiClient.post<unknown>('/agents/api-keys', data),
   delete: (id: string) =>
-    apiClient.delete(`/api-keys/${id}`),
+    apiClient.delete(`/agents/api-keys/${id}`),
 };
 
 // --- Admin API ---

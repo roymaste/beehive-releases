@@ -1,6 +1,6 @@
 [package]
 name = "beehive-browser"
-version = "0.2.0"
+version = "0.4.0"
 description = "蜂巢浏览器 — 防检测多账号管理桌面客户端"
 authors = ["roymaste"]
 edition = "2021"

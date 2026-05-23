@@ -15,7 +15,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -36,6 +36,18 @@
     "linux": {
       "deb": {
         "depends": []
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://107.173.70.124/releases/update.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQxNDcxOTk2RUQ5ODUxNApSV1FVaGRsdW1YRVVCSHdPRVl2VmF0bVl4Q2dCRXNTdklKM0FXZ0ZhM01YN1BXeEdyWmFHSXFaQQo=",
+      "windows": {
+        "installMode": "passive"
       }
     }
   }
