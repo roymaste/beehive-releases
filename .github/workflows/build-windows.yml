@@ -52,6 +52,7 @@ jobs:
         shell: bash
         env:
           FORCE_COLOR: 0
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
 
       - name: Get latest release tag
         if: github.ref == 'refs/heads/main'
